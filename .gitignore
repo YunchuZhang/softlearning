@@ -3,6 +3,9 @@ __pycache__/
 *.py[cod]
 *$py.class
 
+# Editor temp files
+*~
+
 # C extensions
 *.so
 
