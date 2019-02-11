@@ -8,8 +8,7 @@ from . import (
     extra_policy_info_sampler,
     remote_sampler,
     sampler_base,
-    simple_sampler,
-    her_sampler)
+    simple_sampler)
 
 
 SAMPLERS = {
@@ -19,7 +18,6 @@ SAMPLERS = {
     'RemoteSampler': remote_sampler.RemoteSampler,
     'Sampler': sampler_base.BaseSampler,
     'SimpleSampler': simple_sampler.SimpleSampler,
-    'HerSampler': her_sampler.HerSampler
 }
 
 
@@ -43,11 +41,8 @@ def rollout(env,
             callback=None,
             render_mode=None,
             break_on_terminal=True):
-    observation_space = env.observation_space
-    action_space = env.action_space
 
-    pool = replay_pools.SimpleReplayPool(
-        observation_space, action_space, max_size=path_length)
+    pool = replay_pools.SimpleReplayPool(env, max_size=path_length)
     sampler = simple_sampler.SimpleSampler(
         max_path_length=path_length,
         min_pool_size=None,

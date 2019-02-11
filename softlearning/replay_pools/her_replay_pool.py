@@ -5,37 +5,31 @@ from .simple_replay_pool import SimpleReplayPool
 # Observation space should be a dict
 class HerReplayPool(SimpleReplayPool):
 
-    def __init__(self,
-                 desired_goal_key,
-                 achieved_goal_key,
-                 reward_key,
-                 terminal_key,
-                 env,
-                 *args, **kwargs):
+    def __init__(self, env, *args, **kwargs):
 
-        self._desired_goal_key = desired_goal_key
-        self._achieved_goal_key = achieved_goal_key
-        self._reward_key = reward_key
-        self._terminal_key = terminal_key
+        self._desired_goal_key = kwargs['desired_goal_key']
+        self._achieved_goal_key = kwargs['achieved_goal_key']
+        self._reward_key = kwargs['reward_key']
+        self._terminal_key = kwargs['terminal_key']
 
         self.env = env
 
         # Fraction of samples we should resample goals for using the 'future' stragtegy
         self._fraction_future_goals = 0.25
 
-        super(HerReplayPool, self).__init__(*args, **kwargs)
+        super(HerReplayPool, self).__init__(*args, env, **kwargs)
 
         # For each sample keep track of the index of the last sample
         # in that episode
         self._episode_boundaries = np.zeros(self._max_size)
 
 
-    def add_samples(self, num_samples, **kwargs):
+    def add_samples(self, samples):
 
-        indices = np.arange(self._pointer, self._pointer + num_samples) % self._max_size
+        indices = np.arange(self._pointer, self._pointer + len(samples)) % self._max_size
         self._episode_boundaries[indices] = indices[-1]
 
-        return super(HerReplayPool, self).add_samples(num_samples, **kwargs)
+        return super(HerReplayPool, self).add_samples(samples)
 
 
     def batch_by_indices(self, indices, field_name_filter=None, observation_keys=None):
@@ -44,7 +38,7 @@ class HerReplayPool(SimpleReplayPool):
         num_resamples = int(batch_size * self._fraction_future_goals)
 
         batch = {
-            field_name: getattr(self, field_name)[indices]
+            field_name: self.fields[field_name][indices]
             for field_name in self.field_names
         }
 
@@ -69,12 +63,7 @@ class HerReplayPool(SimpleReplayPool):
 
                 future_sample_idx = (idx + future_sample_offset) % self._max_size
 
-                #future_sample = {
-                #    field_name: getattr(self, field_name)[future_sample_idx]
-                #    for field_name in self.field_names
-                #}
-
-                future_achieved_goal = getattr(self, 'next_observations.' + self._achieved_goal_key)[future_sample_idx]
+                future_achieved_goal = self.fields['next_observations.' + self._achieved_goal_key][future_sample_idx]
 
                 desired_goals[idx] = future_achieved_goal
                 next_desired_goals[idx] = future_achieved_goal

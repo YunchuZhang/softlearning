@@ -5,9 +5,7 @@ import ray
 import tensorflow as tf
 import numpy as np
 
-
 from .sampler_base import BaseSampler
-from .utils import rollout
 
 
 class RemoteSampler(BaseSampler):
@@ -110,6 +108,7 @@ class _RemoteEnv(object):
         return self._initialized
 
     def rollout(self, policy_weights, path_length):
+        from .utils import rollout
         self._policy.set_weights(policy_weights)
         path = rollout(self._env, self._policy, path_length)
 

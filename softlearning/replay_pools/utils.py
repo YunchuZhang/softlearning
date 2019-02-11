@@ -23,8 +23,7 @@ def get_replay_pool_from_variant(variant, env, *args, **kwargs):
 
     replay_pool = POOL_CLASSES[replay_pool_type](
         *args,
-        observation_space=env.observation_space,
-        action_space=env.action_space,
+        env,
         **replay_pool_kwargs,
         **kwargs)
 

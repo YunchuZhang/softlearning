@@ -111,6 +111,13 @@ NUM_EPOCHS_PER_DOMAIN = {
     'Pendulum': 10,
 }
 
+DEFAULT_ALGORITHM_DOMAIN_PARAMS = {
+    'kwargs': {
+        'n_epochs': DEFAULT_NUM_EPOCHS,
+        'n_initial_exploration_steps': DEFAULT_MAX_PATH_LENGTH * 10
+    }
+}
+
 ALGORITHM_PARAMS_PER_DOMAIN = {
     **{
         domain: {
@@ -196,17 +203,16 @@ SIMPLE_SAMPLER_PARAMS = {
 }
 
 
-HER_SAMPLER_PARAMS = {
-    'type': 'SimpleSampler',
-    'kwargs': {
-        'batch_size': 256,
-    }
+SAMPLER_PARAMS_BASE = {
+    'SimpleSampler': SIMPLE_SAMPLER_PARAMS,
 }
 
 
-SAMPLER_PARAMS_BASE = {
-    'SimpleSampler': SIMPLE_SAMPLER_PARAMS,
-    'HerSampler': HER_SAMPLER_PARAMS
+DEFAULT_SAMPLER_DOMAIN_PARAMS = {
+    'kwargs': {
+        'max_path_length': DEFAULT_MAX_PATH_LENGTH,
+        'min_pool_size': DEFAULT_MAX_PATH_LENGTH
+    }
 }
 
 
@@ -236,6 +242,10 @@ HER_REPLAY_POOL_PARAMS = {
     'type': 'HerReplayPool',
     'kwargs': {
         'max_size': 1e6,
+        'desired_goal_key': 'desired_goal',
+        'achieved_goal_key': 'achieved_goal',
+        'reward_key': 'rewards',
+        'terminal_key': 'terminals'
     }
 }
 
@@ -249,7 +259,7 @@ REPLAY_POOL_PARAMS_BASE = {
 def get_variant_spec_base(universe, domain, task, policy, algorithm, sampler, replay_pool):
     algorithm_params = deep_update(
         ALGORITHM_PARAMS_BASE,
-        ALGORITHM_PARAMS_PER_DOMAIN.get(domain, {})
+        ALGORITHM_PARAMS_PER_DOMAIN.get(domain, DEFAULT_ALGORITHM_DOMAIN_PARAMS)
     )
     algorithm_params = deep_update(
         algorithm_params,
@@ -275,10 +285,10 @@ def get_variant_spec_base(universe, domain, task, policy, algorithm, sampler, re
         'algorithm_params': algorithm_params,
         'replay_pool_params': deep_update(
             REPLAY_POOL_PARAMS_BASE[replay_pool]
-        )
+        ),
         'sampler_params': deep_update(
             SAMPLER_PARAMS_BASE[sampler],
-            SAMPLER_PARAMS_PER_DOMAIN.get(domain, {})
+            SAMPLER_PARAMS_PER_DOMAIN.get(domain, DEFAULT_SAMPLER_DOMAIN_PARAMS)
         ),
         'run_params': {
             'seed': tune.sample_from(
@@ -298,10 +308,12 @@ def get_variant_spec_image(universe,
                            task,
                            policy,
                            algorithm,
+                           sampler,
+                           replay_pool,
                            *args,
                            **kwargs):
     variant_spec = get_variant_spec_base(
-        universe, domain, task, policy, algorithm, *args, **kwargs)
+        universe, domain, task, policy, algorithm, sampler, replay_pool, *args, **kwargs)
 
     if 'image' in task.lower() or 'image' in domain.lower():
         preprocessor_params = {
@@ -332,10 +344,10 @@ def get_variant_spec(args):
         or 'blind' in task.lower()
         or 'image' in domain.lower()):
         variant_spec = get_variant_spec_image(
-            universe, domain, task, args.policy, args.algorithm)
+            universe, domain, task, args.policy, args.algorithm, args.sampler, args.replay_pool)
     else:
         variant_spec = get_variant_spec_base(
-            universe, domain, task, args.policy, args.algorithm)
+            universe, domain, task, args.policy, args.algorithm, args.sampler, args.replay_pool)
 
     if args.checkpoint_replay_pool is not None:
         variant_spec['run_params']['checkpoint_replay_pool'] = (
