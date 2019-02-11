@@ -3,7 +3,8 @@ from copy import deepcopy
 from . import (
     simple_replay_pool,
     extra_policy_info_replay_pool,
-    union_pool)
+    union_pool,
+    her_replay_pool)
 
 
 POOL_CLASSES = {
@@ -11,9 +12,8 @@ POOL_CLASSES = {
     'ExtraPolicyInfoReplayPool': (
         extra_policy_info_replay_pool.ExtraPolicyInfoReplayPool),
     'UnionPool': union_pool.UnionPool,
+    'HerReplayPool': her_replay_pool.HerReplayPool
 }
-
-DEFAULT_REPLAY_POOL = 'SimpleReplayPool'
 
 
 def get_replay_pool_from_variant(variant, env, *args, **kwargs):

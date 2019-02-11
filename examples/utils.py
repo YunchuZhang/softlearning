@@ -6,6 +6,8 @@ import os
 
 import softlearning.algorithms.utils as alg_utils
 import softlearning.environments.utils as env_utils
+import softlearning.samplers.utils as sampler_utils
+import softlearning.replay_pools.utils as replay_pool_utils
 from softlearning.misc.utils import datetimestamp
 
 
@@ -13,6 +15,8 @@ DEFAULT_UNIVERSE = 'gym'
 DEFAULT_DOMAIN = 'Swimmer'
 DEFAULT_TASK = 'Default'
 DEFAULT_ALGORITHM = 'SAC'
+DEFAULT_SAMPLER = 'SimpleSampler'
+DEFAULT_REPLAY_POOL = 'SimpleReplayPool'
 
 TASKS_BY_DOMAIN_BY_UNIVERSE = {
     universe: {
@@ -41,6 +45,9 @@ UNIVERSES = tuple(env_utils.ENVIRONMENTS.keys())
 
 AVAILABLE_ALGORITHMS = set(alg_utils.ALGORITHM_CLASSES.keys())
 
+AVAILABLE_SAMPLERS = set(sampler_utils.SAMPLERS.keys())
+
+AVAILABLE_REPLAY_POOLS = set(replay_pool_utils.POOL_CLASSES.keys())
 
 def parse_universe(env_name):
     universe = next(
@@ -221,6 +228,10 @@ def get_parser(allow_policy_list=False):
         '--domain', type=str, choices=AVAILABLE_DOMAINS, default=None)
     parser.add_argument(
         '--task', type=str, choices=AVAILABLE_TASKS, default=DEFAULT_TASK)
+    parser.add_argument(
+        '--sampler', type=str, choices=AVAILABLE_SAMPLERS, default=DEFAULT_SAMPLER)
+    parser.add_argument(
+        '--replay_pool', type=str, choices=AVAILABLE_REPLAY_POOLS, default=DEFAULT_REPLAY_POOL)
 
     parser.add_argument(
         '--checkpoint-replay-pool',

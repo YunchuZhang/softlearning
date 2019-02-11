@@ -8,18 +8,22 @@ from . import (
     extra_policy_info_sampler,
     remote_sampler,
     sampler_base,
-    simple_sampler)
+    simple_sampler,
+    her_sampler)
+
+
+SAMPLERS = {
+    'DummySampler': dummy_sampler.DummySampler,
+    'ExtraPolicyInfoSampler': (
+        extra_policy_info_sampler.ExtraPolicyInfoSampler),
+    'RemoteSampler': remote_sampler.RemoteSampler,
+    'Sampler': sampler_base.BaseSampler,
+    'SimpleSampler': simple_sampler.SimpleSampler,
+    'HerSampler': her_sampler.HerSampler
+}
 
 
 def get_sampler_from_variant(variant, *args, **kwargs):
-    SAMPLERS = {
-        'DummySampler': dummy_sampler.DummySampler,
-        'ExtraPolicyInfoSampler': (
-            extra_policy_info_sampler.ExtraPolicyInfoSampler),
-        'RemoteSampler': remote_sampler.RemoteSampler,
-        'Sampler': sampler_base.BaseSampler,
-        'SimpleSampler': simple_sampler.SimpleSampler,
-    }
 
     sampler_params = variant['sampler_params']
     sampler_type = sampler_params['type']

@@ -1,7 +1,8 @@
 import numpy as np
 
-from softlearning.replay_pools import RolloutBuilder
+from softlearning.replay_pools.rollout_builder import RolloutBuilder
 from .simple_sampler import SimpleSampler
+
 
 class HerSampler(SimpleSampler):
     def __init__(self, **kwargs):
@@ -18,7 +19,7 @@ class HerSampler(SimpleSampler):
         self._rollout_builder = RolloutBuilder()
 
     def sample(self):
-         if self._current_observation is None:
+        if self._current_observation is None:
             self._current_observation = self.env.reset()
 
         action = self.policy.actions_np([
@@ -44,12 +45,12 @@ class HerSampler(SimpleSampler):
 
             rollout = self._rollout_builder.get_all_stacked()
             self.pool.add_samples(
-                len(rollout)
-                observations = rollout['observations'] 
-                actions = rollout['actions']
-                rewards = rollout['rewards']
-                terminals = rollout['terminals']
-                next_observations = rollout['next_observations']
+                len(rollout),
+                observations=rollout['observations'],
+                actions=rollout['actions'],
+                rewards=rollout['rewards'],
+                terminals=rollout['terminals'],
+                next_observations=rollout['next_observations']
             )
 
             self._rollout_builder = RolloutBuilder()
@@ -61,7 +62,7 @@ class HerSampler(SimpleSampler):
             last_path.update({'infos': self._infos})
             self._last_n_paths.appendleft(last_path)
 
-            policy.reset()
+            self.policy.reset()
             self._current_observation = self.env.reset()
 
             self._max_path_return = max(self._max_path_return,

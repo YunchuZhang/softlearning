@@ -186,7 +186,65 @@ ENV_PARAMS = {
 NUM_CHECKPOINTS = 10
 
 
-def get_variant_spec_base(universe, domain, task, policy, algorithm):
+SIMPLE_SAMPLER_PARAMS = {
+    'type': 'SimpleSampler',
+    'kwargs': {
+        'batch_size': 256,
+    }
+}
+
+
+HER_SAMPLER_PARAMS = {
+    'type': 'SimpleSampler',
+    'kwargs': {
+        'batch_size': 256,
+    }
+}
+
+
+SAMPLER_PARAMS_BASE = {
+    'SimpleSampler': SIMPLE_SAMPLER_PARAMS,
+    'HerSampler': HER_SAMPLER_PARAMS
+}
+
+
+SAMPLER_PARAMS_PER_DOMAIN = {
+    **{
+        domain: {
+            'kwargs': {
+                'max_path_length': MAX_PATH_LENGTH_PER_DOMAIN.get(
+                    domain, DEFAULT_MAX_PATH_LENGTH),
+                'min_pool_size': MAX_PATH_LENGTH_PER_DOMAIN.get(
+                    domain, DEFAULT_MAX_PATH_LENGTH),
+            }
+        } for domain in MAX_PATH_LENGTH_PER_DOMAIN
+    }
+}
+
+
+SIMPLE_REPLAY_POOL_PARAMS = {
+    'type': 'SimpleReplayPool',
+    'kwargs': {
+        'max_size': 1e6,
+    }
+}
+
+
+HER_REPLAY_POOL_PARAMS = {
+    'type': 'HerReplayPool',
+    'kwargs': {
+        'max_size': 1e6,
+    }
+}
+
+
+REPLAY_POOL_PARAMS_BASE = {
+    'SimpleReplayPool': SIMPLE_REPLAY_POOL_PARAMS,
+    'HerReplayPool': HER_REPLAY_POOL_PARAMS
+}
+
+
+def get_variant_spec_base(universe, domain, task, policy, algorithm, sampler, replay_pool):
     algorithm_params = deep_update(
         ALGORITHM_PARAMS_BASE,
         ALGORITHM_PARAMS_PER_DOMAIN.get(domain, {})
@@ -213,22 +271,13 @@ def get_variant_spec_base(universe, domain, task, policy, algorithm):
             }
         },
         'algorithm_params': algorithm_params,
-        'replay_pool_params': {
-            'type': 'SimpleReplayPool',
-            'kwargs': {
-                'max_size': 1e6,
-            }
-        },
-        'sampler_params': {
-            'type': 'SimpleSampler',
-            'kwargs': {
-                'max_path_length': MAX_PATH_LENGTH_PER_DOMAIN.get(
-                    domain, DEFAULT_MAX_PATH_LENGTH),
-                'min_pool_size': MAX_PATH_LENGTH_PER_DOMAIN.get(
-                    domain, DEFAULT_MAX_PATH_LENGTH),
-                'batch_size': 256,
-            }
-        },
+        'replay_pool_params': deep_update(
+            REPLAY_POOL_PARAMS_BASE[replay_pool]
+        )
+        'sampler_params': deep_update(
+            SAMPLER_PARAMS_BASE[sampler],
+            SAMPLER_PARAMS_PER_DOMAIN.get(domain, {})
+        ),
         'run_params': {
             'seed': tune.sample_from(
                 lambda spec: np.random.randint(0, 10000)),
