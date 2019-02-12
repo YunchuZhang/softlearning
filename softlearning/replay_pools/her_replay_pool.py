@@ -26,7 +26,10 @@ class HerReplayPool(SimpleReplayPool):
 
     def add_samples(self, samples):
 
-        indices = np.arange(self._pointer, self._pointer + len(samples)) % self._max_size
+        field_names = list(samples.keys())
+        num_samples = samples[field_names[0]].shape[0]
+
+        indices = np.arange(self._pointer, self._pointer + num_samples) % self._max_size
         self._episode_boundaries[indices] = indices[-1]
 
         return super(HerReplayPool, self).add_samples(samples)
@@ -49,30 +52,32 @@ class HerReplayPool(SimpleReplayPool):
             rewards = batch[self._reward_key]
             terminals = batch[self._terminal_key]
 
-            # Indices in the batch, not the buffer
-            for idx in range(num_resamples):
+            # batch_idx is index of sample in batch
+            # pool_idx is index of sample in replay pool
+            for batch_idx in range(num_resamples):
+                pool_idx = indices[batch_idx]
 
-                episode_boundary = self._episode_boundaries[idx] + 1
+                episode_boundary = self._episode_boundaries[pool_idx] + 1
 
                 # Episode crosses the end of the buffer
                 # and wraps back to the beginning
-                if episode_boundary < idx:
-                    future_sample_offset = np.random.randint(0, self._max_size - idx + episode_boundary)
+                if episode_boundary < pool_idx:
+                    future_sample_offset = np.random.randint(0, self._max_size - pool_idx + episode_boundary)
                 else:
-                    future_sample_offset = np.random.randint(0, episode_boundary - idx)
+                    future_sample_offset = np.random.randint(0, episode_boundary - pool_idx)
 
-                future_sample_idx = (idx + future_sample_offset) % self._max_size
+                future_sample_idx = (pool_idx + future_sample_offset) % self._max_size
 
                 future_achieved_goal = self.fields['next_observations.' + self._achieved_goal_key][future_sample_idx]
 
-                desired_goals[idx] = future_achieved_goal
-                next_desired_goals[idx] = future_achieved_goal
+                desired_goals[batch_idx] = future_achieved_goal
+                next_desired_goals[batch_idx] = future_achieved_goal
 
-                rewards[idx] = self.env.compute_reward(achieved_goals[idx],
-                                                       desired_goals[idx],
+                rewards[batch_idx] = self.env.compute_reward(achieved_goals[batch_idx],
+                                                       desired_goals[batch_idx],
                                                        None)
                 if future_sample_offset == 0:
-                    terminals[idx] = True
+                    terminals[batch_idx] = True
 
             batch['observations.' + self._desired_goal_key] = desired_goals
             batch['next_observations.' + self._desired_goal_key] = desired_goals
