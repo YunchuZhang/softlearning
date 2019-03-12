@@ -44,11 +44,11 @@ ALGORITHM_PARAMS_BASE = {
     'type': 'SAC',
 
     'kwargs': {
-        'epoch_length': 1000,
+        'epoch_length': 100000,
         'train_every_n_steps': 1,
         'n_train_repeat': 1,
         'eval_render_mode': None,
-        'eval_n_episodes': 1,
+        'eval_n_episodes': 10,
         'eval_deterministic': True,
 
         'discount': 0.99,
@@ -109,6 +109,8 @@ NUM_EPOCHS_PER_DOMAIN = {
     'Point2DEnv': int(200),
     'Reacher': int(200),
     'Pendulum': 10,
+    'FetchPush': int(1e4),
+    'FetchPickAndPlace': int(1e4)
 }
 
 DEFAULT_ALGORITHM_DOMAIN_PARAMS = {

@@ -15,7 +15,7 @@ class HerReplayPool(SimpleReplayPool):
         self.env = env
 
         # Fraction of samples we should resample goals for using the 'future' stragtegy
-        self._fraction_future_goals = 0.25
+        self._fraction_future_goals = 0.8
 
         super(HerReplayPool, self).__init__(*args, env, **kwargs)
 
