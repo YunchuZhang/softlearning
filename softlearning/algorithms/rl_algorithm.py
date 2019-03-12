@@ -3,11 +3,13 @@ from collections import OrderedDict
 from itertools import count
 import gtimer as gt
 import math
+import os
 
 import tensorflow as tf
 import numpy as np
 
 from softlearning.samplers import rollouts
+from softlearning.misc.utils import save_video
 
 
 class RLAlgorithm(tf.contrib.checkpoint.Checkpointable):
@@ -30,6 +32,7 @@ class RLAlgorithm(tf.contrib.checkpoint.Checkpointable):
             eval_n_episodes=10,
             eval_deterministic=True,
             eval_render_mode=None,
+            video_save_frequency=0,
             session=None,
     ):
         """
@@ -59,7 +62,14 @@ class RLAlgorithm(tf.contrib.checkpoint.Checkpointable):
 
         self._eval_n_episodes = eval_n_episodes
         self._eval_deterministic = eval_deterministic
-        self._eval_render_mode = eval_render_mode
+        self._video_save_frequency = video_save_frequency
+
+        if self._video_save_frequency > 0:
+            assert eval_render_mode != 'human', (
+                "RlAlgorithm cannot render and save videos at the same time")
+            self._eval_render_mode = 'rgb_array'
+        else:
+            self._eval_render_mode = eval_render_mode
 
         self._session = session or tf.keras.backend.get_session()
 
@@ -118,7 +128,7 @@ class RLAlgorithm(tf.contrib.checkpoint.Checkpointable):
         total_timestep = self._epoch * self._epoch_length + self._timestep
         return total_timestep
 
-    def _train(self, env, policy, pool, initial_exploration_policy=None):
+    def _train(self):
         """Return a generator that performs RL training.
 
         Args:
@@ -128,15 +138,18 @@ class RLAlgorithm(tf.contrib.checkpoint.Checkpointable):
                 If None, then all exploration is done using policy
             pool (`PoolBase`): Sample pool to add samples to
         """
+        training_environment = self._training_environment
+        evaluation_environment = self._evaluation_environment
+        policy = self._policy
+        pool = self._pool
 
         if not self._training_started:
             self._init_training()
 
             self._initial_exploration_hook(
-                env, initial_exploration_policy, pool)
+                training_environment, self._initial_exploration_policy, pool)
 
-        self.sampler.initialize(env, policy, pool)
-        evaluation_env = env.copy() if self._eval_n_episodes else None
+        self.sampler.initialize(training_environment, policy, pool)
 
         gt.reset_root()
         gt.rename_root('RLAlgorithm')
@@ -173,14 +186,16 @@ class RLAlgorithm(tf.contrib.checkpoint.Checkpointable):
             training_paths = self.sampler.get_last_n_paths(
                 math.ceil(self._epoch_length / self.sampler._max_path_length))
             gt.stamp('training_paths')
-            evaluation_paths = self._evaluation_paths(policy, evaluation_env)
+            evaluation_paths = self._evaluation_paths(
+                policy, evaluation_environment)
             gt.stamp('evaluation_paths')
 
-            training_metrics = self._evaluate_rollouts(training_paths, env)
+            training_metrics = self._evaluate_rollouts(
+                training_paths, training_environment)
             gt.stamp('training_metrics')
             if evaluation_paths:
                 evaluation_metrics = self._evaluate_rollouts(
-                    evaluation_paths, evaluation_env)
+                    evaluation_paths, evaluation_environment)
                 gt.stamp('evaluation_metrics')
             else:
                 evaluation_metrics = {}
@@ -222,10 +237,10 @@ class RLAlgorithm(tf.contrib.checkpoint.Checkpointable):
             )))
 
             if self._eval_render_mode is not None and hasattr(
-                    evaluation_env, 'render_rollouts'):
+                    evaluation_environment, 'render_rollouts'):
                 # TODO(hartikainen): Make this consistent such that there's no
                 # need for the hasattr check.
-                env.render_rollouts(evaluation_paths)
+                training_environment.render_rollouts(evaluation_paths)
 
             yield diagnostics
 
@@ -233,16 +248,30 @@ class RLAlgorithm(tf.contrib.checkpoint.Checkpointable):
 
         self._training_after_hook()
 
+        yield {'done': True, **diagnostics}
+
     def _evaluation_paths(self, policy, evaluation_env):
         if self._eval_n_episodes < 1: return ()
 
         with policy.set_deterministic(self._eval_deterministic):
             paths = rollouts(
+                self._eval_n_episodes,
                 evaluation_env,
                 policy,
                 self.sampler._max_path_length,
-                self._eval_n_episodes,
                 render_mode=self._eval_render_mode)
+
+        should_save_video = (
+            self._video_save_frequency > 0
+            and self._epoch % self._video_save_frequency == 0)
+
+        if should_save_video:
+            for i, path in enumerate(paths):
+                video_frames = path.pop('images')
+                video_file_name = f'evaluation_path_{self._epoch}_{i}.avi'
+                video_file_path = os.path.join(
+                    os.getcwd(), 'videos', video_file_name)
+                save_video(video_frames, video_file_path)
 
         return paths
 
