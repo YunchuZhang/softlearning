@@ -2,12 +2,9 @@ import abc
 from collections import OrderedDict
 from itertools import count
 import gtimer as gt
-import math
 
 import tensorflow as tf
 import numpy as np
-
-from softlearning.samplers import rollouts
 
 
 class RLAlgorithm(tf.contrib.checkpoint.Checkpointable):
@@ -19,18 +16,15 @@ class RLAlgorithm(tf.contrib.checkpoint.Checkpointable):
 
     def __init__(
             self,
-            sampler,
             n_epochs=1000,
             train_every_n_steps=1,
             n_train_repeat=1,
             max_train_repeat_per_timestep=5,
-            n_initial_exploration_steps=0,
-            initial_exploration_policy=None,
             epoch_length=1000,
             eval_n_episodes=10,
             eval_deterministic=True,
             eval_render_mode=None,
-            session=None,
+            **kwargs
     ):
         """
         Args:
@@ -46,38 +40,27 @@ class RLAlgorithm(tf.contrib.checkpoint.Checkpointable):
             eval_render_mode (`str`): Mode to render evaluation rollouts in.
                 None to disable rendering.
         """
-        self.sampler = sampler
-
         self._n_epochs = n_epochs
         self._n_train_repeat = n_train_repeat
         self._max_train_repeat_per_timestep = max(
             max_train_repeat_per_timestep, n_train_repeat)
         self._train_every_n_steps = train_every_n_steps
         self._epoch_length = epoch_length
-        self._n_initial_exploration_steps = n_initial_exploration_steps
-        self._initial_exploration_policy = initial_exploration_policy
+        #self._n_initial_exploration_steps = n_initial_exploration_steps
+        #self._initial_exploration_policy = initial_exploration_policy
 
         self._eval_n_episodes = eval_n_episodes
         self._eval_deterministic = eval_deterministic
         self._eval_render_mode = eval_render_mode
 
-        self._session = session or tf.keras.backend.get_session()
+        #self._session = session or tf.keras.backend.get_session()
 
         self._epoch = 0
         self._timestep = 0
         self._num_train_steps = 0
 
-    def _initial_exploration_hook(self, env, initial_exploration_policy, pool):
-        if self._n_initial_exploration_steps < 1: return
-
-        if not initial_exploration_policy:
-            raise ValueError(
-                "Initial exploration policy must be provided when"
-                " n_initial_exploration_steps > 0.")
-
-        self.sampler.initialize(env, initial_exploration_policy, pool)
-        while pool.size < self._n_initial_exploration_steps:
-            self.sampler.sample()
+    def _initial_exploration_hook(self):
+        pass
 
     def _training_before_hook(self):
         """Method called before the actual training loops."""
@@ -103,8 +86,9 @@ class RLAlgorithm(tf.contrib.checkpoint.Checkpointable):
         """Hook called at the end of each epoch."""
         pass
 
+    @abc.abstractmethod
     def _training_batch(self, batch_size=None):
-        return self.sampler.random_batch(batch_size)
+        raise NotImplementedError
 
     def _evaluation_batch(self, *args, **kwargs):
         return self._training_batch(*args, **kwargs)
@@ -118,25 +102,20 @@ class RLAlgorithm(tf.contrib.checkpoint.Checkpointable):
         total_timestep = self._epoch * self._epoch_length + self._timestep
         return total_timestep
 
-    def _train(self, env, policy, pool, initial_exploration_policy=None):
-        """Return a generator that performs RL training.
+    @abc.abstractmethod
+    def _total_samples(self):
+        raise NotImplementedError
 
-        Args:
-            env (`SoftlearningEnv`): Environment used for training.
-            policy (`Policy`): Policy used for training
-            initial_exploration_policy ('Policy'): Policy used for exploration
-                If None, then all exploration is done using policy
-            pool (`PoolBase`): Sample pool to add samples to
+    def _train(self):
+        """Return a generator that performs RL training.
         """
 
         if not self._training_started:
             self._init_training()
 
-            self._initial_exploration_hook(
-                env, initial_exploration_policy, pool)
+            self._initial_exploration_hook()
 
-        self.sampler.initialize(env, policy, pool)
-        evaluation_env = env.copy() if self._eval_n_episodes else None
+        self._init_sampler()
 
         gt.reset_root()
         gt.rename_root('RLAlgorithm')
@@ -148,9 +127,9 @@ class RLAlgorithm(tf.contrib.checkpoint.Checkpointable):
             self._epoch_before_hook()
             gt.stamp('epoch_before_hook')
 
-            start_samples = self.sampler._total_samples
+            start_samples = self._total_samples()
             for i in count():
-                samples_now = self.sampler._total_samples
+                samples_now = self._total_samples()
                 self._timestep = samples_now - start_samples
 
                 if (samples_now >= start_samples + self._epoch_length
@@ -170,17 +149,19 @@ class RLAlgorithm(tf.contrib.checkpoint.Checkpointable):
                 self._timestep_after_hook()
                 gt.stamp('timestep_after_hook')
 
-            training_paths = self.sampler.get_last_n_paths(
-                math.ceil(self._epoch_length / self.sampler._max_path_length))
+            training_paths = self._training_paths(self._epoch_length)
             gt.stamp('training_paths')
-            evaluation_paths = self._evaluation_paths(policy, evaluation_env)
+            evaluation_paths = self._evaluation_paths()
             gt.stamp('evaluation_paths')
 
-            training_metrics = self._evaluate_rollouts(training_paths, env)
+            training_metrics = self._evaluate_rollouts(
+                training_paths,
+                self._env_path_info(training_paths))
             gt.stamp('training_metrics')
             if evaluation_paths:
                 evaluation_metrics = self._evaluate_rollouts(
-                    evaluation_paths, evaluation_env)
+                    evaluation_paths,
+                    self._eval_env_path_info(evaluation_paths))
                 gt.stamp('evaluation_metrics')
             else:
                 evaluation_metrics = {}
@@ -188,7 +169,7 @@ class RLAlgorithm(tf.contrib.checkpoint.Checkpointable):
             self._epoch_after_hook(training_paths)
             gt.stamp('epoch_after_hook')
 
-            sampler_diagnostics = self.sampler.get_diagnostics()
+            sampler_diagnostics = self._sampler_diagnostics()
 
             diagnostics = self.get_diagnostics(
                 iteration=self._total_timestep,
@@ -221,32 +202,24 @@ class RLAlgorithm(tf.contrib.checkpoint.Checkpointable):
                 ('train-steps', self._num_train_steps),
             )))
 
-            if self._eval_render_mode is not None and hasattr(
-                    evaluation_env, 'render_rollouts'):
-                # TODO(hartikainen): Make this consistent such that there's no
-                # need for the hasattr check.
-                env.render_rollouts(evaluation_paths)
+            if self._eval_render_mode is not None:
+                self._attempt_render(evaluation_paths)
 
             yield diagnostics
 
-        self.sampler.terminate()
+        self._terminate_sampler()
 
         self._training_after_hook()
 
-    def _evaluation_paths(self, policy, evaluation_env):
-        if self._eval_n_episodes < 1: return ()
+    @abc.abstractmethod
+    def _training_paths(self, epoch_length):
+        raise NotImplementedError
 
-        with policy.set_deterministic(self._eval_deterministic):
-            paths = rollouts(
-                evaluation_env,
-                policy,
-                self.sampler._max_path_length,
-                self._eval_n_episodes,
-                render_mode=self._eval_render_mode)
+    @abc.abstractmethod
+    def _evaluation_paths(self):
+        raise NotImplementedError
 
-        return paths
-
-    def _evaluate_rollouts(self, paths, env):
+    def _evaluate_rollouts(self, paths, env_infos):
         """Compute evaluation metrics for the given rollouts."""
 
         total_returns = [path['rewards'].sum() for path in paths]
@@ -263,11 +236,22 @@ class RLAlgorithm(tf.contrib.checkpoint.Checkpointable):
             ('episode-length-std', np.std(episode_lengths)),
         ))
 
-        env_infos = env.get_path_infos(paths)
         for key, value in env_infos.items():
             diagnostics[f'env_infos/{key}'] = value
 
         return diagnostics
+
+    @abc.abstractmethod
+    def _env_path_info(self, paths):
+        raise NotImplementedError
+
+    @abc.abstractmethod
+    def _eval_env_path_info(self, paths):
+        raise NotImplementedError
+
+    @abc.abstractmethod
+    def _sampler_diagnostics(self):
+        raise NotImplementedError
 
     @abc.abstractmethod
     def get_diagnostics(self,
@@ -279,10 +263,11 @@ class RLAlgorithm(tf.contrib.checkpoint.Checkpointable):
 
     @property
     def ready_to_train(self):
-        return self.sampler.batch_ready()
+        raise NotImplementedError
 
+    @abc.abstractmethod
     def _do_sampling(self, timestep):
-        self.sampler.sample()
+        raise NotImplementedError
 
     def _do_training_repeats(self, timestep):
         """Repeat training _n_train_repeat times every _train_every_n_steps"""
@@ -293,24 +278,30 @@ class RLAlgorithm(tf.contrib.checkpoint.Checkpointable):
         if trained_enough: return
 
         for i in range(self._n_train_repeat):
-            self._do_training(
-                iteration=timestep,
-                batch=self._training_batch())
+            self._do_training(iteration=timestep)
 
         self._num_train_steps += self._n_train_repeat
         self._train_steps_this_epoch += self._n_train_repeat
 
     @abc.abstractmethod
-    def _do_training(self, iteration, batch):
+    def _do_training(self, iteration):
         raise NotImplementedError
 
     @abc.abstractmethod
     def _init_training(self):
         raise NotImplementedError
 
-    @property
-    def tf_saveables(self):
-        return {}
+    @abc.abstractmethod
+    def _init_sampler(self):
+        raise NotImplementedError
+
+    @abc.abstractmethod
+    def _terminate_sampler(self):
+        raise NotImplementedError
+
+    @abc.abstractmethod
+    def _attempt_render(self, paths):
+        raise NotImplementedError
 
     def __getstate__(self):
         state = {

@@ -4,7 +4,7 @@ from copy import deepcopy
 def create_SAC_algorithm(variant, *args, **kwargs):
     from .sac import SAC
 
-    algorithm = SAC(*args, **kwargs)
+    algorithm = SAC(variant, *args, **kwargs)
 
     return algorithm
 

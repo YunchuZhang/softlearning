@@ -24,10 +24,10 @@ class ExperimentRunner(tune.Trainable):
 
         self._variant = variant
 
-        gpu_options = tf.GPUOptions(allow_growth=True)
-        session = tf.Session(config=tf.ConfigProto(gpu_options=gpu_options))
-        tf.keras.backend.set_session(session)
-        self._session = tf.keras.backend.get_session()
+        #gpu_options = tf.GPUOptions(allow_growth=True)
+        #session = tf.Session(config=tf.ConfigProto(gpu_options=gpu_options))
+        #tf.keras.backend.set_session(session)
+        #self._session = tf.keras.backend.get_session()
 
         self.train_generator = None
         self._built = False
@@ -49,15 +49,16 @@ class ExperimentRunner(tune.Trainable):
 
         self.algorithm = get_algorithm_from_variant(
             variant=self._variant,
-            env=self.env,
-            policy=policy,
-            initial_exploration_policy=initial_exploration_policy,
-            Qs=Qs,
-            pool=replay_pool,
-            sampler=sampler,
-            session=self._session)
+            #env=self.env,
+            #policy=policy,
+            #initial_exploration_policy=initial_exploration_policy,
+            #Qs=Qs,
+            #pool=replay_pool,
+            #sampler=sampler,
+            #session=self._session
+        )
 
-        initialize_tf_variables(self._session, only_uninitialized=True)
+        #initialize_tf_variables(self._session, only_uninitialized=True)
 
         self._built = True
 
