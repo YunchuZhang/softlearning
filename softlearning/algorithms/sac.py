@@ -10,6 +10,19 @@ class SAC(RLAlgorithm):
             self,
             variant,
             plotter=None,
+            tf_summaries=False,
+            lr=3e-4,
+            reward_scale=1.0,
+            target_entropy='auto',
+            discount=0.99,
+            tau=5e-3,
+            target_update_interval=1,
+            action_prior='uniform',
+            reparameterize=False,
+            store_extra_policy_info=False,
+            save_full_state=False,
+            remote=False,
+            n_initial_exploration_steps=0,
             **kwargs):
         """
         Args:
@@ -37,7 +50,19 @@ class SAC(RLAlgorithm):
 
         self.agent = SACAgent(
             variant,
-            **kwargs
+            tf_summaries=tf_summaries,
+            lr=lr,
+            reward_scale=reward_scale,
+            target_entropy=target_entropy,
+            discount=discount,
+            tau=tau,
+            target_update_interval=target_update_interval,
+            action_prior=action_prior,
+            reparameterize=reparameterize,
+            store_extra_policy_info=store_extra_policy_info,
+            save_full_state=save_full_state,
+            remote=remote,
+            n_initial_exploration_steps=n_initial_exploration_steps,
         )
         self._plotter = plotter
 

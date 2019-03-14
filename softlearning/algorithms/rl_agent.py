@@ -16,7 +16,6 @@ class RLAgent():
             self,
             variant,
             n_initial_exploration_steps=0,
-            **kwargs
     ):
 
         self._env = get_environment_from_variant(variant)
@@ -31,10 +30,6 @@ class RLAgent():
         self._initial_exploration_policy = get_policy('UniformPolicy', self._env)
         self._n_initial_exploration_steps = n_initial_exploration_steps
 
-        gpu_options = tf.GPUOptions(allow_growth=True)
-        session = tf.Session(config=tf.ConfigProto(gpu_options=gpu_options))
-        tf.keras.backend.set_session(session)
-        self._session = tf.keras.backend.get_session()
 
     def init_sampler(self):
         self._sampler.initialize(self._env, self._policy, self._pool)
@@ -46,6 +41,7 @@ class RLAgent():
         self._sampler.terminate()
 
     def total_samples(self):
+        print("getting total samples")
         return self._sampler._total_samples
 
     def initial_exploration(self):

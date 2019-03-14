@@ -4,6 +4,8 @@ import numpy as np
 import tensorflow as tf
 from tensorflow.python.training import training_util
 
+import ray
+
 from softlearning.misc.utils import initialize_tf_variables
 
 from .rl_agent import RLAgent
@@ -36,7 +38,8 @@ class SACAgent(RLAgent):
             reparameterize=False,
             store_extra_policy_info=False,
             save_full_state=False,
-            **kwargs
+            remote=False,
+            n_initial_exploration_steps=0,
     ):
         """
         Args:
@@ -61,7 +64,10 @@ class SACAgent(RLAgent):
         """
 
         #print("sac agent kwargs", kwargs)
-        super(SACAgent, self).__init__(variant, **kwargs)
+        super(SACAgent, self).__init__(
+            variant,
+            n_initial_exploration_steps=n_initial_exploration_steps)
+        #RLAgent.__init__(variant, **kwargs)
 
         self._Q_targets = tuple(tf.keras.models.clone_model(Q) for Q in self._Qs)
 
@@ -86,6 +92,8 @@ class SACAgent(RLAgent):
 
         self._save_full_state = save_full_state
 
+        self._remote = remote
+
         observation_shape = self._env.active_observation_shape
         action_shape = self._env.action_space.shape
 
@@ -96,7 +104,23 @@ class SACAgent(RLAgent):
 
         self._build()
 
+        gpu_options = tf.GPUOptions(allow_growth=True)
+        self._session = tf.Session(config=tf.ConfigProto(gpu_options=gpu_options))
+
+        train_op = tf.group(*list(self._training_ops.values()))
+
+        if self._remote:
+            print("here")
+            self.variables = ray.experimental.tf_utils.TensorFlowVariables(
+                train_op
+            )
+            #self.variables.set_session(self._session)
+        else:
+            self.variables = None
+
         initialize_tf_variables(self._session, only_uninitialized=True)
+
+        print("finish sac agent init")
 
     def _build(self):
         self._training_ops = {}
@@ -105,7 +129,6 @@ class SACAgent(RLAgent):
         self._init_placeholders()
         self._init_actor_update()
         self._init_critic_update()
-
 
     def _init_global_step(self):
         self.global_step = training_util.get_or_create_global_step()
@@ -323,17 +346,23 @@ class SACAgent(RLAgent):
                 for source, target in zip(source_params, target_params)
             ])
 
-    def do_training(self, iteration):
+    def do_training(self, iteration, weights=None):
         """Runs the operations for updating training and target ops."""
+        if self._remote:
+            self.variables.set_weights(weights)
+
+        if iteration % self._target_update_interval == 0:
+            # Run target ops here.
+            self._update_target()
+
         batch = self.training_batch()
 
         feed_dict = self._get_feed_dict(iteration, batch)
 
         self._session.run(self._training_ops, feed_dict)
 
-        if iteration % self._target_update_interval == 0:
-            # Run target ops here.
-            self._update_target()
+        if self._remote:
+            return self.variables.get_weights()
 
     def _get_feed_dict(self, iteration, batch):
         """Construct TensorFlow feed_dict from sample batch."""
@@ -368,6 +397,9 @@ class SACAgent(RLAgent):
     def policy_diagnostics(self, batch):
         return self._policy.get_diagnostics(
             batch['observations'])
+
+    def get_weights(self):
+        return self.variables.get_weights()
 
     @property
     def tf_saveables(self):

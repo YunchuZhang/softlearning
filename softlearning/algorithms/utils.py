@@ -16,10 +16,18 @@ def create_SQL_algorithm(variant, *args, **kwargs):
 
     return algorithm
 
+def create_RemoteSAC_algorithm(variant, *args, **kwargs):
+    from .remote_sac import RemoteSAC
+
+    algorithm = RemoteSAC(variant, *args, remote=True, **kwargs)
+
+    return algorithm
+
 
 ALGORITHM_CLASSES = {
     'SAC': create_SAC_algorithm,
     'SQL': create_SQL_algorithm,
+    'RemoteSAC': create_RemoteSAC_algorithm,
 }
 
 
