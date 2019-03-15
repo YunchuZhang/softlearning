@@ -41,7 +41,7 @@ class RLAgent():
         self._sampler.terminate()
 
     def total_samples(self):
-        print("getting total samples")
+        #print("getting total samples")
         return self._sampler._total_samples
 
     def initial_exploration(self):
