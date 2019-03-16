@@ -3,11 +3,10 @@ from collections import OrderedDict
 from itertools import count
 import gtimer as gt
 
-import tensorflow as tf
 import numpy as np
 
 
-class RLAlgorithm(tf.contrib.checkpoint.Checkpointable):
+class RLAlgorithm():
     """Abstract RLAlgorithm.
 
     Implements the _train and _evaluate methods to be used
@@ -46,14 +45,10 @@ class RLAlgorithm(tf.contrib.checkpoint.Checkpointable):
             max_train_repeat_per_timestep, n_train_repeat)
         self._train_every_n_steps = train_every_n_steps
         self._epoch_length = epoch_length
-        #self._n_initial_exploration_steps = n_initial_exploration_steps
-        #self._initial_exploration_policy = initial_exploration_policy
 
         self._eval_n_episodes = eval_n_episodes
         self._eval_deterministic = eval_deterministic
         self._eval_render_mode = eval_render_mode
-
-        #self._session = session or tf.keras.backend.get_session()
 
         self._epoch = 0
         self._timestep = 0

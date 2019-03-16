@@ -3,8 +3,6 @@
 from collections import OrderedDict
 
 import numpy as np
-import tensorflow as tf
-import tensorflow_probability as tfp
 from softlearning.distributions.squash_bijector import SquashBijector
 from softlearning.models.feedforward import feedforward_model
 
@@ -23,6 +21,9 @@ class GaussianPolicy(LatentSpacePolicy):
                  name=None,
                  *args,
                  **kwargs):
+        import tensorflow as tf
+        import tensorflow_probability as tfp
+        
         self._Serializable__initialize(locals())
 
         self._input_shapes = input_shapes

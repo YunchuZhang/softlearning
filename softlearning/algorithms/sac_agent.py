@@ -1,10 +1,9 @@
 from numbers import Number
 
 import numpy as np
-import tensorflow as tf
-from tensorflow.python.training import training_util
 
 import ray
+from ray.experimental.tf_utils import TensorFlowVariables
 
 from softlearning.misc.utils import initialize_tf_variables
 
@@ -64,10 +63,11 @@ class SACAgent(RLAgent):
         """
 
         #print("sac agent kwargs", kwargs)
+        import tensorflow as tf
+
         super(SACAgent, self).__init__(
             variant,
             n_initial_exploration_steps=n_initial_exploration_steps)
-        #RLAgent.__init__(variant, **kwargs)
 
         self._Q_targets = tuple(tf.keras.models.clone_model(Q) for Q in self._Qs)
 
@@ -105,14 +105,18 @@ class SACAgent(RLAgent):
         self._build()
 
         gpu_options = tf.GPUOptions(allow_growth=True)
-        self._session = tf.Session(config=tf.ConfigProto(gpu_options=gpu_options))
+        #self._session = tf.Session(config=tf.ConfigProto(gpu_options=gpu_options))
+        session = tf.Session(config=tf.ConfigProto(gpu_options=gpu_options))
+        tf.keras.backend.set_session(session)
+        self._session = tf.keras.backend.get_session()
 
         train_op = tf.group(*list(self._training_ops.values()))
 
         if self._remote:
             print("here")
-            self.variables = ray.experimental.tf_utils.TensorFlowVariables(
-                train_op
+            self.variables = TensorFlowVariables(
+                train_op,
+                sess=self._session
             )
             #self.variables.set_session(self._session)
         else:
@@ -131,6 +135,8 @@ class SACAgent(RLAgent):
         self._init_critic_update()
 
     def _init_global_step(self):
+        from tensorflow.python.training import training_util
+
         self.global_step = training_util.get_or_create_global_step()
         self._training_ops.update({
             'increment_global_step': training_util._increment_global_step(1)
@@ -146,6 +152,8 @@ class SACAgent(RLAgent):
             - reward
             - terminals
         """
+        import tensorflow as tf
+
         self._iteration_ph = tf.placeholder(
             tf.int64, shape=None, name='iteration')
 
@@ -192,6 +200,8 @@ class SACAgent(RLAgent):
             )
 
     def _get_Q_target(self):
+        import tensorflow as tf
+
         next_actions = self._policy.actions([self._next_observations_ph])
         next_log_pis = self._policy.log_pis(
             [self._next_observations_ph], next_actions)
@@ -220,6 +230,8 @@ class SACAgent(RLAgent):
         See Equations (5, 6) in [1], for further information of the
         Q-function update rule.
         """
+        import tensorflow as tf
+
         Q_target = tf.stop_gradient(self._get_Q_target())
 
         assert Q_target.shape.as_list() == [None, 1]
@@ -264,6 +276,7 @@ class SACAgent(RLAgent):
         See Section 4.2 in [1], for further information of the policy update,
         and Section 5 in [1] for further information of the entropy update.
         """
+        import tensorflow as tf
 
         actions = self._policy.actions([self._observations_ph])
         log_pis = self._policy.log_pis([self._observations_ph], actions)

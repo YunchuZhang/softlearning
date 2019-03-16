@@ -4,7 +4,6 @@ import glob
 import pickle
 import sys
 
-import tensorflow as tf
 from ray import tune
 
 from softlearning.environments.utils import get_environment_from_variant
@@ -85,6 +84,7 @@ class ExperimentRunner(tune.Trainable):
         return os.path.join(checkpoint_dir, 'checkpoint')
 
     def _get_tf_checkpoint(self):
+        import tensorflow as tf
         tf_checkpoint = tf.train.Checkpoint(**self.algorithm.tf_saveables)
 
         return tf_checkpoint
@@ -146,6 +146,7 @@ class ExperimentRunner(tune.Trainable):
             self.replay_pool.load_experience(experience_path)
 
     def _restore(self, checkpoint_dir):
+        import tensorflow as tf
         assert isinstance(checkpoint_dir, str), checkpoint_dir
 
         checkpoint_dir = checkpoint_dir.rstrip('/')

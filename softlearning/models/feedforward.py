@@ -1,7 +1,4 @@
-import tensorflow as tf
-
-
-from softlearning.utils.keras import PicklableKerasModel
+from softlearning.utils.keras import create_picklable_keras_model
 
 
 def feedforward_model(input_shapes,
@@ -13,6 +10,8 @@ def feedforward_model(input_shapes,
                       name='feedforward_model',
                       *args,
                       **kwargs):
+    import tensorflow as tf
+
     inputs = [
         tf.keras.layers.Input(shape=input_shape)
         for input_shape in input_shapes
@@ -40,6 +39,6 @@ def feedforward_model(input_shapes,
         output_size, *args, activation=output_activation, **kwargs
     )(out)
 
-    model = PicklableKerasModel(inputs, out, name=name)
+    model = create_picklable_keras_model(inputs, out, name)
 
     return model
