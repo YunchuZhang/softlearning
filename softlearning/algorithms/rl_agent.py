@@ -56,8 +56,9 @@ class RLAgent():
         while self._pool.size < self._n_initial_exploration_steps:
             self._sampler.sample()
 
-    def do_sampling(self, timestep):
-        self._sampler.sample()
+    def do_sampling(self, timestep, steps):
+        for _ in range(steps):
+            self._sampler.sample()
 
     def ready_to_train(self):
         return self._sampler.batch_ready()

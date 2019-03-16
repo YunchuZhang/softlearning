@@ -113,7 +113,6 @@ class SACAgent(RLAgent):
         train_op = tf.group(*list(self._training_ops.values()))
 
         if self._remote:
-            print("here")
             self.variables = TensorFlowVariables(
                 train_op,
                 sess=self._session
@@ -124,7 +123,6 @@ class SACAgent(RLAgent):
 
         initialize_tf_variables(self._session, only_uninitialized=True)
 
-        print("finish sac agent init")
 
     def _build(self):
         self._training_ops = {}
@@ -359,20 +357,22 @@ class SACAgent(RLAgent):
                 for source, target in zip(source_params, target_params)
             ])
 
-    def do_training(self, iteration, weights=None):
+    def do_training(self, iteration, steps=1, weights=None):
         """Runs the operations for updating training and target ops."""
         if self._remote:
             self.variables.set_weights(weights)
 
-        if iteration % self._target_update_interval == 0:
-            # Run target ops here.
-            self._update_target()
+        for i in range(iteration, iteration + steps):
 
-        batch = self.training_batch()
+            if i % self._target_update_interval == 0:
+                # Run target ops here.
+                self._update_target()
 
-        feed_dict = self._get_feed_dict(iteration, batch)
+            batch = self.training_batch()
 
-        self._session.run(self._training_ops, feed_dict)
+            feed_dict = self._get_feed_dict(i, batch)
+
+            self._session.run(self._training_ops, feed_dict)
 
         if self._remote:
             return self.variables.get_weights()

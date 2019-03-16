@@ -134,7 +134,8 @@ class RLAlgorithm():
                 self._timestep_before_hook()
                 gt.stamp('timestep_before_hook')
 
-                self._do_sampling(timestep=self._total_timestep)
+                self._do_sampling(timestep=self._total_timestep,
+                                  steps=self._train_every_n_steps)
                 gt.stamp('sample')
 
                 if self.ready_to_train:
@@ -261,25 +262,24 @@ class RLAlgorithm():
         raise NotImplementedError
 
     @abc.abstractmethod
-    def _do_sampling(self, timestep):
+    def _do_sampling(self, timestep, steps=1):
         raise NotImplementedError
 
     def _do_training_repeats(self, timestep):
         """Repeat training _n_train_repeat times every _train_every_n_steps"""
-        if timestep % self._train_every_n_steps > 0: return
         trained_enough = (
             self._train_steps_this_epoch
             > self._max_train_repeat_per_timestep * self._timestep)
         if trained_enough: return
 
-        for i in range(self._n_train_repeat):
-            self._do_training(iteration=timestep)
+        #for i in range(self._n_train_repeat):
+        self._do_training(iteration=timestep, steps=self._n_train_repeat)
 
         self._num_train_steps += self._n_train_repeat
         self._train_steps_this_epoch += self._n_train_repeat
 
     @abc.abstractmethod
-    def _do_training(self, iteration):
+    def _do_training(self, iteration, steps=1):
         raise NotImplementedError
 
     @abc.abstractmethod

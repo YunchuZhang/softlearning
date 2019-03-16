@@ -78,8 +78,8 @@ class SAC(RLAlgorithm):
     def _total_samples(self):
         return self.agent.total_samples()
 
-    def _do_sampling(self, timestep):
-        self.agent.do_sampling(timestep)
+    def _do_sampling(self, timestep=None, steps=1):
+        self.agent.do_sampling(timestep, steps)
 
     def _terminate_sampler(self):
         self.agent.terminate_sampler()
@@ -91,8 +91,8 @@ class SAC(RLAlgorithm):
             *args,
             **kwargs)
 
-    def _do_training(self, iteration):
-        self.agent.do_training(iteration)
+    def _do_training(self, iteration=None, steps=1):
+        self.agent.do_training(iteration, steps=steps)
 
     @property
     def ready_to_train(self):

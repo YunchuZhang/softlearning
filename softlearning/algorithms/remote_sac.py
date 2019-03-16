@@ -76,25 +76,23 @@ class RemoteSAC(RLAlgorithm):
         self._weights_id = self._agents[0].get_weights.remote()
 
         self._plotter = plotter
-        print("finished sac init")
 
     def _initial_exploration_hook(self):
         ray.get([agent.initial_exploration.remote() for agent in self._agents])
 
     def _init_training(self):
-        print("sac init training")
         ray.get([agent.init_training.remote() for agent in self._agents])
 
     def _init_sampler(self):
         ray.get([agent.init_sampler.remote() for agent in self._agents])
 
     def _total_samples(self):
-        #return np.sum(ray.get([agent.total_samples.remote()
-        #                       for agent in self._agents]))
-        return ray.get(self._agents[0].total_samples.remote())
+        return np.sum(ray.get([agent.total_samples.remote()
+                               for agent in self._agents]))
+        #return ray.get(self._agents[0].total_samples.remote())
 
-    def _do_sampling(self, timestep):
-        ray.get([agent.do_sampling.remote(timestep) for agent in self._agents])
+    def _do_sampling(self, timestep=None, steps=1):
+        ray.get([agent.do_sampling.remote(timestep, steps) for agent in self._agents])
 
     def _terminate_sampler(self):
         ray.get([agent.terminate_sampler.remote() for agent in self._agents])
@@ -106,9 +104,11 @@ class RemoteSAC(RLAlgorithm):
             *args,
             **kwargs)
 
-    def _do_training(self, iteration, train_steps=1):
+    def _do_training(self, iteration, steps=1):
         all_weights = ray.get(
-            [agent.do_training.remote(iteration, self._weights_id)
+            [agent.do_training.remote(iteration,
+                                      steps=steps,
+                                      weights=self._weights_id)
              for agent in self._agents])
         mean_weights = {
                 k: (sum(weights[k] for weights in all_weights) / self._num_agents)
