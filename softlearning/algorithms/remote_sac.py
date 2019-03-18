@@ -27,6 +27,7 @@ class RemoteSAC(RLAlgorithm):
             save_full_state=False,
             remote=False,
             n_initial_exploration_steps=0,
+            avg_weights_every_n_steps=1,
             **kwargs):
         """
         Args:
@@ -76,6 +77,7 @@ class RemoteSAC(RLAlgorithm):
         self._weights_id = self._agents[0].get_weights.remote()
 
         self._plotter = plotter
+        self.avg_weights_every_n_steps = avg_weights_every_n_steps
 
     def _initial_exploration_hook(self):
         ray.get([agent.initial_exploration.remote() for agent in self._agents])
@@ -105,16 +107,17 @@ class RemoteSAC(RLAlgorithm):
             **kwargs)
 
     def _do_training(self, iteration, steps=1):
-        all_weights = ray.get(
-            [agent.do_training.remote(iteration,
-                                      steps=steps,
-                                      weights=self._weights_id)
-             for agent in self._agents])
-        mean_weights = {
-                k: (sum(weights[k] for weights in all_weights) / self._num_agents)
-                for k in all_weights[0]
-        }
-        self._weights_id = ray.put(mean_weights)
+        for _ in range(0, steps, self.avg_weights_every_n_steps):
+            all_weights = ray.get(
+                [agent.do_training.remote(iteration,
+                                        steps=self.avg_weights_every_n_steps,
+                                        weights=self._weights_id)
+                for agent in self._agents])
+            mean_weights = {
+                    k: (sum(weights[k] for weights in all_weights) / self._num_agents)
+                    for k in all_weights[0]
+            }
+            self._weights_id = ray.put(mean_weights)
 
     @property
     def ready_to_train(self):
