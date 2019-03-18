@@ -2,7 +2,7 @@ from collections import defaultdict
 
 import numpy as np
 
-from .sampler_base import BaseSampler
+from .base_sampler import BaseSampler
 
 
 class SimpleSampler(BaseSampler):
@@ -18,6 +18,24 @@ class SimpleSampler(BaseSampler):
         self._current_observation = None
         self._total_samples = 0
 
+    def _process_observations(self,
+                              observation,
+                              action,
+                              reward,
+                              terminal,
+                              next_observation,
+                              info):
+        processed_observation = {
+            'observations': observation,
+            'actions': action,
+            'rewards': [reward],
+            'terminals': [terminal],
+            'next_observations': next_observation,
+            'infos': info,
+        }
+
+        return processed_observation
+
     def sample(self):
         if self._current_observation is None:
             self._current_observation = self.env.reset()
@@ -32,12 +50,17 @@ class SimpleSampler(BaseSampler):
         self._path_return += reward
         self._total_samples += 1
 
-        self._current_path['observations'].append(self._current_observation)
-        self._current_path['actions'].append(action)
-        self._current_path['rewards'].append([reward])
-        self._current_path['terminals'].append([terminal])
-        self._current_path['next_observations'].append(next_observation)
-        self._current_path['infos'].append(info)
+        processed_sample = self._process_observations(
+            observation=self._current_observation,
+            action=action,
+            reward=reward,
+            terminal=terminal,
+            next_observation=next_observation,
+            info=info,
+        )
+
+        for key, value in processed_sample.items():
+            self._current_path[key].append(value)
 
         if terminal or self._path_length >= self._max_path_length:
             last_path = {
@@ -47,13 +70,12 @@ class SimpleSampler(BaseSampler):
             self.pool.add_path(last_path)
             self._last_n_paths.appendleft(last_path)
 
-            self.policy.reset()
-            self._current_observation = self.env.reset()
-
             self._max_path_return = max(self._max_path_return,
                                         self._path_return)
             self._last_path_return = self._path_return
 
+            self.policy.reset()
+            self._current_observation = None
             self._path_length = 0
             self._path_return = 0
             self._current_path = defaultdict(list)
@@ -62,7 +84,7 @@ class SimpleSampler(BaseSampler):
         else:
             self._current_observation = next_observation
 
-        return self._current_observation, reward, terminal, info
+        return next_observation, reward, terminal, info
 
     def random_batch(self, batch_size=None, **kwargs):
         batch_size = batch_size or self._batch_size
