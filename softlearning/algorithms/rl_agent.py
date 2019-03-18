@@ -1,7 +1,7 @@
 import tensorflow as tf
 import math
 
-from softlearning.environments.utils import get_environment_from_variant
+from softlearning.environments.utils import get_environment_from_params
 from softlearning.algorithms.utils import get_algorithm_from_variant
 from softlearning.policies.utils import get_policy_from_variant, get_policy
 from softlearning.replay_pools.utils import get_replay_pool_from_variant
@@ -18,8 +18,8 @@ class RLAgent():
             n_initial_exploration_steps=0,
     ):
 
-        self._env = get_environment_from_variant(variant)
-        self._eval_env = self._env.copy()
+        self._env = get_environment_from_params(variant['environment_params']['training'])
+        self._eval_env = get_environment_from_params(variant['environment_params']['evaluation'])
 
         self._sampler = get_sampler_from_variant(variant)
         self._pool = get_replay_pool_from_variant(variant, self._env)
@@ -74,10 +74,10 @@ class RLAgent():
 
         with self._policy.set_deterministic(eval_deterministic):
             paths = rollouts(
+                num_episodes,
                 self._eval_env,
                 self._policy,
                 self._sampler._max_path_length,
-                num_episodes,
                 render_mode=render_mode)
 
         return paths

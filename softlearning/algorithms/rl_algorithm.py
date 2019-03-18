@@ -113,10 +113,6 @@ class RLAlgorithm():
     def _train(self):
         """Return a generator that performs RL training.
         """
-        training_environment = self._training_environment
-        evaluation_environment = self._evaluation_environment
-        policy = self._policy
-        pool = self._pool
 
         if not self._training_started:
             self._init_training()
