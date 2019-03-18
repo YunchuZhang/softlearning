@@ -1,6 +1,7 @@
 from collections import OrderedDict
 
 import numpy as np
+import os
 
 from .rl_algorithm import RLAlgorithm
 from .sac_agent import SACAgent
@@ -86,10 +87,7 @@ class SAC(RLAlgorithm):
 
     def train(self, *args, **kwargs):
         """Initiate training of the SAC instance."""
-
-        return self._train(
-            *args,
-            **kwargs)
+        return self._train(*args, **kwargs)
 
     def _do_training(self, iteration=None, steps=1):
         self.agent.do_training(iteration, steps=steps)
@@ -110,6 +108,18 @@ class SAC(RLAlgorithm):
         paths = self.agent.evaluation_paths(self._eval_n_episodes,
                                             self._eval_deterministic,
                                             self._eval_render_mode)
+
+        should_save_video = (
+            self._video_save_frequency > 0
+            and self._epoch % self._video_save_frequency == 0)
+
+        if should_save_video:
+            for i, path in enumerate(paths):
+                video_frames = path.pop('images')
+                video_file_name = f'evaluation_path_{self._epoch}_{i}.avi'
+                video_file_path = os.path.join(
+                    os.getcwd(), 'videos', video_file_name)
+                save_video(video_frames, video_file_path)
 
         return paths
 

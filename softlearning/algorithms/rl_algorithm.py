@@ -5,6 +5,7 @@ import gtimer as gt
 
 import numpy as np
 
+from softlearning.misc.utils import save_video
 
 class RLAlgorithm():
     """Abstract RLAlgorithm.
@@ -23,6 +24,7 @@ class RLAlgorithm():
             eval_n_episodes=10,
             eval_deterministic=True,
             eval_render_mode=None,
+            video_save_frequency=0,
             **kwargs
     ):
         """
@@ -48,7 +50,14 @@ class RLAlgorithm():
 
         self._eval_n_episodes = eval_n_episodes
         self._eval_deterministic = eval_deterministic
-        self._eval_render_mode = eval_render_mode
+        self._video_save_frequency = video_save_frequency
+
+        if self._video_save_frequency > 0:
+            assert eval_render_mode != 'human', (
+                "RlAlgorithm cannot render and save videos at the same time")
+            self._eval_render_mode = 'rgb_array'
+        else:
+            self._eval_render_mode = eval_render_mode
 
         self._epoch = 0
         self._timestep = 0
@@ -104,6 +113,10 @@ class RLAlgorithm():
     def _train(self):
         """Return a generator that performs RL training.
         """
+        training_environment = self._training_environment
+        evaluation_environment = self._evaluation_environment
+        policy = self._policy
+        pool = self._pool
 
         if not self._training_started:
             self._init_training()
@@ -147,6 +160,7 @@ class RLAlgorithm():
 
             training_paths = self._training_paths(self._epoch_length)
             gt.stamp('training_paths')
+
             evaluation_paths = self._evaluation_paths()
             gt.stamp('evaluation_paths')
 
@@ -206,6 +220,8 @@ class RLAlgorithm():
         self._terminate_sampler()
 
         self._training_after_hook()
+
+        yield {'done': True, **diagnostics}
 
     @abc.abstractmethod
     def _training_paths(self, epoch_length):
