@@ -34,11 +34,12 @@ def normalize_observation_fields(observation_space, name='observations'):
 
 
 class SimpleReplayPool(FlexibleReplayPool):
-    def __init__(self, observation_space, action_space, *args, **kwargs):
-        self._observation_space = observation_space
-        self._action_space = action_space
+    def __init__(self, env, *args, **kwargs):
 
-        observation_fields = normalize_observation_fields(observation_space)
+        self._observation_space = env.observation_space
+        self._action_space = env.action_space
+
+        observation_fields = normalize_observation_fields(self._observation_space)
         # It's a bit memory inefficient to save the observations twice,
         # but it makes the code *much* easier since you no longer have
         # to worry about termination conditions.

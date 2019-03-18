@@ -140,6 +140,10 @@ class GymAdapter(SoftlearningEnv):
 
         return self._env.step(action, *args, **kwargs)
 
+    def compute_reward(self, achieved_goal, goal, info):
+        # This will not work with all environments
+        return self._env.compute_reward(achieved_goal, goal, info)
+
     def reset(self, *args, **kwargs):
         return self._env.reset(*args, **kwargs)
 
