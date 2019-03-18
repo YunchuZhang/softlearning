@@ -3,6 +3,8 @@ import argparse
 from distutils.util import strtobool
 import json
 
+from ray.tune import sample_from
+
 import softlearning.algorithms.utils as alg_utils
 import softlearning.environments.utils as env_utils
 import softlearning.samplers.utils as sampler_utils
@@ -11,8 +13,8 @@ from softlearning.misc.utils import datetimestamp
 
 
 DEFAULT_UNIVERSE = 'gym'
-DEFAULT_DOMAIN = 'Swimmer'
-DEFAULT_TASK = 'Default'
+DEFAULT_DOMAIN = 'Pendulum'
+DEFAULT_TASK = 'v0'
 DEFAULT_ALGORITHM = 'SAC'
 DEFAULT_SAMPLER = 'SimpleSampler'
 DEFAULT_REPLAY_POOL = 'SimpleReplayPool'
@@ -115,7 +117,7 @@ def add_ray_init_args(parser):
     parser.add_argument(
         '--include-webui',
         type=str,
-        default=True,
+        default=False,
         help=init_help_string("Boolean flag indicating whether to start the"
                               "web UI, which is a Jupyter notebook."))
     parser.add_argument(
@@ -175,12 +177,6 @@ def add_ray_tune_args(parser):
             "Optional string template for trial name. For example:"
             " '{trial.trial_id}-seed={trial.config[run_params][seed]}'"))
     parser.add_argument(
-        '--trial-name-creator',
-        default=None,
-        help=tune_help_string(
-            "Optional creator function for the trial string, used in "
-            "generating a trial directory."))
-    parser.add_argument(
         '--trial-cpus',
         type=int,
         default=multiprocessing.cpu_count(),
@@ -230,9 +226,15 @@ def get_parser(allow_policy_list=False):
     parser = argparse.ArgumentParser()
 
     parser.add_argument(
-        '--universe', type=str, choices=UNIVERSES, default=None)
+        '--universe',
+        type=str,
+        choices=UNIVERSES,
+        default=DEFAULT_UNIVERSE)
     parser.add_argument(
-        '--domain', type=str, choices=AVAILABLE_DOMAINS, default=None)
+        '--domain',
+        type=str,
+        choices=AVAILABLE_DOMAINS,
+        default=DEFAULT_DOMAIN)
     parser.add_argument(
         '--task', type=str, choices=AVAILABLE_TASKS, default=DEFAULT_TASK)
     parser.add_argument(
@@ -284,9 +286,14 @@ def get_parser(allow_policy_list=False):
         default=True,
         help="Whether or not to query yes/no on remote run.")
 
+    parser.add_argument(
+        '--video-save-frequency',
+        type=int,
+        default=None,
+        help="Save frequency for videos.")
+
     parser = add_ray_init_args(parser)
     parser = add_ray_tune_args(parser)
-    # parser = add_ray_autoscaler_exec_args(parser)
 
     return parser
 
@@ -302,4 +309,4 @@ def variant_equals(*keys):
 
         return node
 
-    return get_from_spec
+    return sample_from(get_from_spec)
