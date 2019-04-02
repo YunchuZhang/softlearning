@@ -140,9 +140,21 @@ class GymAdapter(SoftlearningEnv):
 
         return self._env.step(action, *args, **kwargs)
 
-    def compute_reward(self, achieved_goal, goal, info):
-        # This will not work with all environments
-        return self._env.compute_reward(achieved_goal, goal, info)
+    @property
+    def is_multiworld_env(self):
+        return hasattr(self._env.env, 'compute_rewards')
+
+    def compute_reward(self,
+                       achieved_goal=None,
+                       desired_goal=None,
+                       info=None,
+                       actions=None,
+                       observations=None):
+
+        if self.is_multiworld_env:
+            return self._env.env.compute_rewards(actions, observations)[0]
+        else:
+            return self._env.compute_reward(achieved_goal, desired_goal, info)
 
     def reset(self, *args, **kwargs):
         return self._env.reset(*args, **kwargs)

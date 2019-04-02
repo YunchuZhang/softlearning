@@ -40,6 +40,9 @@ class HerReplayPool(SimpleReplayPool):
         batch_size = len(indices)
         num_resamples = int(batch_size * self._fraction_future_goals)
 
+        if observation_keys is None:
+            observation_keys = tuple(self._observation_space.spaces.keys())
+
         batch = {
             field_name: self.fields[field_name][indices]
             for field_name in self.field_names
@@ -51,6 +54,7 @@ class HerReplayPool(SimpleReplayPool):
             achieved_goals = batch['next_observations.' + self._achieved_goal_key]
             rewards = batch[self._reward_key]
             terminals = batch[self._terminal_key]
+            actions = batch['actions']
 
             # batch_idx is index of sample in batch
             # pool_idx is index of sample in replay pool
@@ -73,9 +77,17 @@ class HerReplayPool(SimpleReplayPool):
                 desired_goals[batch_idx] = future_achieved_goal
                 next_desired_goals[batch_idx] = future_achieved_goal
 
-                rewards[batch_idx] = self.env.compute_reward(achieved_goals[batch_idx],
-                                                       desired_goals[batch_idx],
-                                                       None)
+                if self.env.is_multiworld_env:
+                    observation = {key: np.array([batch['next_observations.{}'.format(key)][batch_idx]])
+                                   for key in observation_keys}
+                    observation[self._desired_goal_key] = np.array([future_achieved_goal])
+                    #print(observation)
+                    rewards[batch_idx] = self.env.compute_reward(actions=np.array([actions[batch_idx]]),
+                                                                 observations=observation)
+                else:
+                    rewards[batch_idx] = self.env.compute_reward(achieved_goal=achieved_goals[batch_idx],
+                                                                 desired_goal=desired_goals[batch_idx],
+                                                                 info=None)
                 if future_sample_offset == 0:
                     terminals[batch_idx] = True
 
@@ -83,9 +95,6 @@ class HerReplayPool(SimpleReplayPool):
             batch['next_observations.' + self._desired_goal_key] = desired_goals
             batch[self._reward_key] = rewards
             batch[self._terminal_key] = terminals
-
-        if observation_keys is None:
-            observation_keys = tuple(self._observation_space.spaces.keys())
 
         observations = np.concatenate([
             batch['observations.{}'.format(key)]
