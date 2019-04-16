@@ -181,6 +181,9 @@ class ConvVAETrainer():
             )
 
         self.vae_input_ph = tf.placeholder(tf.float32, [None, model.imlength])
+        self.rand_input_test = tf.placeholder(tf.float32, [None, self.representation_size])
+
+        self.random_decoded, _ = self.model.decode(self.rand_input_test, training=False)
 
         self.encoder_mu_notrain, self.encoder_var_notrain = self.model.encode(self.vae_input_ph, training=False)
 
@@ -189,6 +192,11 @@ class ConvVAETrainer():
         self.kle_train = self.model.kl_divergence(self.latent_params_train)
         self.loss_train = self.beta * self.kle_train - self.log_prob_train
         self.update_op = self.optimizer.minimize(self.loss_train, var_list=self.model.trainable_variables)
+
+        self.recons_test, self.obs_params_test, self.latent_params_test = self.model(self.vae_input_ph, training=False)
+        self.log_prob_test = self.model.logprob(self.vae_input_ph, self.obs_params_test, training=False)
+        self.kle_test = self.model.kl_divergence(self.latent_params_test, training=False)
+        self.loss_test = self.beta * self.kle_test - self.log_prob_test
 
     def get_dataset_stats(self, sess, data):
         data = normalize_image(data)
@@ -281,6 +289,7 @@ class ConvVAETrainer():
 
     def test_epoch(
             self,
+            sess,
             epoch,
             save_reconstruction=True,
             save_vae=True,
@@ -294,38 +303,32 @@ class ConvVAETrainer():
         zs = []
         for batch_idx in range(10):
             next_obs = self.get_batch(training=training)
-            reconstructions, obs_distribution_params, latent_distribution_params = self.model(next_obs, training=training)
-            log_prob = self.model.logprob(next_obs, obs_distribution_params, training=training)
-            kle = self.model.kl_divergence(latent_distribution_params, training=training)
 
-            loss = self.beta * kle - log_prob
+            loss, log_prob, kle, latent_distribution_params, reconstructions =
+                                                      sess.run([self.loss_test,
+                                                                self.log_prob_test,
+                                                                self.kle_test,
+                                                                self.latent_params_test,
+                                                                self.recons_test],
+                                                                feed_dict={self.vae_input_ph : next_obs})
 
             encoder_mean = latent_distribution_params[0]
-            z_data = encoder_mean.numpy()
+            z_data = encoder_mean
             for i in range(len(z_data)):
                 zs.append(z_data[i, :])
-            losses.append(loss.numpy())
-            log_probs.append(log_prob.numpy())
-            kles.append(kle.numpy())
+
+            losses.append(loss)
+            log_probs.append(log_prob)
+            kles.append(kle)
 
             if batch_idx == 0 and save_reconstruction:
                 n = min(next_obs.shape[0], 8)
-                comparison = tf.keras.backend.concatenate([
-                    tf.keras.backend.reshape(
-                        next_obs[:n, 0:self.imlength],
-                        (-1, self.imsize, self.imsize, self.input_channels)
-                    ),
-                    tf.keras.backend.reshape(
-                        reconstructions,
-                        (
-                            self.batch_size,
-                            self.imsize,
-                            self.imsize,
-                            self.input_channels
-                        )
-                    )[:n]
-                ], axis=0)
 
+                comparison = np.concatenate(
+                                np.reshape(next_obs[:n, :self.imlength], [-1, self.imsize, self.imsize, self.input_channels]),
+                                np.reshape(recons, [self.batch_size, self.imsize, self.imsize, self.input_channels])[:n]
+                             )
+                    
                 """Based on logger in rlkit core so skipped for now"""
                 #  save_dir = osp.join(logger.get_snapshot_dir(),
                                     #  'r%d.png' % epoch)
@@ -359,7 +362,7 @@ class ConvVAETrainer():
             #  if save_vae:
                 #  logger.save_itr_params(epoch, self.model)
 
-    def debug_statistics(self):
+    def debug_statistics(self, sess):
         """
         Given an image $$x$$, samples a bunch of latents from the prior
         $$z_i$$ and decode them $$\hat x_i$$.
@@ -374,21 +377,19 @@ class ConvVAETrainer():
         debug_batch_size = 64
         data = self.get_batch(training=training)
         reconstructions, _, _ = self.model(data, training=training)
+        reconstructions = sess.run(self.recons_test, feed_dict={self.vae_input_ph : data})
         img = data[0]
 
-        recon_mse = tf.keras.backend.mean(
-                        tf.keras.backend.pow((reconstructions[0] - img), 2)
-                    )
+        recon_mse = np.mean((reconstructions[0] - img) ** 2)
 
         # TODO: This is a work around for torch.expand in the original code, find if any better one exists
-        img_repeated = img.numpy()
-        img_repeated = np.repeat(img_repeated, debug_batch_size)
+        img_repeated = np.repeat(img, debug_batch_size)
         img_repeated = np.reshape(img_repeated, (debug_batch_size, -1))
 
-        samples = tf.convert_to_tensor(np.random.randn(debug_batch_size, self.representation_size).astype(np.float32))
-        random_imgs, _ = self.model.decode(samples, training=training)
-        random_mses = tf.keras.backend.pow((random_imgs - img_repeated), 2)
-        mse_improvement = np.mean(random_mses.numpy(), axis=1) - recon_mse
+        samples = np.random.randn(debug_batch_size, self.representation_size).astype(np.float32)
+        random_imgs = sess.run(self.random_decoded, feed_dict={self.rand_input_test : samples})
+        random_mses = np.mean((random_imgs - img_repeated) ** 2)
+        mse_improvement = np.mean(random_mses, axis=1) - recon_mse
 
         stats = create_stats_ordered_dict(
             'debug/MSE improvement over random',
@@ -396,20 +397,20 @@ class ConvVAETrainer():
         )
         stats.update(create_stats_ordered_dict(
             'debug/MSE of random decoding',
-            ptu.get_numpy(random_mses),
+            random_mses,
         ))
-        stats['debug/MSE of reconstruction'] = recon_mse.numpy()[0]
+        stats['debug/MSE of reconstruction'] = recon_mse
         return stats
 
-    def dump_samples(self, epoch, save_dir='.'):
+    def dump_samples(self, sess, epoch, save_dir='.'):
         training = False
-        sample = tf.convert_to_tensor(np.random.randn(64, self.representation_size).astype(np.float32))
-        sample = self.model.decode(sample, training=training)[0].numpy()
+        sample = np.random.randn(64, self.representation_size).astype(np.float32)
+        sample = sess.run(self.random_decoded, feed_dict={self.rand_input_test : sample})
         """Based on logger in rlkit core so skipped for now"""
         #  save_dir = osp.join(logger.get_snapshot_dir(), 's%d.png' % epoch)
         save_dir = osp.join(save_dir, 's%d.png' % epoch)
         save_image(
-                np.reshape(sample.numpy(), (64, self.input_channels, self.imsize, self.imsize)),
+                np.reshape(sample, (64, self.imsize, self.imsize, self.input_channels)),
             save_dir
         )
 
@@ -419,15 +420,15 @@ class ConvVAETrainer():
         recons = []
         for i in idxs:
             img_np = self.train_dataset[i]
-            img_tf = tf.convert_to_tensor(normalize_image(img_np))
-            recon, *_ = self.model(img_torch, training=training)
+            img_np = normalize_image(img_np)
+            recon = sess.run(self.recons_test, feed_dict={self.vae_input_ph : img_np})
 
-            img = tf.keras.backend.reshape(img_tf, (self.imsize, self.imsize, self.input_channels))
-            rimg = tf.keras.backend.reshape(recon, (self.imsize, self.imsize, self.input_channels))
+            img = np.reshape(img_np, (self.imsize, self.imsize, self.input_channels))
+            rimg = np.reshape(recon, (self.imsize, self.imsize, self.input_channels))
             imgs.append(img)
             recons.append(rimg)
 
-        all_imgs = tf.keras.bckenn.stack(imgs + recons)
+        all_imgs = np.stack(imgs + recons)
 
         """Based on logger in rlkit core so skipped for now"""
         #  save_file = osp.join(logger.get_snapshot_dir(), filename)
