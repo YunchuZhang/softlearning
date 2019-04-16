@@ -11,15 +11,17 @@ from . import (
     simple_sampler)
 
 
+SAMPLERS = {
+    'DummySampler': dummy_sampler.DummySampler,
+    'ExtraPolicyInfoSampler': (
+        extra_policy_info_sampler.ExtraPolicyInfoSampler),
+    'RemoteSampler': remote_sampler.RemoteSampler,
+    'Sampler': base_sampler.BaseSampler,
+    'SimpleSampler': simple_sampler.SimpleSampler,
+}
+
+
 def get_sampler_from_variant(variant, *args, **kwargs):
-    SAMPLERS = {
-        'DummySampler': dummy_sampler.DummySampler,
-        'ExtraPolicyInfoSampler': (
-            extra_policy_info_sampler.ExtraPolicyInfoSampler),
-        'RemoteSampler': remote_sampler.RemoteSampler,
-        'Sampler': base_sampler.BaseSampler,
-        'SimpleSampler': simple_sampler.SimpleSampler,
-    }
 
     sampler_params = variant['sampler_params']
     sampler_type = sampler_params['type']
@@ -39,11 +41,8 @@ def rollout(env,
             callback=None,
             render_mode=None,
             break_on_terminal=True):
-    observation_space = env.observation_space
-    action_space = env.action_space
 
-    pool = replay_pools.SimpleReplayPool(
-        observation_space, action_space, max_size=path_length)
+    pool = replay_pools.SimpleReplayPool(env, max_size=path_length)
     sampler = simple_sampler.SimpleSampler(
         max_path_length=path_length,
         min_pool_size=None,
