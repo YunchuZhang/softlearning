@@ -44,8 +44,8 @@ ALGORITHM_PARAMS_BASE = {
     'type': 'SAC',
 
     'kwargs': {
-        'epoch_length': 100000,
-        'train_every_n_steps': 1,
+        'epoch_length': 10000,
+        'train_every_n_steps': 20,
         'n_train_repeat': 1,
         'eval_render_mode': None,
         'eval_n_episodes': 10,
@@ -63,7 +63,7 @@ ALGORITHM_PARAMS_ADDITIONAL = {
         'type': 'SAC',
         'kwargs': {
             'reparameterize': REPARAMETERIZE,
-            'lr': 3e-4,
+            'lr': 1e-4,
             'target_update_interval': 1,
             'tau': 5e-3,
             'target_entropy': 'auto',
@@ -116,8 +116,12 @@ NUM_EPOCHS_PER_DOMAIN = {
     'Point2DEnv': int(200),
     'Reacher': int(200),
     'Pendulum': 10,
-    'FetchPush': int(1e4),
-    'FetchPickAndPlace': int(1e4)
+    'FetchPush': 1000,
+    'FetchPickAndPlace': 1000,
+    'SawyerReachXYEnv': 1000,
+    'SawyerPushAndReachEnvEasy': 1000,
+    'SawyerPushAndReachEnvMedium': 1000,
+    'SawyerPushAndReachEnvHard': 1000,
 }
 
 DEFAULT_ALGORITHM_DOMAIN_PARAMS = {
@@ -198,8 +202,41 @@ ENVIRONMENT_PARAMS = {
         'Wall-v0': {
             'observation_keys': ('observation', 'desired_goal'),
         },
+    },
+    'SawyerReachXYEnv': {
+        'v1': {
+            'reward_type': 'hand_success'
+        }
+    },
+    'SawyerPushAndReachEnvEasy': {
+        'v0': {
+            #'reward_type': 'hand_success'
+            #'reward_type': 'hand_distance'
+            'reward_type': 'puck_success',
+            #'fix_goal': True
+        }
+    },
+    'SawyerPushAndReachEnvMedium': {
+        'v0': {
+            #'reward_type': 'hand_success'
+            #'reward_type': 'hand_distance'
+            'reward_type': 'puck_success'
+        }
+    },
+    'SawyerPushAndReachEnvHard': {
+        'v0': {
+            #'reward_type': 'hand_success'
+            #'reward_type': 'hand_distance'
+            'reward_type': 'puck_success'
+        }
+    },
+    'FetchReach': {
+        'v1': {
+            'reward_type': 'dense'
+        }
     }
 }
+
 
 NUM_CHECKPOINTS = 10
 
@@ -260,8 +297,8 @@ HER_REPLAY_POOL_PARAMS = {
     'type': 'HerReplayPool',
     'kwargs': {
         'max_size': 1e6,
-        'desired_goal_key': 'desired_goal',
-        'achieved_goal_key': 'achieved_goal',
+        'desired_goal_key': 'state_desired_goal',
+        'achieved_goal_key': 'state_achieved_goal',
         'reward_key': 'rewards',
         'terminal_key': 'terminals'
     }
