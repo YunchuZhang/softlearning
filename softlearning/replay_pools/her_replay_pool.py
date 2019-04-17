@@ -82,7 +82,7 @@ class HerReplayPool(SimpleReplayPool):
                     rewards[batch_idx] = self.env.compute_reward(actions=np.array([actions[batch_idx]]),
                                                                  observations=observation)
                 else:
-                    rewards[batch_idx] = (self.env.compute_reward(achieved_goal=achieved_goals[batch_idx],
+                    rewards[batch_idx] = self.env.compute_reward(achieved_goal=achieved_goals[batch_idx],
                                                                   desired_goal=future_achieved_goal,
                                                                   info=None)
                 if future_sample_offset == 0:
