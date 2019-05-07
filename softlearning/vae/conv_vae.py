@@ -1,7 +1,7 @@
 import tensorflow as tf
 import numpy as np
-from conv_networks import CNN, DCNN
-from vae_base import GaussianLatentVAE
+from .conv_networks import CNN, DCNN
+from .vae_base import GaussianLatentVAE
 
 ###### DEFAULT ARCHITECTURES #########
 
@@ -104,7 +104,7 @@ class ConvVAE(GaussianLatentVAE):
     def __init__(
             self,
             representation_size,
-            architecture,
+            architecture=imsize48_default_architecture,
 
             encoder_class=CNN,
             decoder_class=DCNN,
@@ -244,7 +244,7 @@ class ConvVAE(GaussianLatentVAE):
             inputs = inputs[:, 0 : self.imlength]
 
             logprob = -1 * tf.keras.backend.mean(tf.keras.backend.pow(inputs - obs_distribution_params, 2))
-            return log_prob
+            return logprob
 
         else:
             raise NotImplementedError('Distribution {} not supported'.format(

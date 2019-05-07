@@ -3,12 +3,17 @@ from .adapters.gym_adapter import (
     GymAdapter,
 )
 
+from .adapters.vae_wrapper import (
+    VAEWrappedEnv
+)
+
 ENVIRONMENTS = {
     'gym': GYM_ENVIRONMENTS,
 }
 
 ADAPTERS = {
     'gym': GymAdapter,
+    'vae': VAEWrappedEnv,
 }
 
 

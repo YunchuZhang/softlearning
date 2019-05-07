@@ -136,9 +136,9 @@ def normalize_image(image):
 class ConvVAETrainer():
     def __init__(
             self,
-            train_dataset,
-            test_dataset,
             model,
+            train_dataset=np.array([], dtype=np.uint8),
+            test_dataset=np.array([], dtype=np.uint8),
             batch_size=128,
             log_interval=0,
             beta=0.5,
@@ -304,13 +304,12 @@ class ConvVAETrainer():
         for batch_idx in range(10):
             next_obs = self.get_batch(training=training)
 
-            loss, log_prob, kle, latent_distribution_params, reconstructions =
-                                                      sess.run([self.loss_test,
-                                                                self.log_prob_test,
-                                                                self.kle_test,
-                                                                self.latent_params_test,
-                                                                self.recons_test],
-                                                                feed_dict={self.vae_input_ph : next_obs})
+            loss, log_prob, kle, latent_distribution_params, reconstructions = sess.run([self.loss_test,
+                                                                                         self.log_prob_test,
+                                                                                         self.kle_test,
+                                                                                         self.latent_params_test,
+                                                                                         self.recons_test],
+                                                                                        feed_dict={self.vae_input_ph : next_obs})
 
             encoder_mean = latent_distribution_params[0]
             z_data = encoder_mean

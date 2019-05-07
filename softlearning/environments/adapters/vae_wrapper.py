@@ -4,9 +4,15 @@ import warnings
 
 import cv2
 import numpy as np
+
+import gym
 from gym.spaces import Box, Dict
+
 from .softlearning_env import SoftlearningEnv
+from softlearning.environments.gym.wrappers import NormalizeActionWrapper
+
 from multiworld.core.multitask_env import MultitaskEnv
+from multiworld.core.image_env import ImageEnv
 from multiworld.envs.env_util import get_stat_in_paths, create_stats_ordered_dict
 
 
@@ -18,8 +24,11 @@ class VAEWrappedEnv(SoftlearningEnv, MultitaskEnv):
     """
     def __init__(
             self,
-            wrapped_env,
-            vae,
+            domain,
+            task,
+            *args,
+            wrapped_env=None,
+            vae=None,
             observation_keys=None,
             vae_input_key_prefix='image',
             sample_from_true_prior=False,
@@ -33,10 +42,39 @@ class VAEWrappedEnv(SoftlearningEnv, MultitaskEnv):
             norm_order=2,
             epsilon=20,
             presampled_goals=None,
+            normalize=True,
+            init_camera=None,
+            **kwargs
     ):
         if reward_params is None:
             reward_params = dict()
-        super().__init__(wrapped_env)
+        #super().__init__(wrapped_env)
+
+        self.normalize = normalize
+
+        if wrapped_env is None:
+            assert (domain is not None and task is not None), (domain, task)
+            env_id = f"{domain}-{task}"
+            wrapped_env = gym.envs.make(env_id, **kwargs)
+        else:
+            assert domain is None and task is None, (domain, task)
+
+        if normalize:
+            wrapped_env = NormalizeActionWrapper(wrapped_env)
+
+        # Currently only works for multiworld environments
+        if not isinstance(wrapped_env, ImageEnv):
+            # Normalize here is different from normalize above
+            wrapped_env = ImageEnv(wrapped_env,
+                                   imsize=imsize,
+                                   presampled_goals=presampled_goals,
+                                   normalize=True,
+                                   transpose=True,
+                                   init_camera=init_camera
+                                   )
+
+        self._wrapped_env = wrapped_env
+        
         self.vae = vae
         self.representation_size = self.vae.representation_size
         self.input_channels = self.vae.input_channels
@@ -60,14 +98,14 @@ class VAEWrappedEnv(SoftlearningEnv, MultitaskEnv):
             10 * np.ones(obs_size or self.representation_size),
             dtype=np.float32,
         )
-        spaces = self.wrapped_env.observation_space.spaces
+        spaces = self._wrapped_env.observation_space.spaces
         spaces['observation'] = latent_space
         spaces['desired_goal'] = latent_space
         spaces['achieved_goal'] = latent_space
         spaces['latent_observation'] = latent_space
         spaces['latent_desired_goal'] = latent_space
         spaces['latent_achieved_goal'] = latent_space
-        self.observation_space = Dict(spaces)
+        self._observation_space = Dict(spaces)
         self._presampled_goals = presampled_goals
         if self._presampled_goals is None:
             self.num_goals_presampled = 0
@@ -89,7 +127,7 @@ class VAEWrappedEnv(SoftlearningEnv, MultitaskEnv):
 
     @property
     def observation_space(self):
-        return self.observation_space
+        return self._observation_space
 
 
     @property
@@ -97,10 +135,10 @@ class VAEWrappedEnv(SoftlearningEnv, MultitaskEnv):
         """Shape for the active observation based on observation_keys."""
         observation_keys = (
             self.observation_keys
-            or list(self.observation_space.spaces.keys()))
+            or list(self._observation_space.spaces.keys()))
 
         active_size = sum(
-            np.prod(self.observation_space.spaces[key].shape)
+            np.prod(self._observation_space.spaces[key].shape)
             for key in observation_keys)
 
         active_observation_shape = (active_size, )
@@ -111,7 +149,7 @@ class VAEWrappedEnv(SoftlearningEnv, MultitaskEnv):
     def convert_to_active_observation(self, observation):
         observation_keys = (
             self.observation_keys
-            or list(self.observation_space.spaces.keys()))
+            or list(self._observation_space.spaces.keys()))
 
         observation = np.concatenate([
             observation[key] for key in observation_keys
@@ -122,7 +160,7 @@ class VAEWrappedEnv(SoftlearningEnv, MultitaskEnv):
 
     @property
     def action_space(self):
-        action_space = self.wrapped_env.action_space
+        action_space = self._wrapped_env.action_space
         if len(action_space.shape) > 1:
             raise NotImplementedError(
                 "Action space ({}) is not flat, make sure to check the"
@@ -131,14 +169,14 @@ class VAEWrappedEnv(SoftlearningEnv, MultitaskEnv):
 
 
     def reset(self):
-        obs = self.wrapped_env.reset()
+        obs = self._wrapped_env.reset()
         goal = self.sample_goal()
         self.set_goal(goal)
         self._initial_obs = obs
         return self._update_obs(obs)
 
     def step(self, action):
-        obs, reward, done, info = self.wrapped_env.step(action)
+        obs, reward, done, info = self._wrapped_env.step(action)
         new_obs = self._update_obs(obs)
         self._update_info(info, new_obs)
         reward = self.compute_reward(
@@ -193,11 +231,11 @@ class VAEWrappedEnv(SoftlearningEnv, MultitaskEnv):
                 sampled_goals['latent_desired_goal'] = self._encode(sampled_goals['image_desired_goal'])
             return sampled_goals
         elif self._goal_sampling_mode == 'env':
-            goals = self.wrapped_env.sample_goals(batch_size)
+            goals = self._wrapped_env.sample_goals(batch_size)
             latent_goals = self._encode(goals[self.vae_input_desired_goal_key])
         elif self._goal_sampling_mode == 'reset_of_env':
             assert batch_size == 1
-            goal = self.wrapped_env.get_goal()
+            goal = self._wrapped_env.get_goal()
             goals = {k: v[None] for k, v in goal.items()}
             latent_goals = self._encode(
                 goals[self.vae_input_desired_goal_key]
@@ -258,7 +296,7 @@ class VAEWrappedEnv(SoftlearningEnv, MultitaskEnv):
             desired_goals = obs['state_desired_goal']
             return - np.linalg.norm(desired_goals - achieved_goals, ord=self.norm_order, axis=1)
         elif self.reward_type == 'wrapped_env':
-            return self.wrapped_env.compute_rewards(actions, obs)
+            return self._wrapped_env.compute_rewards(actions, obs)
         else:
             raise NotImplementedError
 
@@ -276,10 +314,10 @@ class VAEWrappedEnv(SoftlearningEnv, MultitaskEnv):
         self.desired_goal = goal
         # TODO: fix this hack / document this
         if self._goal_sampling_mode in {'presampled', 'env'}:
-            self.wrapped_env.set_goal(goal)
+            self._wrapped_env.set_goal(goal)
 
     def get_diagnostics(self, paths, **kwargs):
-        statistics = self.wrapped_env.get_diagnostics(paths, **kwargs)
+        statistics = self._wrapped_env.get_diagnostics(paths, **kwargs)
         for stat_name_in_paths in ["vae_mdist", "vae_success", "vae_dist"]:
             stats = get_stat_in_paths(paths, 'env_infos', stat_name_in_paths)
             statistics.update(create_stats_ordered_dict(
@@ -459,6 +497,28 @@ class VAEWrappedEnv(SoftlearningEnv, MultitaskEnv):
     def __setstate__(self, state):
         warnings.warn('VAEWrapperEnv.custom_goal_sampler was not loaded.')
         super().__setstate__(state)
+
+    @property
+    def unwrapped(self):
+        return self._wrapped_env.unwrapped
+
+    def reset(self, *args, **kwargs):
+        return self._wrapped_env.reset(*args, **kwargs)
+
+    def render(self, *args, **kwargs):
+        raise NotImplementedError
+
+    def close(self, *args, **kwargs):
+        return self._wrapped_env.close(*args, **kwargs)
+
+    def seed(self, *args, **kwargs):
+        return self._wrapped_env.seed(*args, **kwargs)
+
+    def get_param_values(self, *args, **kwargs):
+        raise NotImplementedError
+
+    def set_param_values(self, *args, **kwargs):
+        raise NotImplementedError
 
 
 def temporary_mode(env, mode, func, args=None, kwargs=None):
