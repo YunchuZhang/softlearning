@@ -38,14 +38,17 @@ DEFAULT_MAX_PATH_LENGTH = 1000
 MAX_PATH_LENGTH_PER_DOMAIN = {
     'Point2DEnv': 50,
     'Pendulum': 200,
+    'SawyerPushAndReachEnvEasy': 200,
+    'SawyerPushAndReachEnvMedium': 200,
+    'SawyerPushAndReachEnvHard': 200,
 }
 
 ALGORITHM_PARAMS_BASE = {
     'type': 'SAC',
 
     'kwargs': {
-        'epoch_length': 10000,
-        'train_every_n_steps': 20,
+        'epoch_length': 5000,
+        'train_every_n_steps': 10,
         'n_train_repeat': 1,
         'eval_render_mode': None,
         'eval_n_episodes': 10,
@@ -63,7 +66,7 @@ ALGORITHM_PARAMS_ADDITIONAL = {
         'type': 'SAC',
         'kwargs': {
             'reparameterize': REPARAMETERIZE,
-            'lr': 1e-4,
+            'lr': 1e-3,
             'target_update_interval': 1,
             'tau': 5e-3,
             'target_entropy': 'auto',
@@ -119,9 +122,9 @@ NUM_EPOCHS_PER_DOMAIN = {
     'FetchPush': 1000,
     'FetchPickAndPlace': 1000,
     'SawyerReachXYEnv': 1000,
-    'SawyerPushAndReachEnvEasy': 1000,
-    'SawyerPushAndReachEnvMedium': 1000,
-    'SawyerPushAndReachEnvHard': 1000,
+    'SawyerPushAndReachEnvEasy': 4000,
+    'SawyerPushAndReachEnvMedium': 4000,
+    'SawyerPushAndReachEnvHard': 4000,
 }
 
 DEFAULT_ALGORITHM_DOMAIN_PARAMS = {
