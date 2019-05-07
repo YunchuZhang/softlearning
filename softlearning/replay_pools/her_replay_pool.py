@@ -49,8 +49,6 @@ class HerReplayPool(SimpleReplayPool):
         }
 
         if num_resamples > 0:
-            desired_goals = batch['observations.' + self._desired_goal_key]
-            next_desired_goals = batch['next_observations.' + self._desired_goal_key]
             achieved_goals = batch['next_observations.' + self._achieved_goal_key]
             rewards = batch[self._reward_key]
             terminals = batch[self._terminal_key]
@@ -74,25 +72,22 @@ class HerReplayPool(SimpleReplayPool):
 
                 future_achieved_goal = self.fields['next_observations.' + self._achieved_goal_key][future_sample_idx]
 
-                desired_goals[batch_idx] = future_achieved_goal
-                next_desired_goals[batch_idx] = future_achieved_goal
+                batch['observations.' + self._desired_goal_key][batch_idx] = future_achieved_goal
+                batch['next_observations.' + self._desired_goal_key][batch_idx] = future_achieved_goal
 
                 if self.env.is_multiworld_env:
                     observation = {key: np.array([batch['next_observations.{}'.format(key)][batch_idx]])
                                    for key in observation_keys}
-                    observation[self._desired_goal_key] = np.array([future_achieved_goal])
                     #print(observation)
                     rewards[batch_idx] = self.env.compute_reward(actions=np.array([actions[batch_idx]]),
                                                                  observations=observation)
                 else:
                     rewards[batch_idx] = self.env.compute_reward(achieved_goal=achieved_goals[batch_idx],
-                                                                 desired_goal=desired_goals[batch_idx],
-                                                                 info=None)
+                                                                  desired_goal=future_achieved_goal,
+                                                                  info=None)
                 if future_sample_offset == 0:
                     terminals[batch_idx] = True
 
-            batch['observations.' + self._desired_goal_key] = desired_goals
-            batch['next_observations.' + self._desired_goal_key] = desired_goals
             batch[self._reward_key] = rewards
             batch[self._terminal_key] = terminals
 
