@@ -137,6 +137,7 @@ class ConvVAETrainer():
     def __init__(
             self,
             model,
+            data_key,
             train_dataset=np.array([], dtype=np.uint8),
             test_dataset=np.array([], dtype=np.uint8),
             batch_size=128,
@@ -148,6 +149,7 @@ class ConvVAETrainer():
             mse_weight=0.1,
             is_auto_encoder=False,
             background_subtract=False,
+            session=None
     ):
 
         self.log_interval = log_interval
@@ -155,11 +157,13 @@ class ConvVAETrainer():
         self.beta = beta
         self.imsize = model.imsize
         self.do_scatterplot = do_scatterplot
+        self.data_key = data_key
 
         self.model = model
         self.representation_size = model.representation_size
         self.input_channels = model.input_channels
         self.imlength = model.imlength
+        self._session = session or tf.keras.backend.get_session()
 
         self.lr = lr
         self.optimizer = tf.train.AdamOptimizer(learning_rate=self.lr, epsilon=1e-8)
@@ -198,21 +202,21 @@ class ConvVAETrainer():
         self.kle_test = self.model.kl_divergence(self.latent_params_test, training=False)
         self.loss_test = self.beta * self.kle_test - self.log_prob_test
 
-    def get_dataset_stats(self, sess, data):
+    def get_dataset_stats(self, data):
         data = normalize_image(data)
-        mus = sess.run(self.encoder_mu, feed_dict={self.vae_input_ph : data})
+        mus = self._session.run(self.encoder_mu, feed_dict={self.vae_input_ph : data})
         mean = np.mean(mus, axis=0)
         std = np.std(mus, axis=0)
         return mus, mean, std
 
-    def _kl_np_to_np(self, sess, np_imgs):
+    def _kl_np_to_np(self, np_imgs):
         data = normalize_image(np_imgs)
-        mu, log_var = sess.run([self.encoder_mu, self.encoder_var], feed_dict={self.vae_input_ph : data})
+        mu, log_var = self._session.run([self.encoder_mu, self.encoder_var], feed_dict={self.vae_input_ph : data})
         return -np.sum(1 + log_var - np.power(mu, 2) - np.exp(log_var), axis=1)
 
-    def _reconstruction_squared_error_np_to_np(self, sess, np_imgs):
+    def _reconstruction_squared_error_np_to_np(self, np_imgs):
         data = normalize_image(np_imgs)
-        recons = sess.run(self.recons_train, feed_dict={self.vae_input_ph : data})
+        recons = self._session.run(self.recons_train, feed_dict={self.vae_input_ph : data})
         error = data - recons
         return np.sum(error ** 2, axis=1)
 
@@ -251,7 +255,7 @@ class ConvVAETrainer():
         Y = Y[ind, :]
         return X, Y
 
-    def train_epoch(self, sess, epoch, sample_batch=None, batches=100, from_rl=False):
+    def train_epoch(self, epoch, sample_batch=None, batches=100, from_rl=False):
         training = True
         losses = []
         log_probs = []
@@ -259,11 +263,11 @@ class ConvVAETrainer():
         for batch_idx in range(batches):
             if sample_batch is not None:
                 data = sample_batch(self.batch_size)
-                next_obs = data['next_obs']
+                next_obs = data[self.data_key]
             else:
                 next_obs = self.get_batch()
 
-            _, loss, log_prob, kle = sess.run([self.update_op, self.loss_train, self.log_prob_train, self.kle_train],
+            _, loss, log_prob, kle = self._session.run([self.update_op, self.loss_train, self.log_prob_train, self.kle_train],
                                                 feed_dict={self.vae_input_ph : next_obs})
             
             losses.append(loss)
@@ -289,7 +293,6 @@ class ConvVAETrainer():
 
     def test_epoch(
             self,
-            sess,
             epoch,
             save_reconstruction=True,
             save_vae=True,
@@ -304,7 +307,7 @@ class ConvVAETrainer():
         for batch_idx in range(10):
             next_obs = self.get_batch(training=training)
 
-            loss, log_prob, kle, latent_distribution_params, reconstructions = sess.run([self.loss_test,
+            loss, log_prob, kle, latent_distribution_params, reconstructions = self._session.run([self.loss_test,
                                                                                          self.log_prob_test,
                                                                                          self.kle_test,
                                                                                          self.latent_params_test,
@@ -361,7 +364,7 @@ class ConvVAETrainer():
             #  if save_vae:
                 #  logger.save_itr_params(epoch, self.model)
 
-    def debug_statistics(self, sess):
+    def debug_statistics(self):
         """
         Given an image $$x$$, samples a bunch of latents from the prior
         $$z_i$$ and decode them $$\hat x_i$$.
@@ -376,7 +379,7 @@ class ConvVAETrainer():
         debug_batch_size = 64
         data = self.get_batch(training=training)
         reconstructions, _, _ = self.model(data, training=training)
-        reconstructions = sess.run(self.recons_test, feed_dict={self.vae_input_ph : data})
+        reconstructions = self._session.run(self.recons_test, feed_dict={self.vae_input_ph : data})
         img = data[0]
 
         recon_mse = np.mean((reconstructions[0] - img) ** 2)
@@ -386,7 +389,7 @@ class ConvVAETrainer():
         img_repeated = np.reshape(img_repeated, (debug_batch_size, -1))
 
         samples = np.random.randn(debug_batch_size, self.representation_size).astype(np.float32)
-        random_imgs = sess.run(self.random_decoded, feed_dict={self.rand_input_test : samples})
+        random_imgs = self._session.run(self.random_decoded, feed_dict={self.rand_input_test : samples})
         random_mses = np.mean((random_imgs - img_repeated) ** 2)
         mse_improvement = np.mean(random_mses, axis=1) - recon_mse
 
@@ -401,10 +404,10 @@ class ConvVAETrainer():
         stats['debug/MSE of reconstruction'] = recon_mse
         return stats
 
-    def dump_samples(self, sess, epoch, save_dir='.'):
+    def dump_samples(self, epoch, save_dir='.'):
         training = False
         sample = np.random.randn(64, self.representation_size).astype(np.float32)
-        sample = sess.run(self.random_decoded, feed_dict={self.rand_input_test : sample})
+        sample = self._session.run(self.random_decoded, feed_dict={self.rand_input_test : sample})
         """Based on logger in rlkit core so skipped for now"""
         #  save_dir = osp.join(logger.get_snapshot_dir(), 's%d.png' % epoch)
         save_dir = osp.join(save_dir, 's%d.png' % epoch)
@@ -420,7 +423,7 @@ class ConvVAETrainer():
         for i in idxs:
             img_np = self.train_dataset[i]
             img_np = normalize_image(img_np)
-            recon = sess.run(self.recons_test, feed_dict={self.vae_input_ph : img_np})
+            recon = self._session.run(self.recons_test, feed_dict={self.vae_input_ph : img_np})
 
             img = np.reshape(img_np, (self.imsize, self.imsize, self.input_channels))
             rimg = np.reshape(recon, (self.imsize, self.imsize, self.input_channels))

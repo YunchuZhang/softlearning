@@ -5,6 +5,8 @@ import warnings
 import cv2
 import numpy as np
 
+import tensorflow as tf
+
 import gym
 from gym.spaces import Box, Dict
 
@@ -14,6 +16,7 @@ from softlearning.environments.gym.wrappers import NormalizeActionWrapper
 from multiworld.core.multitask_env import MultitaskEnv
 from multiworld.core.image_env import ImageEnv
 from multiworld.envs.env_util import get_stat_in_paths, create_stats_ordered_dict
+from multiworld.envs.mujoco.cameras import sawyer_init_camera_zoomed_in
 
 
 class VAEWrappedEnv(SoftlearningEnv, MultitaskEnv):
@@ -43,7 +46,7 @@ class VAEWrappedEnv(SoftlearningEnv, MultitaskEnv):
             epsilon=20,
             presampled_goals=None,
             normalize=True,
-            init_camera=None,
+            init_camera=sawyer_init_camera_zoomed_in,
             **kwargs
     ):
         if reward_params is None:
@@ -124,6 +127,8 @@ class VAEWrappedEnv(SoftlearningEnv, MultitaskEnv):
         self._custom_goal_sampler = None
         self._goal_sampling_mode = goal_sampling_mode
 
+        self._session = tf.keras.backend.get_session()
+
 
     @property
     def observation_space(self):
@@ -147,6 +152,11 @@ class VAEWrappedEnv(SoftlearningEnv, MultitaskEnv):
 
 
     def convert_to_active_observation(self, observation):
+
+        #print("observation", observation)
+
+        #print("observation keys", self.observation_keys)
+
         observation_keys = (
             self.observation_keys
             or list(self._observation_space.spaces.keys()))
@@ -168,7 +178,7 @@ class VAEWrappedEnv(SoftlearningEnv, MultitaskEnv):
         return action_space
 
 
-    def reset(self):
+    def reset(self, *args, **kwargs):
         obs = self._wrapped_env.reset()
         goal = self.sample_goal()
         self.set_goal(goal)
@@ -179,16 +189,17 @@ class VAEWrappedEnv(SoftlearningEnv, MultitaskEnv):
         obs, reward, done, info = self._wrapped_env.step(action)
         new_obs = self._update_obs(obs)
         self._update_info(info, new_obs)
-        reward = self.compute_reward(
-            action,
-            {'latent_achieved_goal': new_obs['latent_achieved_goal'],
-             'latent_desired_goal': new_obs['latent_desired_goal']}
-        )
+        if not self.reward_type == 'wrapped_env':
+            reward = self.compute_reward(
+                action,
+                {'latent_achieved_goal': new_obs['latent_achieved_goal'],
+                'latent_desired_goal': new_obs['latent_desired_goal']}
+            )
         self.try_render(new_obs)
         return new_obs, reward, done, info
 
     def _update_obs(self, obs):
-        latent_obs = self._encode_one(obs[self.vae_input_observation_key])
+        latent_obs = self._encode_one(obs[self.vae_input_observation_key].astype(np.float32))
         print("graph length", len([n.name for n in tf.get_default_graph().as_graph_def().node]))
         obs['latent_observation'] = latent_obs
         obs['latent_achieved_goal'] = latent_obs
@@ -199,9 +210,9 @@ class VAEWrappedEnv(SoftlearningEnv, MultitaskEnv):
 
     def _update_info(self, info, obs):
         latent_distribution_params = self.vae.encode(
-            obs[self.vae_input_observation_key].reshape(1,-1)
+            obs[self.vae_input_observation_key].reshape(1,-1).astype(np.float32)
         )
-        latent_obs, logvar = (latent_distribution_params[0].numpy())[0], (latent_distribution_params[1].numpy())[0]
+        latent_obs, logvar = (latent_distribution_params[0]).eval(session=self._session)[0], (latent_distribution_params[1]).eval(session=self._session)[0]
         # assert (latent_obs == obs['latent_observation']).all()
         latent_goal = self.desired_goal['latent_desired_goal']
         dist = latent_goal - latent_obs
@@ -229,11 +240,11 @@ class VAEWrappedEnv(SoftlearningEnv, MultitaskEnv):
             }
             # ensures goals are encoded using latest vae
             if 'image_desired_goal' in sampled_goals:
-                sampled_goals['latent_desired_goal'] = self._encode(sampled_goals['image_desired_goal'])
+                sampled_goals['latent_desired_goal'] = self._encode(sampled_goals['image_desired_goal'].astype(np.float32))
             return sampled_goals
         elif self._goal_sampling_mode == 'env':
             goals = self._wrapped_env.sample_goals(batch_size)
-            latent_goals = self._encode(goals[self.vae_input_desired_goal_key])
+            latent_goals = self._encode(goals[self.vae_input_desired_goal_key].astype(np.float32))
         elif self._goal_sampling_mode == 'reset_of_env':
             assert batch_size == 1
             goal = self._wrapped_env.get_goal()
@@ -267,6 +278,10 @@ class VAEWrappedEnv(SoftlearningEnv, MultitaskEnv):
 
     def get_goal(self):
         return self.desired_goal
+
+    @property
+    def is_multiworld_env(self):
+        return True
 
     def compute_reward(self, action, obs):
         actions = action[None]
@@ -457,7 +472,7 @@ class VAEWrappedEnv(SoftlearningEnv, MultitaskEnv):
 
     def _decode(self, latents):
         reconstructions, _ = self.vae.decode(latents)
-        decoded = reconstructions.numpy()
+        decoded = reconstructions.eval(session=self._session)
         return decoded
 
     def _encode_one(self, img):
@@ -465,12 +480,12 @@ class VAEWrappedEnv(SoftlearningEnv, MultitaskEnv):
 
     def _encode(self, imgs):
         latent_distribution_params = self.vae.encode(imgs)
-        return latent_distribution_params[0].numpy()
+        return latent_distribution_params[0].eval(session=self._session)
 
     def _reconstruct_img(self, flat_img):
         latent_distribution_params = self.vae.encode(flat_img.reshape(1,-1))
         reconstructions, _ = self.vae.decode(latent_distribution_params[0])
-        imgs = reconstructions.numpy()
+        imgs = reconstructions.eval(session=self._session)
         imgs = imgs.reshape(
             1, self.input_channels, self.imsize, self.imsize
         )
@@ -502,9 +517,6 @@ class VAEWrappedEnv(SoftlearningEnv, MultitaskEnv):
     @property
     def unwrapped(self):
         return self._wrapped_env.unwrapped
-
-    def reset(self, *args, **kwargs):
-        return self._wrapped_env.reset(*args, **kwargs)
 
     def render(self, *args, **kwargs):
         raise NotImplementedError

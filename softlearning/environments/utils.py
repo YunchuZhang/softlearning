@@ -9,6 +9,7 @@ from .adapters.vae_wrapper import (
 
 ENVIRONMENTS = {
     'gym': GYM_ENVIRONMENTS,
+    'vae': GYM_ENVIRONMENTS
 }
 
 ADAPTERS = {

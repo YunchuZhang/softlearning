@@ -39,17 +39,18 @@ DEFAULT_MAX_PATH_LENGTH = 1000
 MAX_PATH_LENGTH_PER_DOMAIN = {
     'Point2DEnv': 50,
     'Pendulum': 200,
+    'SawyerReachXYEnv': 50
 }
 
 ALGORITHM_PARAMS_BASE = {
-    'type': 'SAC',
+    'type': 'SAC_VAE',
 
     'kwargs': {
-        'epoch_length': 10000,
+        'epoch_length': 100,
         'train_every_n_steps': 20,
         'n_train_repeat': 1,
         'eval_render_mode': None,
-        'eval_n_episodes': 10,
+        'eval_n_episodes': 1,
         'eval_deterministic': True,
 
         'discount': 0.99,
@@ -60,17 +61,17 @@ ALGORITHM_PARAMS_BASE = {
 
 
 ALGORITHM_PARAMS_ADDITIONAL = {
-    'SAC': {
-        'type': 'SAC',
+    'SAC_VAE': {
+        'type': 'SAC_VAE',
         'kwargs': {
             'reparameterize': REPARAMETERIZE,
-            'lr': 1e-4,
+            'lr': 1e-3,
             'target_update_interval': 1,
             'tau': 5e-3,
             'target_entropy': 'auto',
             'store_extra_policy_info': False,
             'action_prior': 'uniform',
-            'n_initial_exploration_steps': int(1e3),
+            'n_initial_exploration_steps': int(1e2),
         }
     },
     'SQL': {
@@ -206,7 +207,12 @@ ENVIRONMENT_PARAMS = {
     },
     'SawyerReachXYEnv': {
         'v1': {
-            'reward_type': 'hand_success'
+            'reward_type': 'hand_success',
+            #'init_camera': sawyer_init_camera_zoomed_in,
+            'imsize': 48,
+            'observation_keys': ('latent_observation', 'latent_desired_goal'),
+            'reward_params': {'type': 'wrapped_env'},
+            'goal_sampling_mode': 'env'
         }
     },
     'SawyerPushAndReachEnvEasy': {
@@ -214,8 +220,9 @@ ENVIRONMENT_PARAMS = {
             #'reward_type': 'hand_success'
             #'reward_type': 'hand_distance'
             'reward_type': 'puck_success',
-            'init_camera': sawyer_init_camera_zoomed_in,
+            #'init_camera': sawyer_init_camera_zoomed_in,
             'imsize': 48,
+            'observation_keys': ('latent_observation', 'latent_desired_goal'),
             #'fix_goal': True
         }
     },
@@ -299,7 +306,7 @@ SIMPLE_REPLAY_POOL_PARAMS = {
 HER_REPLAY_POOL_PARAMS = {
     'type': 'HerReplayPool',
     'kwargs': {
-        'max_size': 1e6,
+        'max_size': 1e4,
         'desired_goal_key': 'state_desired_goal',
         'achieved_goal_key': 'state_achieved_goal',
         'reward_key': 'rewards',
@@ -336,6 +343,7 @@ def get_variant_spec_base(universe, domain, task, policy, algorithm, sampler, re
         'vae_train_params': {
             'kwargs': {
                 'beta': 20,
+                'data_key': 'observations.image_observation'
             }
         },
         'environment_params': {
