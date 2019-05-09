@@ -5,6 +5,8 @@ import warnings
 import cv2
 import numpy as np
 
+import tensorflow as tf
+
 import gym
 from gym.spaces import Box, Dict
 
@@ -125,6 +127,8 @@ class VAEWrappedEnv(SoftlearningEnv, MultitaskEnv):
         self._custom_goal_sampler = None
         self._goal_sampling_mode = goal_sampling_mode
 
+        self._session = tf.keras.backend.get_session()
+
 
     @property
     def observation_space(self):
@@ -148,6 +152,11 @@ class VAEWrappedEnv(SoftlearningEnv, MultitaskEnv):
 
 
     def convert_to_active_observation(self, observation):
+
+        #print("observation", observation)
+
+        #print("observation keys", self.observation_keys)
+
         observation_keys = (
             self.observation_keys
             or list(self._observation_space.spaces.keys()))
@@ -189,7 +198,7 @@ class VAEWrappedEnv(SoftlearningEnv, MultitaskEnv):
         return new_obs, reward, done, info
 
     def _update_obs(self, obs):
-        latent_obs = self._encode_one(obs[self.vae_input_observation_key])
+        latent_obs = self._encode_one(obs[self.vae_input_observation_key].astype(np.float32))
         obs['latent_observation'] = latent_obs
         obs['latent_achieved_goal'] = latent_obs
         obs['observation'] = latent_obs
@@ -199,9 +208,9 @@ class VAEWrappedEnv(SoftlearningEnv, MultitaskEnv):
 
     def _update_info(self, info, obs):
         latent_distribution_params = self.vae.encode(
-            obs[self.vae_input_observation_key].reshape(1,-1)
+            obs[self.vae_input_observation_key].reshape(1,-1).astype(np.float32)
         )
-        latent_obs, logvar = (latent_distribution_params[0].numpy())[0], (latent_distribution_params[1].numpy())[0]
+        latent_obs, logvar = (latent_distribution_params[0]).eval(session=self._session)[0], (latent_distribution_params[1]).eval(session=self._session)[0]
         # assert (latent_obs == obs['latent_observation']).all()
         latent_goal = self.desired_goal['latent_desired_goal']
         dist = latent_goal - latent_obs
@@ -457,7 +466,7 @@ class VAEWrappedEnv(SoftlearningEnv, MultitaskEnv):
 
     def _decode(self, latents):
         reconstructions, _ = self.vae.decode(latents)
-        decoded = reconstructions.numpy()
+        decoded = reconstructions.eval(session=self._session)
         return decoded
 
     def _encode_one(self, img):
@@ -465,12 +474,12 @@ class VAEWrappedEnv(SoftlearningEnv, MultitaskEnv):
 
     def _encode(self, imgs):
         latent_distribution_params = self.vae.encode(imgs)
-        return latent_distribution_params[0].numpy()
+        return latent_distribution_params[0].eval(session=self._session)
 
     def _reconstruct_img(self, flat_img):
         latent_distribution_params = self.vae.encode(flat_img.reshape(1,-1))
         reconstructions, _ = self.vae.decode(latent_distribution_params[0])
-        imgs = reconstructions.numpy()
+        imgs = reconstructions.eval(session=self._session)
         imgs = imgs.reshape(
             1, self.input_channels, self.imsize, self.imsize
         )
