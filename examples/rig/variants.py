@@ -64,7 +64,7 @@ ALGORITHM_PARAMS_ADDITIONAL = {
         'type': 'SAC',
         'kwargs': {
             'reparameterize': REPARAMETERIZE,
-            'lr': 1e-4,
+            'lr': 1e-3,
             'target_update_interval': 1,
             'tau': 5e-3,
             'target_entropy': 'auto',
@@ -206,7 +206,10 @@ ENVIRONMENT_PARAMS = {
     },
     'SawyerReachXYEnv': {
         'v1': {
-            'reward_type': 'hand_success'
+            'reward_type': 'hand_success',
+            #'init_camera': sawyer_init_camera_zoomed_in,
+            'imsize': 48,
+            'observation_keys': ('latent_observation', 'latent_desired_goal'),
         }
     },
     'SawyerPushAndReachEnvEasy': {
@@ -214,8 +217,9 @@ ENVIRONMENT_PARAMS = {
             #'reward_type': 'hand_success'
             #'reward_type': 'hand_distance'
             'reward_type': 'puck_success',
-            'init_camera': sawyer_init_camera_zoomed_in,
+            #'init_camera': sawyer_init_camera_zoomed_in,
             'imsize': 48,
+            'observation_keys': ('latent_observation', 'latent_desired_goal'),
             #'fix_goal': True
         }
     },
@@ -336,6 +340,7 @@ def get_variant_spec_base(universe, domain, task, policy, algorithm, sampler, re
         'vae_train_params': {
             'kwargs': {
                 'beta': 20,
+                'data_key': 'observations.image_observation'
             }
         },
         'environment_params': {

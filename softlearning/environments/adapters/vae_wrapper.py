@@ -14,6 +14,7 @@ from softlearning.environments.gym.wrappers import NormalizeActionWrapper
 from multiworld.core.multitask_env import MultitaskEnv
 from multiworld.core.image_env import ImageEnv
 from multiworld.envs.env_util import get_stat_in_paths, create_stats_ordered_dict
+from multiworld.envs.mujoco.cameras import sawyer_init_camera_zoomed_in
 
 
 class VAEWrappedEnv(SoftlearningEnv, MultitaskEnv):
@@ -43,7 +44,7 @@ class VAEWrappedEnv(SoftlearningEnv, MultitaskEnv):
             epsilon=20,
             presampled_goals=None,
             normalize=True,
-            init_camera=None,
+            init_camera=sawyer_init_camera_zoomed_in,
             **kwargs
     ):
         if reward_params is None:
@@ -168,7 +169,7 @@ class VAEWrappedEnv(SoftlearningEnv, MultitaskEnv):
         return action_space
 
 
-    def reset(self):
+    def reset(self, *args, **kwargs):
         obs = self._wrapped_env.reset()
         goal = self.sample_goal()
         self.set_goal(goal)
@@ -501,9 +502,6 @@ class VAEWrappedEnv(SoftlearningEnv, MultitaskEnv):
     @property
     def unwrapped(self):
         return self._wrapped_env.unwrapped
-
-    def reset(self, *args, **kwargs):
-        return self._wrapped_env.reset(*args, **kwargs)
 
     def render(self, *args, **kwargs):
         raise NotImplementedError
