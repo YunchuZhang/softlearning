@@ -189,6 +189,7 @@ class VAEWrappedEnv(SoftlearningEnv, MultitaskEnv):
 
     def _update_obs(self, obs):
         latent_obs = self._encode_one(obs[self.vae_input_observation_key])
+        print("graph length", len([n.name for n in tf.get_default_graph().as_graph_def().node]))
         obs['latent_observation'] = latent_obs
         obs['latent_achieved_goal'] = latent_obs
         obs['observation'] = latent_obs
