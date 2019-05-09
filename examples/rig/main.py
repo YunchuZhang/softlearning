@@ -85,6 +85,7 @@ class ExperimentRunner(tune.Trainable):
 
         self.algorithm = get_algorithm_from_variant(
             variant=self._variant,
+            VAETrainer=vae_trainer,
             training_environment=training_environment,
             evaluation_environment=evaluation_environment,
             policy=policy,

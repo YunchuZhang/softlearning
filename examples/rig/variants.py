@@ -42,7 +42,7 @@ MAX_PATH_LENGTH_PER_DOMAIN = {
 }
 
 ALGORITHM_PARAMS_BASE = {
-    'type': 'SAC',
+    'type': 'SAC_VAE',
 
     'kwargs': {
         'epoch_length': 10000,
@@ -60,8 +60,8 @@ ALGORITHM_PARAMS_BASE = {
 
 
 ALGORITHM_PARAMS_ADDITIONAL = {
-    'SAC': {
-        'type': 'SAC',
+    'SAC_VAE': {
+        'type': 'SAC_VAE',
         'kwargs': {
             'reparameterize': REPARAMETERIZE,
             'lr': 1e-3,

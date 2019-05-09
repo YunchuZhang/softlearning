@@ -1,8 +1,8 @@
 from .sac import SAC
 
-class SACVAE(SAC):
+class SAC_VAE(SAC):
     def __init__(self, VAETrainer, train_vae_every=10, **kwargs):
-        super(SACVAE, self).__init__(**kwargs)
+        super(SAC_VAE, self).__init__(**kwargs)
         self.VAETrainer = VAETrainer
         self.vae_num_epoch = 0
         self.train_vae_every = train_vae_every
