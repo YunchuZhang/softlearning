@@ -79,6 +79,9 @@ class VAEWrappedEnv(SoftlearningEnv, MultitaskEnv):
         self._wrapped_env = wrapped_env
         
         self.vae = vae
+        self.vae_input_ph = tf.placeholder(tf.float32, [None, vae.imlength])
+        self.encoder_mu_notrain, self.encoder_var_notrain = self.vae.encode(self.vae_input_ph, training=False)
+
         self.representation_size = self.vae.representation_size
         self.input_channels = self.vae.input_channels
         self.sample_from_true_prior = sample_from_true_prior
@@ -209,10 +212,7 @@ class VAEWrappedEnv(SoftlearningEnv, MultitaskEnv):
         return obs
 
     def _update_info(self, info, obs):
-        latent_distribution_params = self.vae.encode(
-            obs[self.vae_input_observation_key].reshape(1,-1).astype(np.float32)
-        )
-        latent_obs, logvar = (latent_distribution_params[0]).eval(session=self._session)[0], (latent_distribution_params[1]).eval(session=self._session)[0]
+        latent_obs, logvar = self._session.run([self.encoder_mu_notrain, self.encoder_var_notrain], feed_dict={self.vae_input_ph: obs[self.vae_input_observation_key].reshape(1,-1).astype(np.float32)})
         # assert (latent_obs == obs['latent_observation']).all()
         latent_goal = self.desired_goal['latent_desired_goal']
         dist = latent_goal - latent_obs
@@ -479,8 +479,8 @@ class VAEWrappedEnv(SoftlearningEnv, MultitaskEnv):
         return self._encode(img[None])[0]
 
     def _encode(self, imgs):
-        latent_distribution_params = self.vae.encode(imgs)
-        return latent_distribution_params[0].eval(session=self._session)
+        mu = self._session.run(self.encoder_mu_notrain, feed_dict={self.vae_input_ph: imgs})
+        return mu
 
     def _reconstruct_img(self, flat_img):
         latent_distribution_params = self.vae.encode(flat_img.reshape(1,-1))
