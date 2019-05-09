@@ -78,6 +78,7 @@ class RLAlgorithm(tf.contrib.checkpoint.Checkpointable):
         self._num_train_steps = 0
 
     def _initial_exploration_hook(self, env, initial_exploration_policy, pool):
+        print("starting initial exploration")
         if self._n_initial_exploration_steps < 1: return
 
         if not initial_exploration_policy:
@@ -88,6 +89,9 @@ class RLAlgorithm(tf.contrib.checkpoint.Checkpointable):
         self.sampler.initialize(env, initial_exploration_policy, pool)
         while pool.size < self._n_initial_exploration_steps:
             self.sampler.sample()
+            print("initial exploration sample")
+
+        print("finished initial exploration")
 
     def _training_before_hook(self):
         """Method called before the actual training loops."""
@@ -174,6 +178,7 @@ class RLAlgorithm(tf.contrib.checkpoint.Checkpointable):
                 gt.stamp('timestep_before_hook')
 
                 self._do_sampling(timestep=self._total_timestep)
+                print("finished sampling")
                 gt.stamp('sample')
 
                 if self.ready_to_train:

@@ -39,13 +39,14 @@ DEFAULT_MAX_PATH_LENGTH = 1000
 MAX_PATH_LENGTH_PER_DOMAIN = {
     'Point2DEnv': 50,
     'Pendulum': 200,
+    'SawyerReachXYEnv': 50
 }
 
 ALGORITHM_PARAMS_BASE = {
     'type': 'SAC_VAE',
 
     'kwargs': {
-        'epoch_length': 10000,
+        'epoch_length': 100,
         'train_every_n_steps': 20,
         'n_train_repeat': 1,
         'eval_render_mode': None,
@@ -70,7 +71,7 @@ ALGORITHM_PARAMS_ADDITIONAL = {
             'target_entropy': 'auto',
             'store_extra_policy_info': False,
             'action_prior': 'uniform',
-            'n_initial_exploration_steps': int(1e3),
+            'n_initial_exploration_steps': int(1e2),
         }
     },
     'SQL': {
@@ -210,6 +211,7 @@ ENVIRONMENT_PARAMS = {
             #'init_camera': sawyer_init_camera_zoomed_in,
             'imsize': 48,
             'observation_keys': ('latent_observation', 'latent_desired_goal'),
+            'reward_params': {'type': 'wrapped_env'}
         }
     },
     'SawyerPushAndReachEnvEasy': {
@@ -303,7 +305,7 @@ SIMPLE_REPLAY_POOL_PARAMS = {
 HER_REPLAY_POOL_PARAMS = {
     'type': 'HerReplayPool',
     'kwargs': {
-        'max_size': 1e6,
+        'max_size': 1e4,
         'desired_goal_key': 'state_desired_goal',
         'achieved_goal_key': 'state_achieved_goal',
         'reward_key': 'rewards',

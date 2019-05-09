@@ -277,6 +277,10 @@ class VAEWrappedEnv(SoftlearningEnv, MultitaskEnv):
     def get_goal(self):
         return self.desired_goal
 
+    @property
+    def is_multiworld_env(self):
+        return True
+
     def compute_reward(self, action, obs):
         actions = action[None]
         next_obs = {

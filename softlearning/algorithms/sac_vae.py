@@ -9,9 +9,13 @@ class SAC_VAE(SAC):
 
     def _training_before_hook(self):
         super()._training_before_hook()
+
+        print("starting vae training")
         # Should work other than the fact that vae trainer uses data['next_obs']
         self.VAETrainer.train_epoch(self.vae_num_epoch, self.sampler.random_batch)
         self.vae_num_epoch += 1
+
+        print("finished training before hook")
 
     def _epoch_before_hook(self):
         super()._epoch_before_hook()
@@ -19,3 +23,5 @@ class SAC_VAE(SAC):
             # Should work other than the fact that vae trainer uses data['next_obs']
             self.VAETrainer.train_epoch(self.vae_num_epoch, self.sampler.random_batch)
             self.vae_num_epoch += 1
+
+        print("finished epoch before hook")
