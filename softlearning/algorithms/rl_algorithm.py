@@ -178,7 +178,6 @@ class RLAlgorithm(tf.contrib.checkpoint.Checkpointable):
                 gt.stamp('timestep_before_hook')
 
                 self._do_sampling(timestep=self._total_timestep)
-                print("finished sampling")
                 gt.stamp('sample')
 
                 if self.ready_to_train:
@@ -187,6 +186,8 @@ class RLAlgorithm(tf.contrib.checkpoint.Checkpointable):
 
                 self._timestep_after_hook()
                 gt.stamp('timestep_after_hook')
+
+            print("finished training paths")
 
             training_paths = self.sampler.get_last_n_paths(
                 math.ceil(self._epoch_length / self.sampler._max_path_length))

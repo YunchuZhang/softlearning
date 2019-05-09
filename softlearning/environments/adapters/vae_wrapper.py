@@ -189,11 +189,12 @@ class VAEWrappedEnv(SoftlearningEnv, MultitaskEnv):
         obs, reward, done, info = self._wrapped_env.step(action)
         new_obs = self._update_obs(obs)
         self._update_info(info, new_obs)
-        reward = self.compute_reward(
-            action,
-            {'latent_achieved_goal': new_obs['latent_achieved_goal'],
-             'latent_desired_goal': new_obs['latent_desired_goal']}
-        )
+        if not self.reward_type == 'wrapped_env':
+            reward = self.compute_reward(
+                action,
+                {'latent_achieved_goal': new_obs['latent_achieved_goal'],
+                'latent_desired_goal': new_obs['latent_desired_goal']}
+            )
         self.try_render(new_obs)
         return new_obs, reward, done, info
 
@@ -238,11 +239,11 @@ class VAEWrappedEnv(SoftlearningEnv, MultitaskEnv):
             }
             # ensures goals are encoded using latest vae
             if 'image_desired_goal' in sampled_goals:
-                sampled_goals['latent_desired_goal'] = self._encode(sampled_goals['image_desired_goal'])
+                sampled_goals['latent_desired_goal'] = self._encode(sampled_goals['image_desired_goal'].astype(np.float32))
             return sampled_goals
         elif self._goal_sampling_mode == 'env':
             goals = self._wrapped_env.sample_goals(batch_size)
-            latent_goals = self._encode(goals[self.vae_input_desired_goal_key])
+            latent_goals = self._encode(goals[self.vae_input_desired_goal_key].astype(np.float32))
         elif self._goal_sampling_mode == 'reset_of_env':
             assert batch_size == 1
             goal = self._wrapped_env.get_goal()

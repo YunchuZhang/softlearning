@@ -17,6 +17,9 @@ class HerReplayPool(SimpleReplayPool):
         # Fraction of samples we should resample goals for using the 'future' stragtegy
         self._fraction_future_goals = 0.8
 
+        # Need to include both 'state' and non-'state' for image_env vs base environment
+        self._reward_keys = ('state_achieved_goal', 'state_desired_goal', 'achieved_goal', 'desired_goal')
+
         super(HerReplayPool, self).__init__(*args, env, **kwargs)
 
         # For each sample keep track of the index of the last sample
@@ -77,10 +80,10 @@ class HerReplayPool(SimpleReplayPool):
 
                 if self.env.is_multiworld_env:
                     observation = {key: np.array([batch['next_observations.{}'.format(key)][batch_idx]])
-                                   for key in observation_keys}
+                                   for key in self._reward_keys}
                     #print(observation)
-                    rewards[batch_idx] = self.env.compute_reward(actions=np.array([actions[batch_idx]]),
-                                                                 observations=observation)
+                    rewards[batch_idx] = self.env.compute_rewards(actions=np.array([actions[batch_idx]]),
+                                                                 obs=observation)
                 else:
                     rewards[batch_idx] = self.env.compute_reward(achieved_goal=achieved_goals[batch_idx],
                                                                   desired_goal=future_achieved_goal,

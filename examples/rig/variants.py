@@ -50,7 +50,7 @@ ALGORITHM_PARAMS_BASE = {
         'train_every_n_steps': 20,
         'n_train_repeat': 1,
         'eval_render_mode': None,
-        'eval_n_episodes': 10,
+        'eval_n_episodes': 1,
         'eval_deterministic': True,
 
         'discount': 0.99,
@@ -211,7 +211,8 @@ ENVIRONMENT_PARAMS = {
             #'init_camera': sawyer_init_camera_zoomed_in,
             'imsize': 48,
             'observation_keys': ('latent_observation', 'latent_desired_goal'),
-            'reward_params': {'type': 'wrapped_env'}
+            'reward_params': {'type': 'wrapped_env'},
+            'goal_sampling_mode': 'env'
         }
     },
     'SawyerPushAndReachEnvEasy': {
