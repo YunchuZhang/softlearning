@@ -41,6 +41,7 @@ MAX_PATH_LENGTH_PER_DOMAIN = {
     'SawyerPushAndReachEnvEasy': 200,
     'SawyerPushAndReachEnvMedium': 200,
     'SawyerPushAndReachEnvHard': 200,
+    'SawyerPickupEnvYZEasy': 200
 }
 
 ALGORITHM_PARAMS_BASE = {
@@ -50,7 +51,7 @@ ALGORITHM_PARAMS_BASE = {
         'epoch_length': 5000,
         'train_every_n_steps': 10,
         'n_train_repeat': 1,
-        'eval_render_mode': None,
+        'eval_render_mode': None, 
         'eval_n_episodes': 10,
         'eval_deterministic': True,
 
@@ -122,9 +123,10 @@ NUM_EPOCHS_PER_DOMAIN = {
     'FetchPush': 1000,
     'FetchPickAndPlace': 1000,
     'SawyerReachXYEnv': 1000,
-    'SawyerPushAndReachEnvEasy': 4000,
-    'SawyerPushAndReachEnvMedium': 4000,
-    'SawyerPushAndReachEnvHard': 4000,
+    'SawyerPushAndReachEnvEasy': 2000,
+    'SawyerPushAndReachEnvMedium': 2000,
+    'SawyerPushAndReachEnvHard': 2000,
+    'SawyerPickupEnvYZEasy': 2000,
 }
 
 DEFAULT_ALGORITHM_DOMAIN_PARAMS = {
@@ -233,6 +235,11 @@ ENVIRONMENT_PARAMS = {
             'reward_type': 'puck_success'
         }
     },
+    #'SawyerPickupEnvYZEasy': {
+    #    'v0': {
+    #        'reward_type': 'hand_and_obj_success'
+    #    }
+    #},
     'FetchReach': {
         'v1': {
             'reward_type': 'dense'
