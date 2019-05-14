@@ -41,7 +41,8 @@ MAX_PATH_LENGTH_PER_DOMAIN = {
     'SawyerPushAndReachEnvEasy': 200,
     'SawyerPushAndReachEnvMedium': 200,
     'SawyerPushAndReachEnvHard': 200,
-    'SawyerPickupEnvYZEasy': 200
+    'SawyerPickupEnvYZEasy': 200,
+    'FlexFetchReach': 100,
 }
 
 ALGORITHM_PARAMS_BASE = {
@@ -127,6 +128,7 @@ NUM_EPOCHS_PER_DOMAIN = {
     'SawyerPushAndReachEnvMedium': 2000,
     'SawyerPushAndReachEnvHard': 2000,
     'SawyerPickupEnvYZEasy': 2000,
+    'FlexFetchReach': 1000,
 }
 
 DEFAULT_ALGORITHM_DOMAIN_PARAMS = {

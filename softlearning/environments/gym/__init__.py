@@ -69,6 +69,11 @@ GENERAL_ENVIRONMENT_SPECS = (
         'entry_point': (f'{CUSTOM_GYM_ENVIRONMENTS_PATH}'
                         '.multi_goal:MultiGoalEnv')
     },
+    {
+        'id': 'FlexFetchReach-v0',
+        'entry_point': (f'{CUSTOM_GYM_ENVIRONMENTS_PATH}'
+                        '.flex.flex_wrappers:FetchReach')
+    }
 )
 
 MULTIWORLD_ENVIRONMENT_SPECS = (
