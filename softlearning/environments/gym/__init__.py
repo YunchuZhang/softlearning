@@ -73,6 +73,11 @@ GENERAL_ENVIRONMENT_SPECS = (
         'id': 'FlexFetchReach-v0',
         'entry_point': (f'{CUSTOM_GYM_ENVIRONMENTS_PATH}'
                         '.flex.flex_wrappers:FetchReach')
+    },
+    {
+        'id': 'FlexFetchPush-v0',
+        'entry_point': (f'{CUSTOM_GYM_ENVIRONMENTS_PATH}'
+                        '.flex.flex_wrappers:FetchPush')
     }
 )
 

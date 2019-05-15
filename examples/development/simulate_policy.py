@@ -20,7 +20,7 @@ def parse_args():
     parser.add_argument('--num-rollouts', '-n', type=int, default=10)
     parser.add_argument('--render-mode', '-r',
                         type=str,
-                        default='human',
+                        default=None,
                         choices=('human', 'rgb_array', None),
                         help="Mode to render the rollouts in.")
     parser.add_argument('--deterministic', '-d',

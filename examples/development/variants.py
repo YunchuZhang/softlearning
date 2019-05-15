@@ -43,6 +43,7 @@ MAX_PATH_LENGTH_PER_DOMAIN = {
     'SawyerPushAndReachEnvHard': 200,
     'SawyerPickupEnvYZEasy': 200,
     'FlexFetchReach': 100,
+    'FlexFetchPush': 200,
 }
 
 ALGORITHM_PARAMS_BASE = {
@@ -129,6 +130,7 @@ NUM_EPOCHS_PER_DOMAIN = {
     'SawyerPushAndReachEnvHard': 2000,
     'SawyerPickupEnvYZEasy': 2000,
     'FlexFetchReach': 1000,
+    'FlexFetchPush': 1000,
 }
 
 DEFAULT_ALGORITHM_DOMAIN_PARAMS = {
@@ -309,8 +311,8 @@ HER_REPLAY_POOL_PARAMS = {
     'type': 'HerReplayPool',
     'kwargs': {
         'max_size': 1e6,
-        'desired_goal_key': 'state_desired_goal',
-        'achieved_goal_key': 'state_achieved_goal',
+        'desired_goal_key': 'desired_goal',
+        'achieved_goal_key': 'achieved_goal',
         'reward_key': 'rewards',
         'terminal_key': 'terminals'
     }
