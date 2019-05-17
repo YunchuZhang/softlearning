@@ -74,11 +74,7 @@ class SimpleSampler(BaseSampler):
                                         self._path_return)
             self._last_path_return = self._path_return
 
-            self.policy.reset()
-            self._current_observation = None
-            self._path_length = 0
-            self._path_return = 0
-            self._current_path = defaultdict(list)
+            self.reset()
 
             self._n_episodes += 1
         else:
@@ -103,3 +99,11 @@ class SimpleSampler(BaseSampler):
         })
 
         return diagnostics
+
+    def reset(self):
+        self.policy.reset()
+        self._current_observation = None
+        self._path_length = 0
+        self._path_return = 0
+        self._current_path = defaultdict(list)
+

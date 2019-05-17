@@ -94,11 +94,7 @@ class MultiAgentSampler(BaseSampler):
                                         np.max(self._path_returns))
             self._last_path_return = self._path_returns[-1]
 
-            self.policy.reset()
-            self._current_observations = None
-            self._path_length = 0
-            self._path_returns = np.zeros(self.num_agents)
-            self._current_paths = [defaultdict(list) for _ in range(self.num_agents)]
+            self.reset()
 
             self._n_episodes += 1
         else:
@@ -123,3 +119,10 @@ class MultiAgentSampler(BaseSampler):
         })
 
         return diagnostics
+
+    def reset(self):
+        self.policy.reset()
+        self._current_observations = None
+        self._path_length = 0
+        self._path_returns = np.zeros(self.num_agents)
+        self._current_paths = [defaultdict(list) for _ in range(self.num_agents)]

@@ -53,15 +53,18 @@ def rollouts(n_paths,
             max_path_length=path_length,
             min_pool_size=None,
             batch_size=None,
+            store_last_n_paths=n_paths,
         )
-
-    sampler.store_last_n_paths = n_paths
 
     sampler.initialize(env, policy, pool)
 
+    sampler.clear_last_n_paths()
+    sampler.reset()
+    sampler.store_last_n_paths = n_paths
+
     videos = []
 
-    while len(sampler._last_n_paths) < n_paths:
+    while len(sampler.get_last_n_paths()) < n_paths:
 
         images = []
 
