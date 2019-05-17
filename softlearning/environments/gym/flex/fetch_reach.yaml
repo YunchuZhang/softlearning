@@ -1,4 +1,4 @@
-scene_name: RL Fetch Push
+scene_name: RL Fetch Reach
 exp:
   max_ep_len: 1000
   frame_sampling:
@@ -8,8 +8,7 @@ exp:
 gym:
   renderBackend: 0
 scene:
-  NumAgents: 1
-  NumPerRow: 25
+  NumAgents: 50
 #solver
 # 0 - PBD (XPBD) 
 # 1 - Jacobi (Newton) 
@@ -21,16 +20,17 @@ scene:
   NumSubsteps: 2
   NumIterations: 4
   NumInnerIterations: 15
-  NumPostCollisionIterations: 15
   WarmStart: 0.0
   Pause: False
   DoLearning: True
   NumRenderSteps: 1
   NumPerRow: 25
-  Spacing: 4.5
+  Spacing: 5.
   SampleInitStates: True
   DoDeltaPlanarControl: True
   DoGripperControl: False # Keep False for Push task
   SparseRewards: True
   RenderTarget: True
   RelativeTarget: False
+  InitOnPlane: False
+  ControlOnPlane: False

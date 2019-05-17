@@ -4,7 +4,6 @@ import numpy as np
 
 from .base_sampler import BaseSampler
 
-
 class SimpleSampler(BaseSampler):
     def __init__(self, **kwargs):
         super(SimpleSampler, self).__init__(**kwargs)

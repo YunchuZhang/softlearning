@@ -3,4 +3,5 @@ from .dummy_sampler import DummySampler
 from .simple_sampler import SimpleSampler
 from .remote_sampler import RemoteSampler
 from .extra_policy_info_sampler import ExtraPolicyInfoSampler
+from .multiagent_sampler import MultiAgentSampler
 from .utils import rollout, rollouts

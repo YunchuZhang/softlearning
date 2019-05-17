@@ -78,6 +78,11 @@ GENERAL_ENVIRONMENT_SPECS = (
         'id': 'FlexFetchPush-v0',
         'entry_point': (f'{CUSTOM_GYM_ENVIRONMENTS_PATH}'
                         '.flex.flex_wrappers:FetchPush')
+    },
+    {
+        'id': 'FlexFetchReachMultiRobot-v0',
+        'entry_point': (f'{CUSTOM_GYM_ENVIRONMENTS_PATH}'
+                        '.flex.flex_wrappers:FetchReachMultiRobot')
     }
 )
 

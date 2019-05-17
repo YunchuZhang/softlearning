@@ -4,6 +4,7 @@ from itertools import count
 import gtimer as gt
 import math
 import os
+import copy
 
 import tensorflow as tf
 import numpy as np
@@ -259,6 +260,7 @@ class RLAlgorithm(tf.contrib.checkpoint.Checkpointable):
                 evaluation_env,
                 policy,
                 self.sampler._max_path_length,
+                sampler=copy.deepcopy(self.sampler),
                 render_mode=self._eval_render_mode)
 
         should_save_video = (

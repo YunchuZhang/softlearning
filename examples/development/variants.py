@@ -42,8 +42,10 @@ MAX_PATH_LENGTH_PER_DOMAIN = {
     'SawyerPushAndReachEnvMedium': 200,
     'SawyerPushAndReachEnvHard': 200,
     'SawyerPickupEnvYZEasy': 200,
+    'FetchReach': 50,
     'FlexFetchReach': 100,
-    'FlexFetchPush': 200,
+    'FlexFetchPush': 100,
+    'FlexFetchReachMultiRobot': 100,
 }
 
 ALGORITHM_PARAMS_BASE = {
@@ -131,6 +133,7 @@ NUM_EPOCHS_PER_DOMAIN = {
     'SawyerPickupEnvYZEasy': 2000,
     'FlexFetchReach': 1000,
     'FlexFetchPush': 1000,
+    'FlexFetchReachMultiRobot': 1000,
 }
 
 DEFAULT_ALGORITHM_DOMAIN_PARAMS = {
@@ -244,11 +247,11 @@ ENVIRONMENT_PARAMS = {
     #        'reward_type': 'hand_and_obj_success'
     #    }
     #},
-    'FetchReach': {
-        'v1': {
-            'reward_type': 'dense'
-        }
-    }
+    #'FetchReach': {
+    #    'v1': {
+    #        'reward_type': 'dense'
+    #    }
+    #}
 }
 
 
@@ -262,9 +265,18 @@ SIMPLE_SAMPLER_PARAMS = {
     }
 }
 
+MULTIAGENT_SAMPLER_PARAMS = {
+    'type': 'MultiAgentSampler',
+    'kwargs': {
+        'batch_size': 256,
+        'num_agents': 50,
+    }
+}
+
 
 SAMPLER_PARAMS_BASE = {
     'SimpleSampler': SIMPLE_SAMPLER_PARAMS,
+    'MultiAgentSampler': MULTIAGENT_SAMPLER_PARAMS,
 }
 
 
