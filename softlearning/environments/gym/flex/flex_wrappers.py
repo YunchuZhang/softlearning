@@ -5,17 +5,17 @@ from gym import spaces
 import gym
 import os
 
-CONFIG_DIRECTORY = os.path.dirname(os.path.abspath(__file__))
+CONFIG_DIRECTORY = os.path.dirname(os.path.abspath(__file__)) + '/cfg/'
 # FLEX_BIN_PATH = '/home/a/workspace/FlexRobotics/bin'
 FLEX_BIN_PATH = '/home/katadh/Documents/Research/flex/FlexRobotics/bin'
 
 
 class FetchReach(gym.Env):
         def __init__(self, render=0):
-                self.cfg = YamlConfig(CONFIG_DIRECTORY + '/cfg/fetch_reach.yaml')
+                self.cfg = YamlConfig(CONFIG_DIRECTORY + 'fetch_reach.yaml')
 
                 self.cfg['gym']['renderBackend'] = render
-                self.numAgents = self.cfg['scene']['NumAgents'] = 1
+                self.num_agentss = self.cfg['scene']['NumAgents'] = 1
                 self.cfg['scene']['NumPerRow'] = 1
                 self.cfg['scene']['SampleInitStates'] = True
                 self.cfg['scene']['InitialGrasp'] = False
@@ -57,11 +57,11 @@ class FetchReach(gym.Env):
 
 class FetchPush(gym.Env):
         def __init__(self, render=0):
-                self.cfg = YamlConfig(CONFIG_DIRECTORY + '/cfg/fetch_push.yaml')
+                self.cfg = YamlConfig(CONFIG_DIRECTORY + 'fetch_push.yaml')
 
                 self.cfg['gym']['renderBackend'] = render
-                self.numAgents = self.cfg['scene']['NumAgents'] = 1
-                self.cfg['scene']['NumPerRow'] = np.sqrt(np.floor(self.numAgents))
+                self.num_agentss = self.cfg['scene']['NumAgents'] = 1
+                self.cfg['scene']['NumPerRow'] = np.sqrt(np.floor(self.num_agentss))
                 self.cfg['scene']['SampleInitStates'] = True
                 self.cfg['scene']['InitialGrasp'] = False
                 self.cfg['scene']['RelativeTarget'] = False
@@ -102,10 +102,10 @@ class FetchPush(gym.Env):
 
 class FetchReachMultiRobot(gym.Env):
         def __init__(self, render=0):
-                self.cfg = YamlConfig(CONFIG_DIRECTORY + '/cfg/fetch_reach.yaml')
+                self.cfg = YamlConfig(CONFIG_DIRECTORY + 'fetch_reach.yaml')
 
                 self.num_agents = self.cfg['scene']['NumAgents'] = 50
-                self.cfg['scene']['NumPerRow'] = np.sqrt(np.floor(self.num_agents))
+                self.cfg['scene']['NumPerRow'] = np.sqrt(n.floor(self.num_agents))
                 self.cfg['gym']['renderBackend'] = render
                 self.cfg['scene']['SampleInitStates'] = True
                 self.cfg['scene']['InitialGrasp'] = False
@@ -147,15 +147,15 @@ class FetchReachMultiRobot(gym.Env):
 
 class FetchPushMultiRobot(gym.Env):
         def __init__(self):
-                self.cfg = YamlConfig(CONFIG_DIRECTORY + '/fetch_push.yaml')
+                self.cfg = YamlConfig(CONFIG_DIRECTORY + 'fetch_push.yaml')
 
                 self.num_agents = self.cfg['scene']['NumAgents'] = 50
-                self.cfg['scene']['NumPerRow'] = np.sqrt(np.floor(self.numAgents))
+                self.cfg['scene']['NumPerRow'] = np.sqrt(np.floor(self.num_agents))
                 self.cfg['scene']['SampleInitStates'] = True
                 self.cfg['scene']['InitialGrasp'] = False
                 self.cfg['scene']['RelativeTarget'] = False
                 self.cfg['scene']['DoDeltaPlanarControl'] = True
-                self.cfg['scene']['DoGripperControl'] = True
+                self.cfg['scene']['DoGripperControl'] = False
                 self.cfg['scene']['InitialGraspProbability'] = 1
                 self.cfg['scene']['DoWristRollControl'] = False
 
@@ -167,7 +167,7 @@ class FetchPushMultiRobot(gym.Env):
                 self.observation_space = spaces.Dict(
                         {"achieved_goal": spaces.Box(low=-np.inf, high=np.inf, shape=(3,), dtype=np.float32),
                          "desired_goal": spaces.Box(low=-np.inf, high=np.inf, shape=(3,), dtype=np.float32),
-                         "observation": spaces.Box(low=-np.inf, high=np.inf, shape=(14,), dtype=np.float32)})
+                         "observation": spaces.Box(low=-np.inf, high=np.inf, shape=(12,), dtype=np.float32)})
 
         def reset(self):
                 self.env.reset()
