@@ -31,9 +31,9 @@ class FetchReach(gym.Env):
                 self.previous_observation = None
                 self.action_space = self.env.action_space
                 self.observation_space = spaces.Dict(
-                        {"achieved_goal": spaces.Box(low=-np.inf, high=np.inf, shape=(3, 1), dtype=np.float32),
-                         "desired_goal": spaces.Box(low=-np.inf, high=np.inf, shape=(3, 1), dtype=np.float32),
-                         "observation": spaces.Box(low=-np.inf, high=np.inf, shape=(6, 1), dtype=np.float32)})
+                        {"achieved_goal": spaces.Box(low=-np.inf, high=np.inf, shape=(3,), dtype=np.float32),
+                         "desired_goal": spaces.Box(low=-np.inf, high=np.inf, shape=(3,), dtype=np.float32),
+                         "observation": spaces.Box(low=-np.inf, high=np.inf, shape=(6,), dtype=np.float32)})
 
         def reset(self):
                 self.env.reset()
@@ -105,7 +105,7 @@ class FetchReachMultiRobot(gym.Env):
                 self.cfg = YamlConfig(CONFIG_DIRECTORY + 'fetch_reach.yaml')
 
                 self.num_agents = self.cfg['scene']['NumAgents'] = 50
-                self.cfg['scene']['NumPerRow'] = np.sqrt(n.floor(self.num_agents))
+                self.cfg['scene']['NumPerRow'] = np.sqrt(np.floor(self.num_agents))
                 self.cfg['gym']['renderBackend'] = render
                 self.cfg['scene']['SampleInitStates'] = True
                 self.cfg['scene']['InitialGrasp'] = False
@@ -121,9 +121,9 @@ class FetchReachMultiRobot(gym.Env):
                 self.previous_observation = None
                 self.action_space = self.env.action_space
                 self.observation_space = spaces.Dict(
-                        {"achieved_goal": spaces.Box(low=-np.inf, high=np.inf, shape=(3, 1), dtype=np.float32),
-                         "desired_goal": spaces.Box(low=-np.inf, high=np.inf, shape=(3, 1), dtype=np.float32),
-                         "observation": spaces.Box(low=-np.inf, high=np.inf, shape=(6, 1), dtype=np.float32)})
+                        {"achieved_goal": spaces.Box(low=-np.inf, high=np.inf, shape=(3,), dtype=np.float32),
+                         "desired_goal": spaces.Box(low=-np.inf, high=np.inf, shape=(3,), dtype=np.float32),
+                         "observation": spaces.Box(low=-np.inf, high=np.inf, shape=(6,), dtype=np.float32)})
 
         def reset(self):
                 self.env.reset()
