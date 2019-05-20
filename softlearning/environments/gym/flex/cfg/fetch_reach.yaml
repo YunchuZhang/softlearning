@@ -32,5 +32,5 @@ scene:
   SparseRewards: True
   RenderTarget: True
   RelativeTarget: False
-  InitOnPlane: False
+  InitOnPlane: True
   ControlOnPlane: False
