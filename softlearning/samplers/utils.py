@@ -59,16 +59,16 @@ def rollouts(n_paths,
     sampler.initialize(env, policy, pool)
 
     sampler.clear_last_n_paths()
-    sampler.reset()
     sampler.store_last_n_paths = n_paths
 
     videos = []
 
     while len(sampler.get_last_n_paths()) < n_paths:
 
+        sampler.reset()
         images = []
-
         t = 0
+
         for t in range(path_length):
             observation, reward, terminal, info = sampler.sample()
 
@@ -82,7 +82,7 @@ def rollouts(n_paths,
                 else:
                     env.render()
 
-            if terminal:
+            if np.count_nonzero(terminal):
                 policy.reset()
                 if break_on_terminal: break
 

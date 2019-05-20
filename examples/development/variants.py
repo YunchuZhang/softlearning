@@ -44,8 +44,9 @@ MAX_PATH_LENGTH_PER_DOMAIN = {
     'SawyerPickupEnvYZEasy': 200,
     'FetchReach': 50,
     'FlexFetchReach': 100,
-    'FlexFetchPush': 100,
+    'FlexFetchPush': 200,
     'FlexFetchReachMultiRobot': 100,
+    'FlexFetchPushMultiRobot': 100,
 }
 
 ALGORITHM_PARAMS_BASE = {
@@ -53,7 +54,7 @@ ALGORITHM_PARAMS_BASE = {
 
     'kwargs': {
         'epoch_length': 5000,
-        'train_every_n_steps': 10,
+        'train_every_n_steps': 1,
         'n_train_repeat': 1,
         'eval_render_mode': None, 
         'eval_n_episodes': 10,
@@ -134,6 +135,7 @@ NUM_EPOCHS_PER_DOMAIN = {
     'FlexFetchReach': 1000,
     'FlexFetchPush': 1000,
     'FlexFetchReachMultiRobot': 1000,
+    'FlexFetchPushMultiRobot': 1000,
 }
 
 DEFAULT_ALGORITHM_DOMAIN_PARAMS = {

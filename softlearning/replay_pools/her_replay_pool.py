@@ -85,8 +85,6 @@ class HerReplayPool(SimpleReplayPool):
                     rewards[batch_idx] = self.env.compute_reward(achieved_goal=achieved_goals[batch_idx],
                                                                   desired_goal=future_achieved_goal,
                                                                   info=None)
-                if future_sample_offset == 0:
-                    terminals[batch_idx] = True
 
             batch[self._reward_key] = rewards
             batch[self._terminal_key] = terminals

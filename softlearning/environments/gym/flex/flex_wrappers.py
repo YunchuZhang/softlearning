@@ -57,7 +57,7 @@ class FetchReach(gym.Env):
 
 
 class FetchPush(gym.Env):
-        def __init__(self):
+        def __init__(self, render=0):
                 self.cfg = YamlConfig(CONFIG_DIRECTORY + '/fetch_push.yaml')
 
                 self.numAgents = self.cfg['scene']['NumAgents'] = 1
@@ -69,6 +69,8 @@ class FetchPush(gym.Env):
                 self.cfg['scene']['DoGripperControl'] = True
                 self.cfg['scene']['InitialGraspProbability'] = 1
                 self.cfg['scene']['DoWristRollControl'] = False
+
+                self.cfg['gym']['renderBackend'] = render
 
                 set_flex_bin_path(FLEX_BIN_PATH)
                 self.env = FlexVecEnv(self.cfg)
@@ -102,9 +104,6 @@ class FetchPush(gym.Env):
 
 class FetchReachMultiRobot(gym.Env):
         def __init__(self):
-                # Currently does not actually change the number of agents
-                self.num_agents = 50
-
                 self.cfg = YamlConfig(CONFIG_DIRECTORY + '/fetch_reach.yaml')
 
                 self.cfg['scene']['SampleInitStates'] = True
@@ -140,6 +139,53 @@ class FetchReachMultiRobot(gym.Env):
                 self.previous_observation = obs[:, :4].copy()
                 return {'observation': np.append(obs[:, :4], velocity, axis=1), 'achieved_goal': obs[:, :3],
                         'desired_goal': obs[:, 4:8]}, reward, done, {'is_success': reward + 1}
+
+        def compute_reward(self, achieved_goal, desired_goal, info):
+                return self.env.compute_reward(achieved_goal[None, :], desired_goal[None, :], info)
+
+
+class FetchPushMultiRobot(gym.Env):
+        def __init__(self):
+                self.cfg = YamlConfig(CONFIG_DIRECTORY + '/fetch_push.yaml')
+
+                self.numAgents = self.cfg['scene']['NumAgents'] = 50
+                self.cfg['scene']['NumPerRow'] = np.sqrt(np.floor(self.numAgents))
+                self.cfg['scene']['SampleInitStates'] = True
+                self.cfg['scene']['InitialGrasp'] = False
+                self.cfg['scene']['RelativeTarget'] = False
+                self.cfg['scene']['DoDeltaPlanarControl'] = True
+                self.cfg['scene']['DoGripperControl'] = True
+                self.cfg['scene']['InitialGraspProbability'] = 1
+                self.cfg['scene']['DoWristRollControl'] = False
+
+                set_flex_bin_path(FLEX_BIN_PATH)
+                self.env = FlexVecEnv(self.cfg)
+
+                self.previous_observation = None
+                self.action_space = self.env.action_space
+                self.observation_space = spaces.Dict(
+                        {"achieved_goal": spaces.Box(low=-np.inf, high=np.inf, shape=(3,), dtype=np.float32),
+                         "desired_goal": spaces.Box(low=-np.inf, high=np.inf, shape=(3,), dtype=np.float32),
+                         "observation": spaces.Box(low=-np.inf, high=np.inf, shape=(14,), dtype=np.float32)})
+
+        def reset(self):
+                self.env.reset()
+
+                action = np.zeros((50, 4))
+                action[:, -1] = -1
+                for i in range(20):
+                        obs, reward, done, info = self.env.step(action)
+                        self.previous_observation = np.concatenate((obs[:, :4], obs[:, 7:]), axis=1).copy()
+
+                return {'observation': np.concatenate((obs[:, :4], obs[:, 7:], np.zeros((50, 7))), axis=1), 'achieved_goal': obs[:, 7:],
+                        'desired_goal': obs[:, 4:7]}
+
+        def step(self, action):
+                obs, reward, done, info = self.env.step(action)
+                velocity = np.concatenate((obs[:, :4], obs[:, 7:]), axis=1) - self.previous_observation
+                self.previous_observation = np.concatenate((obs[:, :4], obs[:, 7:]), axis=1).copy()
+                return {'observation': np.concatenate((obs[:, :4], obs[:, 7:], velocity), axis=1), 'achieved_goal': obs[:, 7:],
+                        'desired_goal': obs[:, 4:7]}, reward, done, {'is_success': reward + 1}
 
         def compute_reward(self, achieved_goal, desired_goal, info):
                 return self.env.compute_reward(achieved_goal[None, :], desired_goal[None, :], info)

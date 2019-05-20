@@ -83,7 +83,12 @@ GENERAL_ENVIRONMENT_SPECS = (
         'id': 'FlexFetchReachMultiRobot-v0',
         'entry_point': (f'{CUSTOM_GYM_ENVIRONMENTS_PATH}'
                         '.flex.flex_wrappers:FetchReachMultiRobot')
-    }
+    },
+    {
+        'id': 'FlexFetchPushMultiRobot-v0',
+        'entry_point': (f'{CUSTOM_GYM_ENVIRONMENTS_PATH}'
+                        '.flex.flex_wrappers:FetchPushMultiRobot')
+    },
 )
 
 MULTIWORLD_ENVIRONMENT_SPECS = (
