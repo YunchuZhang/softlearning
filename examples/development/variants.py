@@ -46,16 +46,16 @@ MAX_PATH_LENGTH_PER_DOMAIN = {
     'FlexFetchReach': 100,
     'FlexFetchPush': 200,
     'FlexFetchReachMultiRobot': 100,
-    'FlexFetchPushMultiRobot': 100,
+    'FlexFetchPushMultiRobot': 250,
 }
 
 ALGORITHM_PARAMS_BASE = {
     'type': 'SAC',
 
     'kwargs': {
-        'epoch_length': 5000,
+        'epoch_length': 25000,
         'train_every_n_steps': 1,
-        'n_train_repeat': 1,
+        'n_train_repeat': 5,
         'eval_render_mode': None, 
         'eval_n_episodes': 10,
         'eval_deterministic': True,
@@ -135,7 +135,7 @@ NUM_EPOCHS_PER_DOMAIN = {
     'FlexFetchReach': 1000,
     'FlexFetchPush': 1000,
     'FlexFetchReachMultiRobot': 1000,
-    'FlexFetchPushMultiRobot': 1000,
+    'FlexFetchPushMultiRobot': 10000,
 }
 
 DEFAULT_ALGORITHM_DOMAIN_PARAMS = {
@@ -244,6 +244,16 @@ ENVIRONMENT_PARAMS = {
             'reward_type': 'puck_success'
         }
     },
+    'FlexFetchReachMultiRobot': {
+        'v0': {
+            'render': 1
+        }
+    },
+    'FlexFetchPushMultiRobot': {
+        'v0': {
+            'render': 0
+        }
+    }
     #'SawyerPickupEnvYZEasy': {
     #    'v0': {
     #        'reward_type': 'hand_and_obj_success'
