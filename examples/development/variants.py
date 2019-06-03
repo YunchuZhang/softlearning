@@ -41,14 +41,16 @@ MAX_PATH_LENGTH_PER_DOMAIN = {
     'SawyerPushAndReachEnvEasy': 200,
     'SawyerPushAndReachEnvMedium': 200,
     'SawyerPushAndReachEnvHard': 200,
-    'SawyerPickupEnvYZEasy': 200
+    'SawyerPickupEnvYZEasy': 200, 
+    'SawyerPickupEnv': 200,
+    'FetchReach' : 50,
 }
 
 ALGORITHM_PARAMS_BASE = {
     'type': 'SAC',
 
     'kwargs': {
-        'epoch_length': 5000,
+        'epoch_length': 10000, # 5000
         'train_every_n_steps': 10,
         'n_train_repeat': 1,
         'eval_render_mode': None, 
@@ -127,6 +129,7 @@ NUM_EPOCHS_PER_DOMAIN = {
     'SawyerPushAndReachEnvMedium': 2000,
     'SawyerPushAndReachEnvHard': 2000,
     'SawyerPickupEnvYZEasy': 2000,
+    'SawyerPickupEnv': 2000,
 }
 
 DEFAULT_ALGORITHM_DOMAIN_PARAMS = {
@@ -235,6 +238,27 @@ ENVIRONMENT_PARAMS = {
             'reward_type': 'puck_success'
         }
     },
+    'SawyerPickupEnv': {
+        'v0': {
+            #'reward_type': 'hand_success'
+            #'reward_type': 'hand_distance'
+            #'reward_type': 'hand_and_obj_success'
+            'reward_type': 'hand_and_obj_success'
+        },
+
+        'v1': {
+            #'reward_type': 'hand_success'
+            #'reward_type': 'hand_distance'
+            'reward_type': 'hand_and_obj_success'
+        },
+
+        'v2': {
+            #'reward_type': 'hand_success'
+            #'reward_type': 'hand_distance'
+            'reward_type': 'hand_obj_success'
+        },
+
+    },
     #'SawyerPickupEnvYZEasy': {
     #    'v0': {
     #        'reward_type': 'hand_and_obj_success'
@@ -242,7 +266,7 @@ ENVIRONMENT_PARAMS = {
     #},
     'FetchReach': {
         'v1': {
-            'reward_type': 'dense'
+            # 'reward_type': 'sparse'
         }
     }
 }
