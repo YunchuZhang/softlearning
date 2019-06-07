@@ -89,7 +89,7 @@ class RLAlgorithm(tf.contrib.checkpoint.Checkpointable):
         self.sampler.initialize(env, initial_exploration_policy, pool)
         while pool.size < self._n_initial_exploration_steps:
             self.sampler.sample()
-            print("initial exploration sample")
+            #print("initial exploration sample")
 
         print("finished initial exploration")
 
@@ -187,7 +187,7 @@ class RLAlgorithm(tf.contrib.checkpoint.Checkpointable):
                 self._timestep_after_hook()
                 gt.stamp('timestep_after_hook')
 
-            print("finished training paths")
+            #print("finished training paths")
 
             training_paths = self.sampler.get_last_n_paths(
                 math.ceil(self._epoch_length / self.sampler._max_path_length))

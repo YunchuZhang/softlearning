@@ -5,12 +5,19 @@ from .simple_replay_pool import SimpleReplayPool
 # Observation space should be a dict
 class HerReplayPool(SimpleReplayPool):
 
-    def __init__(self, env, *args, **kwargs):
+    def __init__(self,
+                 env,
+                 desired_goal_key,
+                 achieved_goal_key,
+                 reward_key,
+                 terminal_key,
+                 *args,
+                 **kwargs):
 
-        self._desired_goal_key = kwargs['desired_goal_key']
-        self._achieved_goal_key = kwargs['achieved_goal_key']
-        self._reward_key = kwargs['reward_key']
-        self._terminal_key = kwargs['terminal_key']
+        self._desired_goal_key = desired_goal_key
+        self._achieved_goal_key = achieved_goal_key
+        self._reward_key = reward_key
+        self._terminal_key = terminal_key
 
         self.env = env
 

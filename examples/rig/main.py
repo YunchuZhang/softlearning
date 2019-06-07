@@ -40,6 +40,7 @@ class ExperimentRunner(tune.Trainable):
         tf.keras.backend.clear_session()
 
     def _build(self):
+
         variant = copy.deepcopy(self._variant)
 
         vae_params = variant['vae_params']
@@ -63,11 +64,13 @@ class ExperimentRunner(tune.Trainable):
             get_environment_from_params(env_train_params))
 
         if 'evaluation' in environment_params:
-            env_eval_params = environment_params['evaluation']
-            env_eval_params['kwargs']['vae'] = vae
+            eval_env_params = environment_params['evaluation']
+            eval_env_params['kwargs']['vae'] = vae
+            #eval_env_params['kwargs']['render_rollouts'] = True
+            #eval_env_params['kwargs']['render_goals'] = True
 
             evaluation_environment = self.evaluation_environment = (
-                get_environment_from_params(env_eval_params))
+                get_environment_from_params(eval_env_params))
 
         else:
             evaluation_environment = training_environment

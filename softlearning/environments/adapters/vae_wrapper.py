@@ -3,6 +3,7 @@ import random
 import warnings
 
 import cv2
+import matplotlib.pyplot as plt
 import numpy as np
 
 import tensorflow as tf
@@ -18,6 +19,7 @@ from multiworld.core.image_env import ImageEnv
 from multiworld.envs.env_util import get_stat_in_paths, create_stats_ordered_dict
 from multiworld.envs.mujoco.cameras import sawyer_init_camera_zoomed_in
 
+import pdb
 
 class VAEWrappedEnv(SoftlearningEnv, MultitaskEnv):
     """This class wraps an image-based environment with a VAE.
@@ -62,8 +64,8 @@ class VAEWrappedEnv(SoftlearningEnv, MultitaskEnv):
         else:
             assert domain is None and task is None, (domain, task)
 
-        if normalize:
-            wrapped_env = NormalizeActionWrapper(wrapped_env)
+        #if normalize:
+        #    wrapped_env = NormalizeActionWrapper(wrapped_env)
 
         # Currently only works for multiworld environments
         if not isinstance(wrapped_env, ImageEnv):
@@ -82,6 +84,8 @@ class VAEWrappedEnv(SoftlearningEnv, MultitaskEnv):
         self.vae_input_ph = tf.placeholder(tf.float32, [None, vae.imlength])
         self.encoder_mu_notrain, self.encoder_var_notrain = self.vae.encode(self.vae_input_ph, training=False)
 
+        self.recons_test, _, _ = self.vae(self.vae_input_ph, training=False)
+
         self.representation_size = self.vae.representation_size
         self.input_channels = self.vae.input_channels
         self.sample_from_true_prior = sample_from_true_prior
@@ -93,6 +97,12 @@ class VAEWrappedEnv(SoftlearningEnv, MultitaskEnv):
             render_goals=render_goals,
             render_rollouts=render_rollouts,
         )
+        if render_rollouts:
+            self.env_plt = None
+            self.env_recon_plt = None
+            self.init_plt = None
+            self.init_recon_plt = None
+
         self.imsize = imsize
         self.reward_params = reward_params
         self.reward_type = self.reward_params.get("type", 'latent_distance')
@@ -131,6 +141,8 @@ class VAEWrappedEnv(SoftlearningEnv, MultitaskEnv):
         self._goal_sampling_mode = goal_sampling_mode
 
         self._session = tf.keras.backend.get_session()
+
+        self.past_goal_recon = None
 
 
     @property
@@ -189,9 +201,13 @@ class VAEWrappedEnv(SoftlearningEnv, MultitaskEnv):
         return self._update_obs(obs)
 
     def step(self, action):
+        #if self.render_rollouts:
+            #print("taking step")
         obs, reward, done, info = self._wrapped_env.step(action)
+        #print("OBSERVATION:", obs)
         new_obs = self._update_obs(obs)
         self._update_info(info, new_obs)
+        #print("NEW OBSERVATION:", new_obs)
         if not self.reward_type == 'wrapped_env':
             reward = self.compute_reward(
                 action,
@@ -203,7 +219,7 @@ class VAEWrappedEnv(SoftlearningEnv, MultitaskEnv):
 
     def _update_obs(self, obs):
         latent_obs = self._encode_one(obs[self.vae_input_observation_key].astype(np.float32))
-        print("graph length", len([n.name for n in tf.get_default_graph().as_graph_def().node]))
+        #print("graph length", len([n.name for n in tf.get_default_graph().as_graph_def().node]))
         obs['latent_observation'] = latent_obs
         obs['latent_achieved_goal'] = latent_obs
         obs['observation'] = latent_obs
@@ -332,6 +348,7 @@ class VAEWrappedEnv(SoftlearningEnv, MultitaskEnv):
         if self._goal_sampling_mode in {'presampled', 'env'}:
             self._wrapped_env.set_goal(goal)
 
+
     def get_diagnostics(self, paths, **kwargs):
         statistics = self._wrapped_env.get_diagnostics(paths, **kwargs)
         for stat_name_in_paths in ["vae_mdist", "vae_success", "vae_dist"]:
@@ -348,6 +365,7 @@ class VAEWrappedEnv(SoftlearningEnv, MultitaskEnv):
                 always_show_all_stats=True,
             ))
         return statistics
+
 
     """
     Other functions
@@ -437,7 +455,10 @@ class VAEWrappedEnv(SoftlearningEnv, MultitaskEnv):
             ).transpose()
             cv2.imshow('env', img)
             cv2.waitKey(1)
-            reconstruction = self._reconstruct_img(obs['image_observation']).transpose()
+            reconstruction = self._reconstruct_img(
+                obs['image_observation'].astype(np.float32)
+            ).transpose()
+            #print(reconstruction)
             cv2.imshow('env_reconstruction', reconstruction)
             cv2.waitKey(1)
             init_img = self._initial_obs['image_observation'].reshape(
@@ -448,10 +469,12 @@ class VAEWrappedEnv(SoftlearningEnv, MultitaskEnv):
             cv2.imshow('initial_state', init_img)
             cv2.waitKey(1)
             init_reconstruction = self._reconstruct_img(
-                self._initial_obs['image_observation']
+                self._initial_obs['image_observation'].astype(np.float32)
             ).transpose()
             cv2.imshow('init_reconstruction', init_reconstruction)
             cv2.waitKey(1)
+
+            #print("finished rollout render")
 
         if self.render_goals:
             goal = obs['image_desired_goal'].reshape(
@@ -461,6 +484,18 @@ class VAEWrappedEnv(SoftlearningEnv, MultitaskEnv):
             ).transpose()
             cv2.imshow('goal', goal)
             cv2.waitKey(1)
+            goal_reconstruction = self._reconstruct_img(
+                obs['image_desired_goal'].astype(np.float32)
+            ).transpose()
+            #if not (goal_reconstruction == self.past_goal_recon).all():
+            #    plt.figure()
+            #    plt.imshow(goal_reconstruction)
+            #    plt.show()
+
+            #self.past_goal_recon = goal_reconstruction
+            cv2.imshow('goal_reconstruction', goal_reconstruction)
+            cv2.waitKey(1)
+
 
     def _sample_vae_prior(self, batch_size):
         if self.sample_from_true_prior:
@@ -470,26 +505,34 @@ class VAEWrappedEnv(SoftlearningEnv, MultitaskEnv):
         n = np.random.randn(batch_size, self.representation_size)
         return sigma * n + mu
 
+
     def _decode(self, latents):
         reconstructions, _ = self.vae.decode(latents)
         decoded = reconstructions.eval(session=self._session)
         return decoded
 
+
     def _encode_one(self, img):
         return self._encode(img[None])[0]
+
 
     def _encode(self, imgs):
         mu = self._session.run(self.encoder_mu_notrain, feed_dict={self.vae_input_ph: imgs})
         return mu
 
+
     def _reconstruct_img(self, flat_img):
-        latent_distribution_params = self.vae.encode(flat_img.reshape(1,-1))
-        reconstructions, _ = self.vae.decode(latent_distribution_params[0])
-        imgs = reconstructions.eval(session=self._session)
+        #latent_distribution_params = self.vae.encode(flat_img.reshape(1,-1))
+        #reconstructions, _ = self.vae.decode(latent_distribution_params[0])
+        #imgs = reconstructions.eval(session=self._session)
+        #latent_obs = self._session.run(self.encoder_mu_notrain, feed_dict={self.vae_input_ph: flat_img.reshape(1,-1).astype(np.float32)})
+        #print(latent_obs)
+        imgs = self._session.run(self.recons_test, feed_dict={self.vae_input_ph: flat_img.reshape(1, -1)})
         imgs = imgs.reshape(
             1, self.input_channels, self.imsize, self.imsize
         )
         return imgs[0]
+
 
     def _image_and_proprio_from_decoded(self, decoded):
         if decoded is None:
@@ -519,7 +562,7 @@ class VAEWrappedEnv(SoftlearningEnv, MultitaskEnv):
         return self._wrapped_env.unwrapped
 
     def render(self, *args, **kwargs):
-        raise NotImplementedError
+        return self._wrapped_env.render(*args, **kwargs)
 
     def close(self, *args, **kwargs):
         return self._wrapped_env.close(*args, **kwargs)

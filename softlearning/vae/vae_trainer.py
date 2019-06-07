@@ -5,6 +5,7 @@ import math
 from numbers import Number
 from collections import OrderedDict
 
+
 def create_stats_ordered_dict(
         name,
         data,
@@ -137,7 +138,7 @@ class ConvVAETrainer():
     def __init__(
             self,
             model,
-            data_key,
+            data_keys,
             train_dataset=np.array([], dtype=np.uint8),
             test_dataset=np.array([], dtype=np.uint8),
             batch_size=128,
@@ -157,7 +158,7 @@ class ConvVAETrainer():
         self.beta = beta
         self.imsize = model.imsize
         self.do_scatterplot = do_scatterplot
-        self.data_key = data_key
+        self.data_keys = data_keys
 
         self.model = model
         self.representation_size = model.representation_size
@@ -255,6 +256,7 @@ class ConvVAETrainer():
         Y = Y[ind, :]
         return X, Y
 
+
     def train_epoch(self, epoch, sample_batch=None, batches=100, from_rl=False):
         training = True
         losses = []
@@ -263,12 +265,15 @@ class ConvVAETrainer():
         for batch_idx in range(batches):
             if sample_batch is not None:
                 data = sample_batch(self.batch_size)
-                next_obs = data[self.data_key]
+                next_obs = np.concatenate([
+                    data[key] for key in self.data_keys], axis=0)
             else:
                 next_obs = self.get_batch()
 
             _, loss, log_prob, kle = self._session.run([self.update_op, self.loss_train, self.log_prob_train, self.kle_train],
                                                 feed_dict={self.vae_input_ph : next_obs})
+
+            #print(loss)
             
             losses.append(loss)
             log_probs.append(log_prob)
@@ -290,6 +295,7 @@ class ConvVAETrainer():
             #  logger.record_tabular("train/Log Prob", np.mean(log_probs))
             #  logger.record_tabular("train/KL", np.mean(kles))
             #  logger.record_tabular("train/loss", np.mean(losses))
+
 
     def test_epoch(
             self,
@@ -328,7 +334,7 @@ class ConvVAETrainer():
 
                 comparison = np.concatenate(
                                 np.reshape(next_obs[:n, :self.imlength], [-1, self.imsize, self.imsize, self.input_channels]),
-                                np.reshape(recons, [self.batch_size, self.imsize, self.imsize, self.input_channels])[:n]
+                                np.reshape(reconstructions, [self.batch_size, self.imsize, self.imsize, self.input_channels])[:n]
                              )
                     
                 """Based on logger in rlkit core so skipped for now"""

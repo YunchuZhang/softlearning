@@ -19,6 +19,8 @@ def normalize_observation_fields(observation_space, name='observations'):
             for name, value in field.items()
         }
     elif isinstance(observation_space, (Box, Discrete)):
+        if 'image' in name:
+            observation_space.dtype = np.uint8
         fields = {
             name: {
                 'shape': observation_space.shape,
@@ -71,17 +73,23 @@ class SimpleReplayPool(FlexibleReplayPool):
             *args, fields_attrs=fields, **kwargs)
 
     def add_samples(self, samples):
+        from .utils import unnormalize_image
+
         if not isinstance(self._observation_space, Dict):
             return super(SimpleReplayPool, self).add_samples(samples)
 
         dict_observations = defaultdict(list)
         for observation in samples['observations']:
             for key, value in observation.items():
+                if 'image' in key and value is not None:
+                    value = unnormalize_image(value)
                 dict_observations[key].append(value)
 
         dict_next_observations = defaultdict(list)
         for next_observation in samples['next_observations']:
             for key, value in next_observation.items():
+                if 'image' in key and value is not None:
+                    value = unnormalize_image(value)
                 dict_next_observations[key].append(value)
 
         samples.update(
@@ -100,10 +108,13 @@ class SimpleReplayPool(FlexibleReplayPool):
 
         return super(SimpleReplayPool, self).add_samples(samples)
 
+
     def batch_by_indices(self,
                          indices,
                          field_name_filter=None,
                          observation_keys=None):
+        from .utils import normalize_image
+
         if not isinstance(self._observation_space, Dict):
             return super(SimpleReplayPool, self).batch_by_indices(
                 indices, field_name_filter=field_name_filter)
@@ -115,6 +126,11 @@ class SimpleReplayPool(FlexibleReplayPool):
 
         if observation_keys is None:
             observation_keys = tuple(self._observation_space.spaces.keys())
+
+        for key, value in batch.items():
+            if 'image' in key and value is not None:
+                value = normalize_image(value)
+                batch[key] = value
 
         observations = np.concatenate([
             batch['observations.{}'.format(key)]
@@ -138,6 +154,7 @@ class SimpleReplayPool(FlexibleReplayPool):
             }
 
         return batch
+
 
     def terminate_episode(self):
         pass

@@ -46,11 +46,11 @@ ALGORITHM_PARAMS_BASE = {
     'type': 'SAC_VAE',
 
     'kwargs': {
-        'epoch_length': 100,
-        'train_every_n_steps': 20,
+        'epoch_length': 2000,
+        'train_every_n_steps': 10,
         'n_train_repeat': 1,
         'eval_render_mode': None,
-        'eval_n_episodes': 1,
+        'eval_n_episodes': 10,
         'eval_deterministic': True,
 
         'discount': 0.99,
@@ -71,7 +71,7 @@ ALGORITHM_PARAMS_ADDITIONAL = {
             'target_entropy': 'auto',
             'store_extra_policy_info': False,
             'action_prior': 'uniform',
-            'n_initial_exploration_steps': int(1e2),
+            'n_initial_exploration_steps': int(1e3),
         }
     },
     'SQL': {
@@ -291,7 +291,7 @@ SIMPLE_REPLAY_POOL_PARAMS = {
     'kwargs': {
         'max_size': tune.sample_from(lambda spec: (
             {
-                'SimpleReplayPool': int(1e6),
+                'SimpleReplayPool': int(2e5),
                 'TrajectoryReplayPool': int(1e4),
             }.get(
                 spec.get('config', spec)
@@ -306,7 +306,7 @@ SIMPLE_REPLAY_POOL_PARAMS = {
 HER_REPLAY_POOL_PARAMS = {
     'type': 'HerReplayPool',
     'kwargs': {
-        'max_size': 1e4,
+        'max_size': 2e5,
         'desired_goal_key': 'state_desired_goal',
         'achieved_goal_key': 'state_achieved_goal',
         'reward_key': 'rewards',
@@ -315,9 +315,25 @@ HER_REPLAY_POOL_PARAMS = {
 }
 
 
+VAE_REPLAY_POOL_PARAMS = {
+    'type': 'VAEReplayPool',
+    'kwargs': {
+        'max_size': 2e5,
+        'latent_obs_key': 'observations.latent_observation',
+        'latent_key_pairs': {
+            'observations.image_observation': 'observations.latent_observation',
+            'observations.image_desired_goal': 'observations.latent_desired_goal',
+            'next_observations.image_observation': 'next_observations.latent_observation',
+            'next_observations.image_desired_goal': 'next_observations.latent_desired_goal',
+        }
+    }
+}
+
+
 REPLAY_POOL_PARAMS_BASE = {
     'SimpleReplayPool': SIMPLE_REPLAY_POOL_PARAMS,
-    'HerReplayPool': HER_REPLAY_POOL_PARAMS
+    'HerReplayPool': HER_REPLAY_POOL_PARAMS,
+    'VAEReplayPool': VAE_REPLAY_POOL_PARAMS
 }
 
 
@@ -342,8 +358,8 @@ def get_variant_spec_base(universe, domain, task, policy, algorithm, sampler, re
         },
         'vae_train_params': {
             'kwargs': {
-                'beta': 20,
-                'data_key': 'observations.image_observation'
+                'beta': 1,
+                'data_keys': ['observations.image_desired_goal']
             }
         },
         'environment_params': {

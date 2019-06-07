@@ -38,14 +38,15 @@ DEFAULT_MAX_PATH_LENGTH = 1000
 MAX_PATH_LENGTH_PER_DOMAIN = {
     'Point2DEnv': 50,
     'Pendulum': 200,
+    'SawyerReachXYEnv': 50
 }
 
 ALGORITHM_PARAMS_BASE = {
     'type': 'SAC',
 
     'kwargs': {
-        'epoch_length': 10000,
-        'train_every_n_steps': 20,
+        'epoch_length': 5000,
+        'train_every_n_steps': 10,
         'n_train_repeat': 1,
         'eval_render_mode': None,
         'eval_n_episodes': 10,
@@ -63,7 +64,7 @@ ALGORITHM_PARAMS_ADDITIONAL = {
         'type': 'SAC',
         'kwargs': {
             'reparameterize': REPARAMETERIZE,
-            'lr': 1e-4,
+            'lr': 1e-3,
             'target_update_interval': 1,
             'tau': 5e-3,
             'target_entropy': 'auto',
