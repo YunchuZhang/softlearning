@@ -16,7 +16,7 @@ def get_gaussian_policy(env, Q, **kwargs):
 def get_uniform_policy(env, *args, **kwargs):
     from .uniform_policy import UniformPolicy
     policy = UniformPolicy(
-        input_shapes=(env.active_observation_shape, ),
+        input_shapes=(*env.active_observation_shape, ),
         output_shape=env.action_space.shape)
 
     return policy

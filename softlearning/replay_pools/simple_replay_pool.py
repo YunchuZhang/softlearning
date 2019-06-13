@@ -36,8 +36,13 @@ def normalize_observation_fields(observation_space, name='observations'):
 
 
 class SimpleReplayPool(FlexibleReplayPool):
-    def __init__(self, env, *args, **kwargs):
+    def __init__(self,
+                 env,
+                 concat_observations=True,
+                 *args,
+                 **kwargs):
 
+        self.concat_observations=concat_observations
         self._observation_space = env.observation_space
         self._action_space = env.action_space
 
@@ -132,18 +137,19 @@ class SimpleReplayPool(FlexibleReplayPool):
                 value = normalize_image(value)
                 batch[key] = value
 
-        observations = np.concatenate([
-            batch['observations.{}'.format(key)]
-            for key in observation_keys
-        ], axis=-1)
+        if self.concat_observations:
+            observations = np.concatenate([
+                batch['observations.{}'.format(key)]
+                for key in observation_keys
+            ], axis=-1)
 
-        next_observations = np.concatenate([
-            batch['next_observations.{}'.format(key)]
-            for key in observation_keys
-        ], axis=-1)
+            next_observations = np.concatenate([
+                batch['next_observations.{}'.format(key)]
+                for key in observation_keys
+            ], axis=-1)
 
-        batch['observations'] = observations
-        batch['next_observations'] = next_observations
+            batch['observations'] = observations
+            batch['next_observations'] = next_observations
 
         if field_name_filter is not None:
             filtered_fields = self.filter_fields(

@@ -97,11 +97,10 @@ class GymAdapter(SoftlearningEnv):
             self.observation_keys
             or list(self._env.observation_space.spaces.keys()))
 
-        active_size = sum(
-            np.prod(self._env.observation_space.spaces[key].shape)
-            for key in observation_keys)
-
-        active_observation_shape = (active_size, )
+        active_observation_shape = [
+            self._env.observation_space.spaces[key].shape
+            for key in observation_keys
+        ]
 
         return active_observation_shape
 
@@ -113,9 +112,9 @@ class GymAdapter(SoftlearningEnv):
             self.observation_keys
             or list(self._env.observation_space.spaces.keys()))
 
-        observation = np.concatenate([
-            observation[key] for key in observation_keys
-        ], axis=-1)
+        observation = [
+            observation[key][None] for key in observation_keys
+        ]
 
         return observation
 
