@@ -77,10 +77,11 @@ def convnet_preprocessor(
     return model
 
 
-def 3dmap_processor(
+def map3D_preprocessor(
         input_shapes,
-        3dmap_model,
         output_size,
+        mapping_model=None,
+        data_pos={},
         data_format='channels_last',
         filters=None,
         kernal_sizes=None,
@@ -90,6 +91,7 @@ def 3dmap_processor(
         pool_sizes=None,
         pool_strides=None,
         dense_hidden_layer_sizes=(64, 64),
+        name='map3D_preprocessor',
         *args,
         **kwargs
 ):
@@ -98,9 +100,10 @@ def 3dmap_processor(
         for input_shape in input_shapes
     ]
 
-    #TODO PASS INPUTS THROUGH 3D map code
+    #TODO: Need to change this so that the inputs are mapped to the right place
+    # also not sure if this is the best way of doing this
+    conv_out = mapping_model(inputs[data_pos['images']], inputs[data_pos['zmaps']], inputs[data_pos['cam_angles']])
 
-    conv_out = input_tensor
     for num_filters, kernal_size, conv_stride, pool_size, pool_stride in zip(
             filters,
             kernal_sizes,
