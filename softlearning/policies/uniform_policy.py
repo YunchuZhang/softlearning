@@ -16,7 +16,7 @@ class UniformPolicy(BasePolicy):
         ]
         self._action_range = action_range
 
-        x = [tf.keras.layers.Flatten()(input) for input in self.inputs]
+        x = [tf.keras.layers.Flatten()(input_) for input_ in self.inputs]
 
         x = tf.keras.layers.Lambda(
             lambda x: tf.concat(x, axis=-1)

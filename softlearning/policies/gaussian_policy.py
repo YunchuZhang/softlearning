@@ -38,12 +38,13 @@ class GaussianPolicy(LatentSpacePolicy):
             for input_shape in input_shapes
         ]
 
-        conditions = tf.keras.layers.Lambda(
-            lambda x: tf.concat(x, axis=-1)
-        )(self.condition_inputs)
-
         if preprocessor is not None:
-            conditions = preprocessor(conditions)
+            conditions = preprocessor(self.condition_inputs)
+        else:
+            conditions = [tf.keras.layers.Flatten()(input_) for input_ in self.condition_inputs]
+            conditions = tf.keras.layers.Lambda(
+                lambda x: tf.concat(x, axis=-1)
+            )(conditions)
 
         shift_and_log_scale_diag = self._shift_and_log_scale_diag_net(
             input_shapes=(conditions.shape[1:], ),

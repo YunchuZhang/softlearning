@@ -75,3 +75,66 @@ def convnet_preprocessor(
     model = PicklableKerasModel(inputs, output, name=name)
 
     return model
+
+
+def 3dmap_processor(
+        input_shapes,
+        3dmap_model,
+        output_size,
+        data_format='channels_last',
+        filters=None,
+        kernal_sizes=None,
+        conv_strides=None,
+        activation=tf.nn.relu,
+        pool_type=None,
+        pool_sizes=None,
+        pool_strides=None,
+        dense_hidden_layer_sizes=(64, 64),
+        *args,
+        **kwargs
+):
+    inputs = [
+        tf.keras.layers.Input(shape=input_shape)
+        for input_shape in input_shapes
+    ]
+
+    #TODO PASS INPUTS THROUGH 3D map code
+
+    conv_out = input_tensor
+    for num_filters, kernal_size, conv_stride, pool_size, pool_stride in zip(
+            filters,
+            kernal_sizes,
+            conv_strides,
+            pool_sizes,
+            pool_strides):
+
+        conv_out = tf.keras.layers.Conv3D(
+            filters=num_filters,
+            kernal_size=kernal_size,
+            strides=stride,
+            activation=activation
+        )(conv_out)
+        # Get the Pool based on the pool name
+        conv_out = getattr(tf.keras.layers, pool_type)(
+            pool_size=pool_size, strides=pool_stride
+        )(conv_out)
+
+    flattened = tf.keras.layers.Flatten()(conv_out)
+
+    output = (
+        feedforward_model(
+            input_shapes=(flattened[1:].as_list(), ),
+            output_size=output_size,
+            hidden_layer_sizes=dense_hidden_layer_sizes,
+            activation='relu',
+            output_activation='linear',
+            *args,
+            **kwargs
+        )([flattened])
+        if dense_hidden_layer_sizes
+        else flattened)
+
+    model = PicklableKerasModel(inputs, output, name=name)
+
+    return model
+        

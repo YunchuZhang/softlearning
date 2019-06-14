@@ -44,6 +44,7 @@ class SAC(RLAlgorithm):
             store_extra_policy_info=False,
 
             save_full_state=False,
+            observation_keys=None,
             **kwargs,
     ):
         """
@@ -100,12 +101,16 @@ class SAC(RLAlgorithm):
 
         self._save_full_state = save_full_state
 
+        self._observation_keys = (
+            observation_keys
+            or list(self._training_environment.observation_space.spaces.keys()))
+
         observation_shape = self._training_environment.active_observation_shape
         action_shape = self._training_environment.action_space.shape
 
-        assert len(observation_shape) == 1, observation_shape
+        #assert len(observation_shape) == 1, observation_shape
         self._observation_shape = observation_shape
-        assert len(action_shape) == 1, action_shape
+        #assert len(action_shape) == 1, action_shape
         self._action_shape = action_shape
 
         self._build()
@@ -141,17 +146,31 @@ class SAC(RLAlgorithm):
         self._iteration_ph = tf.placeholder(
             tf.int64, shape=None, name='iteration')
 
-        self._observations_ph = tf.placeholder(
+        self._observations_phs = [tf.placeholder(
             tf.float32,
-            shape=(None, *self._observation_shape),
-            name='observation',
-        )
+            shape=(None, *shape),
+            name='observations.{}'.format(key)
+        ) for key, shape in zip(self._observation_keys,
+                                self._observation_shape)]
 
-        self._next_observations_ph = tf.placeholder(
+        self._next_observations_phs = [tf.placeholder(
             tf.float32,
-            shape=(None, *self._observation_shape),
-            name='next_observation',
-        )
+            shape=(None, *shape),
+            name='next_observations.{}'.format(key)
+        ) for key, shape in zip(self._observation_keys,
+                                self._observation_shape)]
+
+        #self._observations_ph = tf.placeholder(
+        #    tf.float32,
+        #    shape=(None, *self._observation_shape),
+        #    name='observation',
+        #)
+
+        #self._next_observations_ph = tf.placeholder(
+        #    tf.float32,
+        #    shape=(None, *self._observation_shape),
+        #    name='next_observation',
+        #)
 
         self._actions_ph = tf.placeholder(
             tf.float32,
@@ -184,12 +203,12 @@ class SAC(RLAlgorithm):
             )
 
     def _get_Q_target(self):
-        next_actions = self._policy.actions([self._next_observations_ph])
+        next_actions = self._policy.actions(self._next_observations_phs)
         next_log_pis = self._policy.log_pis(
-            [self._next_observations_ph], next_actions)
+            self._next_observations_phs, next_actions)
 
         next_Qs_values = tuple(
-            Q([self._next_observations_ph, next_actions])
+            Q([*self._next_observations_phs, next_actions])
             for Q in self._Q_targets)
 
         min_next_Q = tf.reduce_min(next_Qs_values, axis=0)
@@ -217,7 +236,7 @@ class SAC(RLAlgorithm):
         assert Q_target.shape.as_list() == [None, 1]
 
         Q_values = self._Q_values = tuple(
-            Q([self._observations_ph, self._actions_ph])
+            Q([*self._observations_phs, self._actions_ph])
             for Q in self._Qs)
 
         Q_losses = self._Q_losses = tuple(
@@ -257,8 +276,8 @@ class SAC(RLAlgorithm):
         and Section 5 in [1] for further information of the entropy update.
         """
 
-        actions = self._policy.actions([self._observations_ph])
-        log_pis = self._policy.log_pis([self._observations_ph], actions)
+        actions = self._policy.actions(self._observations_phs)
+        log_pis = self._policy.log_pis(self._observations_phs, actions)
 
         assert log_pis.shape.as_list() == [None, 1]
 
@@ -292,7 +311,7 @@ class SAC(RLAlgorithm):
             policy_prior_log_probs = 0.0
 
         Q_log_targets = tuple(
-            Q([self._observations_ph, actions])
+            Q([*self._observations_phs, actions])
             for Q in self._Qs)
         min_Q_log_target = tf.reduce_min(Q_log_targets, axis=0)
 
@@ -353,12 +372,20 @@ class SAC(RLAlgorithm):
         """Construct TensorFlow feed_dict from sample batch."""
 
         feed_dict = {
-            self._observations_ph: batch['observations'],
             self._actions_ph: batch['actions'],
-            self._next_observations_ph: batch['next_observations'],
             self._rewards_ph: batch['rewards'],
             self._terminals_ph: batch['terminals'],
         }
+
+        feed_dict.update({
+            self._observations_phs[i]: batch['observations.{}'.format(key)]
+            for i, key in enumerate(self._observation_keys)
+        })
+
+        feed_dict.update({
+            self._next_observations_phs[i]: batch['next_observations.{}'.format(key)]
+            for i, key in enumerate(self._observation_keys)
+        })
 
         if self._store_extra_policy_info:
             feed_dict[self._log_pis_ph] = batch['log_pis']
