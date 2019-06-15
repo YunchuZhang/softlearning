@@ -4,7 +4,6 @@ import numpy as np
 
 from .base_sampler import BaseSampler
 
-
 class SimpleSampler(BaseSampler):
     def __init__(self, **kwargs):
         super(SimpleSampler, self).__init__(**kwargs)
@@ -40,10 +39,10 @@ class SimpleSampler(BaseSampler):
         if self._current_observation is None:
             self._current_observation = self.env.reset()
 
-        action = self.policy.actions_np([
+        action = self.policy.actions_np(
             self.env.convert_to_active_observation(
-                self._current_observation)[None]
-        ])[0]
+                self._current_observation)
+        )[0]
 
         next_observation, reward, terminal, info = self.env.step(action)
         self._path_length += 1

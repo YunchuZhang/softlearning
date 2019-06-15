@@ -11,6 +11,16 @@ def get_convnet_preprocessor(observation_shape,
     return preprocessor
 
 
+def get_map3D_preprocessor(observation_shape,
+                           name='map3D_preprocessor',
+                           **kwargs):
+    from .convnet import map3D_preprocessor
+    preprocessor = map3D_preprocessor(
+        input_shapes=observation_shape, name=name, **kwargs
+    )
+    return preprocessor
+
+
 def get_feedforward_preprocessor(observation_shape,
                                  name='feedforward_preprocessor',
                                  **kwargs):
@@ -23,6 +33,7 @@ def get_feedforward_preprocessor(observation_shape,
 
 PREPROCESSOR_FUNCTIONS = {
     'convnet_preprocessor': get_convnet_preprocessor,
+    'map3D_preprocessor': get_map3D_preprocessor,
     'feedforward_preprocessor': get_feedforward_preprocessor,
     None: lambda *args, **kwargs: None
 }

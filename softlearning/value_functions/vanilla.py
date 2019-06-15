@@ -7,7 +7,7 @@ def create_feedforward_Q_function(observation_shape,
                                   observation_preprocessor=None,
                                   name='feedforward_Q',
                                   **kwargs):
-    input_shapes = (observation_shape, action_shape)
+    input_shapes = (*observation_shape, action_shape)
     preprocessors = (observation_preprocessor, None)
     return feedforward_model(
         input_shapes,
@@ -23,7 +23,7 @@ def create_feedforward_V_function(observation_shape,
                                   observation_preprocessor=None,
                                   name='feedforward_V',
                                   **kwargs):
-    input_shapes = (observation_shape, )
+    input_shapes = observation_shape
     preprocessors = (observation_preprocessor, None)
     return feedforward_model(
         input_shapes,

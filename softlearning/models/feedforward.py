@@ -18,6 +18,9 @@ def feedforward_model(input_shapes,
         for input_shape in input_shapes
     ]
 
+    # TODO: Change this preprocessor stuff so all inputs are passed to the
+    # same preprocessor, but not the action. Need to consider compatability
+    # issues with convnet_preprocessor
     if preprocessors is None:
         preprocessors = (None, ) * len(inputs)
 
