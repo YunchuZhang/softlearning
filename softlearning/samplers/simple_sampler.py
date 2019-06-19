@@ -1,6 +1,8 @@
 from collections import defaultdict
 
 import numpy as np
+import ipdb
+st = ipdb.set_trace
 
 from .base_sampler import BaseSampler
 
@@ -36,6 +38,7 @@ class SimpleSampler(BaseSampler):
         return processed_observation
 
     def sample(self):
+        # st()
         if self._current_observation is None:
             self._current_observation = self.env.reset()
 
@@ -57,6 +60,21 @@ class SimpleSampler(BaseSampler):
             next_observation=next_observation,
             info=info,
         )
+        
+        # processed_sample_filter = {}
+        # observation_keys = []
+
+        # if self.filter_keys:
+        #     for i in self.filter_keys:
+        #         i.split(".")
+        # processed_sample_filter["observations"] = {}
+        # processed_sample_filter["next_observations"] = {}
+
+        # for i in self.observation_keys:
+        #     processed_sample_filter["observations"][i] = processed_sample["observations"][i]
+
+        # processed_sample = processed_sample_filter
+        # st()
 
         for key, value in processed_sample.items():
             self._current_path[key].append(value)
@@ -66,7 +84,9 @@ class SimpleSampler(BaseSampler):
                 field_name: np.array(values)
                 for field_name, values in self._current_path.items()
             }
+            # st()
             self.pool.add_path(last_path)
+            # st()
             self._last_n_paths.appendleft(last_path)
 
             self._max_path_return = max(self._max_path_return,
@@ -88,7 +108,6 @@ class SimpleSampler(BaseSampler):
     def random_batch(self, batch_size=None, **kwargs):
         batch_size = batch_size or self._batch_size
         observation_keys = getattr(self.env, 'observation_keys', None)
-
         return self.pool.random_batch(
             batch_size, observation_keys=observation_keys, **kwargs)
 

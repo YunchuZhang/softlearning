@@ -7,12 +7,13 @@ class BaseSampler(object):
                  max_path_length,
                  min_pool_size,
                  batch_size,
-                 store_last_n_paths=10):
+                 store_last_n_paths=10,filter_keys=None):
         self._max_path_length = max_path_length
         self._min_pool_size = min_pool_size
         self._batch_size = batch_size
         self._store_last_n_paths = store_last_n_paths
         self._last_n_paths = deque(maxlen=store_last_n_paths)
+        self.filter_keys = filter_keys
 
         self.env = None
         self.policy = None

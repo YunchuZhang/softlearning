@@ -489,6 +489,30 @@ OG("0517_bulletpush3D_4_multicam_bn",
    #load_name = "0517_bulletpush3D_4_multicam_bn/0518_shuffle_no_bn_on_top_and_3d_lr3_bs2"
    )
 
+# OG("audrey_test",
+#    "mujocopickplace",
+#    #"bulletpushdata_cotrain",
+#    #"bulletpushdata_mitpush_same_200_split",
+#    #IS_DUMP_VIS=False,
+#    MASK_AGENT=False, 
+#    eager=True,
+#    #OUTLINE_PRECOMPUTED = True,
+#    #USE_OUTLINE=True,
+#    #IS_NOT_BN_IN_2D = True,
+#    IS_NOT_BN_IN_3D = True,
+#    lr=0.000001,
+#    opname="bulletpush3D_4", H =64, W=64,
+#    #data_dir="/projects/katefgroup/xian/data",
+#    data_dir="/projects/katefgroup/audrey/dynamics",
+#    AGGREGATION_METHOD = 'average', USE_MESHGRID=False,
+#    crop_size=32,
+#    max_T=1,
+#    DEBUG_UNPROJECT=True,
+#    fs_2D=8,
+#    BS=4, valp=500, is_trainval_diff_summ=True,
+#    radius = 0.8, boundary_to_center=0.9, fov = 110
+#    )
+
 OG("0517_bulletpush3D_4_multicam_bn_test",
    "bulletpushdata_mitpush_same_200_split",
    mode="test",

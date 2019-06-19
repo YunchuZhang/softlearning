@@ -1,5 +1,6 @@
 from softlearning.models.feedforward import feedforward_model
-
+import ipdb 
+st = ipdb.set_trace
 
 def create_feedforward_Q_function(observation_shape,
                                   action_shape,
@@ -9,6 +10,7 @@ def create_feedforward_Q_function(observation_shape,
                                   **kwargs):
     input_shapes = (*observation_shape, action_shape)
     preprocessors = (observation_preprocessor, None)
+    st()
     return feedforward_model(
         input_shapes,
         *args,

@@ -4,7 +4,8 @@ import numpy as np
 from gym.spaces import Box, Dict, Discrete
 
 from .flexible_replay_pool import FlexibleReplayPool
-
+import ipdb
+st= ipdb.set_trace
 
 def normalize_observation_fields(observation_space, name='observations'):
     if isinstance(observation_space, Dict):
@@ -39,12 +40,14 @@ class SimpleReplayPool(FlexibleReplayPool):
     def __init__(self,
                  env,
                  concat_observations=True,
+                 filter_key=None,
                  *args,
                  **kwargs):
 
         self.concat_observations=concat_observations
         self._observation_space = env.observation_space
         self._action_space = env.action_space
+        st()
 
         observation_fields = normalize_observation_fields(self._observation_space)
         # It's a bit memory inefficient to save the observations twice,
@@ -73,6 +76,9 @@ class SimpleReplayPool(FlexibleReplayPool):
                 },
             }
         }
+        if filter_key:
+            fields = {i:fields[i] for i in filter_key}
+
 
         super(SimpleReplayPool, self).__init__(
             *args, fields_attrs=fields, **kwargs)
@@ -82,6 +88,7 @@ class SimpleReplayPool(FlexibleReplayPool):
 
         if not isinstance(self._observation_space, Dict):
             return super(SimpleReplayPool, self).add_samples(samples)
+
 
         dict_observations = defaultdict(list)
         for observation in samples['observations']:

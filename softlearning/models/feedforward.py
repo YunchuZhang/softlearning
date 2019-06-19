@@ -1,5 +1,6 @@
 import tensorflow as tf
-
+import ipdb 
+st = ipdb.set_trace
 
 from softlearning.utils.keras import PicklableKerasModel
 
@@ -17,7 +18,7 @@ def feedforward_model(input_shapes,
         tf.keras.layers.Input(shape=input_shape)
         for input_shape in input_shapes
     ]
-
+    # st()
     # TODO: Change this preprocessor stuff so all inputs are passed to the
     # same preprocessor, but not the action. Need to consider compatability
     # issues with convnet_preprocessor

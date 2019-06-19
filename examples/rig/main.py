@@ -6,7 +6,8 @@ import sys
 
 import tensorflow as tf
 from ray import tune
-
+import ipdb
+st = ipdb.set_trace
 from softlearning.environments.utils import get_environment_from_params
 from softlearning.algorithms.utils import get_algorithm_from_variant
 from softlearning.policies.utils import get_policy_from_variant, get_policy
@@ -40,7 +41,6 @@ class ExperimentRunner(tune.Trainable):
         tf.keras.backend.clear_session()
 
     def _build(self):
-
         variant = copy.deepcopy(self._variant)
 
         vae_params = variant['vae_params']
@@ -75,10 +75,10 @@ class ExperimentRunner(tune.Trainable):
         else:
             evaluation_environment = training_environment
 
-
         replay_pool = self.replay_pool = (
             get_replay_pool_from_variant(variant, training_environment))
         sampler = self.sampler = get_sampler_from_variant(variant)
+        st()
         Qs = self.Qs = get_Q_function_from_variant(
             variant, training_environment)
         policy = self.policy = get_policy_from_variant(

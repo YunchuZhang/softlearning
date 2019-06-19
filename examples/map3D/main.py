@@ -3,7 +3,6 @@ import copy
 import glob
 import pickle
 import sys
-
 import tensorflow as tf
 from ray import tune
 
@@ -71,6 +70,7 @@ class ExperimentRunner(tune.Trainable):
         initialize_tf_variables(self._session, only_uninitialized=True)
 
         self._built = True
+
 
     def _train(self):
         if not self._built:
