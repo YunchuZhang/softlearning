@@ -25,7 +25,7 @@ class HerReplayPool(SimpleReplayPool):
         self._fraction_future_goals = 0.8
 
         # Need to include both 'state' and non-'state' for image_env vs base environment
-        self._reward_keys = ('state_achieved_goal', 'state_desired_goal', 'achieved_goal', 'desired_goal')
+        self._reward_keys = ('image_achieved_goal', 'image_desired_goal')
 
         super(HerReplayPool, self).__init__(*args, env, **kwargs)
 
@@ -101,18 +101,18 @@ class HerReplayPool(SimpleReplayPool):
             batch[self._reward_key] = rewards
             batch[self._terminal_key] = terminals
 
-        observations = np.concatenate([
-            batch['observations.{}'.format(key)]
-            for key in observation_keys
-        ], axis=-1)
+        # observations = np.concatenate([
+        #     batch['observations.{}'.format(key)]
+        #     for key in observation_keys
+        # ], axis=-1)
 
-        next_observations = np.concatenate([
-            batch['next_observations.{}'.format(key)]
-            for key in observation_keys
-        ], axis=-1)
+        # next_observations = np.concatenate([
+        #     batch['next_observations.{}'.format(key)]
+        #     for key in observation_keys
+        # ], axis=-1)
 
-        batch['observations'] = observations
-        batch['next_observations'] = next_observations
+        # batch['observations'] = observations
+        # batch['next_observations'] = next_observations
 
         if field_name_filter is not None:
             filtered_fields = self.filter_fields(

@@ -9,7 +9,7 @@ import tensorflow as tf
 from os import listdir
 from os.path import join, isdir
 import pathos.pools as pp
-from utils.tfutil import _bytes_feature
+from utils_map.tfutil import _bytes_feature
 #from z import read_zmap, read_norm
 # from bv import read_bv,read_bv_schematic
 from ipdb import set_trace as st
@@ -184,6 +184,7 @@ def tf_for_obj(obj_np):
     # st()
     T=1
     # st()
+    # st()
     # print(obj_np[0].shape,"shapes")
     assert obj_np[0].shape == (T,54, const.H, const.W, 4)
     assert obj_np[1].shape == (T,54, 2)
@@ -222,6 +223,8 @@ def tf_for_obj(obj_np):
 
     # convert everything to f32 except categories
     # images, angles, tree_constraint, mask,vox = list(map(np.float32, obj_np[:5]))
+    pickled_observations = {"observations.image_observation":obj_np[0],"observations.depth_observation":obj_np[2],"observations.cam_angles_observation":obj_np[1]}
+
     # st()
     example = tf.train.Example(features=tf.train.Features(feature={
         'images': _bytes_feature(obj_np[0].tostring()),
@@ -235,7 +238,7 @@ def tf_for_obj(obj_np):
         # 'resize_factor': _bytes_feature(resize_factor.tostring()),
         # "raw_seq_filename": _bytes_feature(tf.compat.as_bytes(raw_seq_filename))
     }))
-    return example
+    return example,pickled_observations
 
 
 def out_path_for_obj_path(obj_path):
@@ -257,8 +260,11 @@ def job(xxx_todo_changeme):
     (i, obj_path) = xxx_todo_changeme
     print(i, obj_path)
     out_path = out_path_for_obj_path(obj_path)
-    tfexample = tf_for_obj(np_for_obj(obj_path))
-
+    tfexample,dictVal = tf_for_obj(np_for_obj(obj_path))
+    import pickle
+    pickle.dump(dictVal,open("og.p","wb"))
+    out_path="out"
+    st()
     write_tf(tfexample, out_path)
 
 
@@ -277,4 +283,4 @@ def main(mt):
 
 
 if __name__ == '__main__':
-    main(True)  # set false for debug
+    main(False)  # set false for debug

@@ -1,14 +1,14 @@
 import sys
 import math
 import time
-
+from softlearning import __init__path
 from options import OptionGroup as OG
 import options
 
 opname = 'reconstruction'
 net_name = "3d"
 eager = False
-
+run_full = False
 # unlikely to change constants:
 NUM_VIEWS = 3
 NUM_PREDS = 1
@@ -106,7 +106,7 @@ tb_dir = 'log'
 data_dir = 'data'
 ckpt_dir = 'ckpt'
 ckpt_cfg_dir = 'ckpt_cfg'
-
+loss="CE"
 
 
 # debug flags
@@ -247,6 +247,7 @@ options.data_options("bulletpushdata_0520_val_5steps_20", "bulletpushdata_0520_v
 options.data_options("bulletpushdata_cotrain", "bulletpushdata_cotrain", add_suffix=True)
 options.data_options("bulletpushdata_200_debug", "bulletpushdata_200_debug", add_suffix=True)
 
+options.data_options("mujocopickplace", "mujocopickplace", add_suffix=True)
 
 OG("bulletpush",
    "bulletpushdata_basic_h2",
@@ -677,6 +678,7 @@ OG("0520_bulletpush3D_4_multicam_bn_mask_nview1_vp",
    NUM_VIEWS=1,
    train_vp=True,
    train_on_val = True,
+   # run_full=True,
    #IS_NOT_BN_IN_3D = True,
    lr=0.0001,
    opname="bulletpush3D_4_cotrain", H =64, W=64,
@@ -684,7 +686,7 @@ OG("0520_bulletpush3D_4_multicam_bn_mask_nview1_vp",
    data_dir="/projects/katefgroup/fish/dynamics",
    AGGREGATION_METHOD = 'average', USE_MESHGRID=False,
    crop_size=32,
-   max_T=1,
+   max_T=0,
    CONVLSTM_DIM = 256,
    CONVLSTM_STEPS = 6,
    radius = 5.0, boundary_to_center=1.5, fov=36, fs_2D=8,
@@ -694,6 +696,39 @@ OG("0520_bulletpush3D_4_multicam_bn_mask_nview1_vp",
    #load_name = "0517_bulletpush3D_4_multicam_bn_mask/xian_bs4"
 
 )
+
+OG("rl_new",
+   "mujocopickplace",
+   #"bulletpushdata_cotrain",
+   #"bulletpushdata_mitpush_same_200_split",
+   #IS_DUMP_VIS=False,
+   MASK_AGENT=False, 
+   eager=False,
+   #OUTLINE_PRECOMPUTED = True,
+   #USE_OUTLINE=True,
+   #IS_NOT_BN_IN_2D = True,
+   IS_NOT_BN_IN_3D = True,
+   lr=0.001,
+   max_T = 0,
+   opname="bulletpush3D_4_cotrain", H =64, W=64,
+   CONVLSTM_STEPS = 6,
+   #data_dir="/projects/katefgroup/xian/data",
+   data_dir="/home/mprabhud/rl/softlearning/softlearning/map3D",
+   AGGREGATION_METHOD = 'average', USE_MESHGRID=False,
+   crop_size=32,
+   split_format=True,
+   # max_T=1,
+   CONVLSTM_DIM = 256,
+   IS_VIEW_PRED=True,
+   radius = 0.8, boundary_to_center=0.9, fov = 110, fs_2D=8, # 0.8 0.2 20
+   DEBUG_UNPROJECT=False,
+   BS=1 , valp=500, is_trainval_diff_summ=True,
+   run_full=False,
+   ckpt_cfg_dir="/home/mprabhud/rl/softlearning/softlearning/map3D/ckpt_cfg",
+   load_name="rl_new/1"
+   #load_name = "0517_bulletpush3D_4_multicam_bn_mask/no_bn_on_top_3d_shuffle"
+   #load_name = "0517_bulletpush3D_4_multicam_bn_mask/xian_bs4"
+   )
 
 
 

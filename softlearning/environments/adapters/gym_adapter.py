@@ -3,7 +3,8 @@
 import numpy as np
 import gym
 from gym import spaces, wrappers
-
+import ipdb
+st = ipdb.set_trace
 from .softlearning_env import SoftlearningEnv
 from softlearning.environments.gym import register_environments
 from softlearning.environments.gym.wrappers import NormalizeActionWrapper
@@ -64,8 +65,8 @@ class GymAdapter(SoftlearningEnv):
             assert (domain is not None and task is not None), (domain, task)
             env_id = f"{domain}-{task}"
             env = gym.envs.make(env_id, **kwargs)
-        else:
-            assert domain is None and task is None, (domain, task)
+        # else:
+        #     assert domain is None and task is None, (domain, task)
 
         if isinstance(env, wrappers.TimeLimit) and unwrap_time_limit:
             # Remove the TimeLimit wrapper that sets 'done = True' when
@@ -92,7 +93,7 @@ class GymAdapter(SoftlearningEnv):
         """Shape for the active observation based on observation_keys."""
         if not isinstance(self._env.observation_space, spaces.Dict):
             return super(GymAdapter, self).active_observation_shape
-
+        # st()
         observation_keys = (
             self.observation_keys
             or list(self._env.observation_space.spaces.keys()))

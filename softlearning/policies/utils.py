@@ -1,12 +1,15 @@
 from copy import deepcopy
 
 from softlearning.preprocessors.utils import get_preprocessor_from_params
-
+import ipdb
+st = ipdb.set_trace
 
 def get_gaussian_policy(env, Q, **kwargs):
     from .gaussian_policy import FeedforwardGaussianPolicy
+    # st()
+    observation_shape =  kwargs.pop("observation_shape")
     policy = FeedforwardGaussianPolicy(
-        input_shapes=env.active_observation_shape,
+        input_shapes=observation_shape,
         output_shape=env.action_space.shape,
         **kwargs)
 
@@ -34,8 +37,10 @@ def get_policy(policy_type, *args, **kwargs):
 
 def get_policy_from_variant(variant, env, Qs, *args, **kwargs):
     policy_params = variant['policy_params']
+
     policy_type = policy_params['type']
     policy_kwargs = deepcopy(policy_params['kwargs'])
+    policy_obs_shape = policy_params['input_shape']
 
     preprocessor_params = policy_kwargs.pop('preprocessor_params', None)
     preprocessor = get_preprocessor_from_params(env, preprocessor_params)
@@ -45,6 +50,7 @@ def get_policy_from_variant(variant, env, Qs, *args, **kwargs):
         *args,
         Q=Qs[0],
         preprocessor=preprocessor,
+        observation_shape=policy_obs_shape,
         **policy_kwargs,
         **kwargs)
 

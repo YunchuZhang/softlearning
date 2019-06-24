@@ -30,6 +30,8 @@ def feedforward_model(input_shapes,
         for preprocessor, input_ in zip(preprocessors, inputs)
     ]
 
+    preprocessed_inputs = [tf.keras.layers.Flatten()(i) if len(i.shape) > 2 else i  for i in preprocessed_inputs]
+    
     concatenated = tf.keras.layers.Lambda(
         lambda x: tf.concat(x, axis=-1)
     )(preprocessed_inputs)

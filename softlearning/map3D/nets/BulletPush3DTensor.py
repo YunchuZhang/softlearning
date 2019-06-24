@@ -1,8 +1,10 @@
 #from nets.Net import Net
 from .BulletPushBase import BulletPushBase
 import constants as const
-import utils
-from utils import voxel
+const.set_experiment("rl_new")
+
+import utils_map as utils
+from utils_map import voxel
 import tensorflow as tf
 import numpy as np
 from munch import Munch
@@ -16,6 +18,7 @@ import copy
 import tfquaternion as tfq
 import ipdb
 st = ipdb.set_trace
+import __init__path
 """
 * agent state prediction is separated from object prediction
 
@@ -24,240 +27,242 @@ st = ipdb.set_trace
 
 
 class BulletPush3DTensor4_cotrain(BulletPushBase):
-   
+
+
+
     def loss(self):
-        self.gt_delta = tf.concat([self.target.delta_obj_state, self.target.delta_agent_state], 2)[:, :self.T, ...]
-
-        gt_xyz_delta, gt_orn_delta, gt_vel_delta = self.split_states_g(self.gt_delta, mode="h13")
-        est_xyz_delta, est_orn_delta, est_vel_delta = self.split_states_g(self.est_dyn_states_delta, mode="h13")
-
-        if const.IS_PREDICT_CONTACT:
-
-            contact_logits = tf.nn.sigmoid_cross_entropy_with_logits(labels=self.gt_is_contact,\
-              logits=self.pred_contact)
-            contact_loss = tf.reduce_sum(contact_logits * self.target.all_class[:,:self.T, :self.nobjs])/tf.reduce_sum(self.target.all_class[:,:self.T, :self.nobjs])
-
-            contact_acc = tf.reduce_sum(tf.dtypes.cast(tf.equal(tf.math.greater(self.gt_is_contact, 0.5),\
-                   tf.math.greater(tf.nn.sigmoid(self.pred_contact), 0.5)), dtype=tf.float32)\
-                   * self.target.all_class[:,:self.T, :self.nobjs])\
-                  /tf.reduce_sum(self.target.all_class[:,:self.T, :self.nobjs])
-
-
-        angle_loss = utils.losses.quatloss(est_orn_delta, gt_orn_delta,
-                                           mask=self.target.all_class[:,:self.T,:])
-
-        angle_l1_loss = utils.losses.l1loss(est_orn_delta, gt_orn_delta,
-                                           mask=tf.expand_dims(self.target.all_class[:,:self.T,:], -1))
-
-        pos_loss = utils.losses.l2loss(est_xyz_delta, gt_xyz_delta,
-                                       mask = tf.expand_dims(self.target.all_class[:,:self.T,:], -1))
-        vel_loss = utils.losses.l2loss(est_vel_delta, gt_vel_delta,
-                                       mask = tf.expand_dims(self.target.all_class[:,:self.T,:], -1))
-
-        pos_l1_loss = utils.losses.l1loss(est_xyz_delta, gt_xyz_delta,
-                                       mask = tf.expand_dims(self.target.all_class[:,:self.T,:], -1))
-        vel_l1_loss = utils.losses.l1loss(est_vel_delta, gt_vel_delta,
-                                       mask = tf.expand_dims(self.target.all_class[:,:self.T,:], -1))
-
-        ### view pred loss ###
-        if const.train_vp:
+        if const.loss=="l1":
+            vp_loss = utils.losses.l1loss(self.predicted_view, self.inputs.state.vp_frame)            
+        else:
             vp_loss = utils.losses.binary_ce_loss(self.predicted_view, self.inputs.state.vp_frame)
-        else:
-            vp_loss = tf.constant(0.0)
 
-        #TODO_MIHIR not sure what is the purpose of this 
-
-        # is_trainset_coeff = tf.cond(tf.equal(self.input.q_ph, 0), true_fn=lambda:1.0, false_fn=lambda:0.0)
-        if self.is_training:
-            is_trainset_coeff =1.0
-        else:
-            is_trainset_coeff =0.0
-        
-        tf.summary.image('pred_view', self.predicted_view, max_outputs=1, collections=["scalar"])
-        tf.summary.image('gt_view', self.inputs.state.vp_frame, max_outputs=1, collections=["scalar"])
-
-        self.dyn_loss = pos_l1_loss + angle_l1_loss + vel_l1_loss
-
-        if const.IS_PREDICT_CONTACT:
-            #if const.PRETRAIN_CONTACT:
-            #    self.dyn_loss = contact_loss
-            #else:
-            self.dyn_loss += 0.01 * contact_loss
-
-        # do not train dynamics in trainv mode
-        self.real_total_loss = self.dyn_loss + vp_loss
-        self.loss_ = self.dyn_loss*is_trainset_coeff + vp_loss
-
-        pos_eud_loss = utils.losses.eudloss(est_xyz_delta, gt_xyz_delta,\
-                                            mask = self.target.all_class[:,:self.T,:])
-        # agent loss
-        est_xyz_delta_object, est_xyz_delta_agent = self.split_states_g(est_xyz_delta)
-        est_orn_delta_object, est_orn_delta_agent = self.split_states_g(est_orn_delta)
-        gt_xyz_delta_object, gt_xyz_delta_agent = self.split_states_g(gt_xyz_delta)
-        gt_orn_delta_object, gt_orn_delta_agent = self.split_states_g(gt_orn_delta)
-
-        tf.summary.histogram("gt_xyz_delta_object", tf.linalg.norm(gt_xyz_delta_object[:,0,0,:], axis=-1),\
-                             collections=["scalar", "all"])
-        tf.summary.histogram("gt_xyz_delta_object_l1", tf.reduce_sum(tf.abs(gt_xyz_delta_object[:,0,0,:]), axis=-1),\
-                             collections=["scalar", "all"])
-
-        tf.summary.histogram("est_xyz_delta_object", tf.linalg.norm(est_xyz_delta_object[:,0,0,:], axis=-1),\
-                             collections=["scalar", "all"])
-        tf.summary.histogram("est_xyz_delta_object_l1", tf.reduce_sum(tf.abs(est_xyz_delta_object[:,0,0,:]), axis=-1),\
-                             collections=["scalar", "all"])
-        tf.summary.histogram("gt_orn_delta_object", tf.linalg.norm(\
-                              tf.sign(gt_orn_delta_object[:, 0,0,:1]) * gt_orn_delta_object[:,0,0,:] \
-                              - tf.expand_dims(self.orn_base, 0), axis=-1), collections=["scalar", "all"])
-        tf.summary.histogram("gt_orn_delta_object_l1", tf.reduce_sum(tf.abs(\
-                              tf.sign(gt_orn_delta_object[:, 0, 0, :1]) * gt_orn_delta_object[:,0,0,:] \
-                              - tf.expand_dims(self.orn_base, 0)), axis=-1), collections=["scalar", "all"])
-
-        mask_object, mask_agent = self.split_states_g(tf.expand_dims(self.target.all_class[:,:self.T,:], -1))
-
-        pos_object_loss = utils.losses.l2loss(est_xyz_delta_object, gt_xyz_delta_object,
-                                            mask=mask_object)
-
-        pos_object_eud_loss = utils.losses.eudloss(est_xyz_delta_object, gt_xyz_delta_object,\
-                                                    mask = mask_object[...,0])
-
-
-        pos_agent_loss = utils.losses.l2loss(est_xyz_delta_agent, gt_xyz_delta_agent,
-                                            mask=mask_agent)
-
-        
-
-        orn_object_loss = utils.losses.quatloss(est_orn_delta_object, gt_orn_delta_object,
-                                            mask=mask_object[...,0])
-
-        orn_object_angle_loss = utils.losses.quat_angle_loss(est_orn_delta_object, gt_orn_delta_object, mask=mask_object[...,0])
-
-
-        orn_agent_loss = utils.losses.quatloss(est_orn_delta_agent, gt_orn_delta_agent,
-                                            mask=mask_agent[...,0])
-
-        # object_loss
-
-        self.loss_ = utils.tfpy.print_val(self.loss_, "loss")
-        self.real_total_loss = utils.tfpy.print_val(self.real_total_loss, "real_total_loss")
-        if const.DEBUG_LOSSES:
-            vp_loss = utils.tfpy.print_val(vp_loss, "vp_loss")
-            angle_loss = utils.tfpy.print_val(angle_loss, "angle_loss")
-            angle_l1_loss = utils.tfpy.print_val(angle_loss, "angle_l1_loss")
-            pos_eud_loss = utils.tfpy.print_val(pos_eud_loss, "pos_eud_loss")
-            pos_loss = utils.tfpy.print_val(pos_loss, "pos_loss")
-            vel_loss = utils.tfpy.print_val(vel_loss, "vel_loss")
-
-            pos_object_loss = utils.tfpy.print_val(pos_object_loss, "pos_object_loss")
-            pos_agent_loss = utils.tfpy.print_val(pos_agent_loss, "pos_agent_loss")
-            orn_object_loss = utils.tfpy.print_val(orn_object_loss, "orn_object_loss")
-            orn_agent_loss = utils.tfpy.print_val(orn_agent_loss, "orn_agent_loss")
-
-            est_orn  = tf.concat([est_orn_delta_object[:,:,0,:], gt_orn_delta_object[:,:,0,:]], -1)
-            est_orn = utils.tfpy.print_val(est_orn, "est_orn_delta_object")
-            if const.IS_PREDICT_CONTACT:
-                contact_loss = utils.tfpy.print_val(contact_loss, "contact_loss")
-                contact_acc = utils.tfpy.print_val(contact_acc, "contact_acc")
-
-            self.extra_out["est_orn_delta_object"] = est_orn
-        summ.scalar("loss", self.loss_, collections=["scalar", "all"])
-        summ.scalar("real_total_loss", self.real_total_loss, collections=["scalar", "all"])
-        summ.scalar("angle_loss", angle_loss, collections=["scalar", "all"])
-        summ.scalar("angle_l1_loss", angle_l1_loss, collections=["scalar", "all"])
-        summ.scalar("pos_loss", pos_loss, collections=["scalar", "all"])
-        summ.scalar("pos_eud_loss", pos_eud_loss, collections=["scalar", "all"])
-        summ.scalar("vel_loss", vel_loss, collections=["scalar", "all"])
-        summ.scalar("pos_object_loss", pos_object_loss, collections=["scalar", "all"])
-        summ.scalar("pos_agent_loss", pos_agent_loss, collections=["scalar", "all"])
-        summ.scalar("orn_object_loss", orn_object_loss, collections=["scalar", "all"])
-        summ.scalar("orn_agent_loss", orn_agent_loss, collections=["scalar", "all"])
+        self.loss_ = vp_loss
+        vp_loss = utils.tfpy.print_val(vp_loss, "vp_loss")
         summ.scalar("viewpred_loss", vp_loss, collections=["scalar", "all"])
+        # if const.run_full:
+        #     self.gt_delta = tf.concat([self.target.delta_obj_state, self.target.delta_agent_state], 2)[:, :self.T, ...]
 
-        summ.scalar("pos_object_eud_loss", pos_object_eud_loss, collections=["scalar", "all"])
-        summ.scalar("orn_object_angle_loss", orn_object_angle_loss, collections=["scalar", "all"])
+        #     gt_xyz_delta, gt_orn_delta, gt_vel_delta = self.split_states_g(self.gt_delta, mode="h13")
+        #     est_xyz_delta, est_orn_delta, est_vel_delta = self.split_states_g(self.est_dyn_states_delta, mode="h13")
 
-        if const.IS_PREDICT_CONTACT:
-            summ.scalar("contact_loss", contact_loss, collections=["scalar", "all"])
-            summ.scalar("contact_acc", contact_acc, collections=["scalar", "all"])
+        #     if const.IS_PREDICT_CONTACT:
+
+        #         contact_logits = tf.nn.sigmoid_cross_entropy_with_logits(labels=self.gt_is_contact,\
+        #           logits=self.pred_contact)
+        #         contact_loss = tf.reduce_sum(contact_logits * self.target.all_class[:,:self.T, :self.nobjs])/tf.reduce_sum(self.target.all_class[:,:self.T, :self.nobjs])
+
+        #         contact_acc = tf.reduce_sum(tf.dtypes.cast(tf.equal(tf.math.greater(self.gt_is_contact, 0.5),\
+        #                tf.math.greater(tf.nn.sigmoid(self.pred_contact), 0.5)), dtype=tf.float32)\
+        #                * self.target.all_class[:,:self.T, :self.nobjs])\
+        #               /tf.reduce_sum(self.target.all_class[:,:self.T, :self.nobjs])
 
 
- 
-    def setup_data(self, data):
-        # data = self.input.data(index)
+        #     angle_loss = utils.losses.quatloss(est_orn_delta, gt_orn_delta,
+        #                                        mask=self.target.all_class[:,:self.T,:])
+
+        #     angle_l1_loss = utils.losses.l1loss(est_orn_delta, gt_orn_delta,
+        #                                        mask=tf.expand_dims(self.target.all_class[:,:self.T,:], -1))
+
+        #     pos_loss = utils.losses.l2loss(est_xyz_delta, gt_xyz_delta,
+        #                                    mask = tf.expand_dims(self.target.all_class[:,:self.T,:], -1))
+        #     vel_loss = utils.losses.l2loss(est_vel_delta, gt_vel_delta,
+        #                                    mask = tf.expand_dims(self.target.all_class[:,:self.T,:], -1))
+
+        #     pos_l1_loss = utils.losses.l1loss(est_xyz_delta, gt_xyz_delta,
+        #                                    mask = tf.expand_dims(self.target.all_class[:,:self.T,:], -1))
+        #     vel_l1_loss = utils.losses.l1loss(est_vel_delta, gt_vel_delta,
+        #                                    mask = tf.expand_dims(self.target.all_class[:,:self.T,:], -1))
+
+        #     ### view pred loss ###
+        #     if const.train_vp:
+        #         vp_loss = utils.losses.binary_ce_loss(self.predicted_view, self.inputs.state.vp_frame)
+        #     else:
+        #         vp_loss = tf.constant(0.0)
+        #     is_trainset_coeff = tf.cond(tf.equal(self.input.q_ph, 0), true_fn=lambda:1.0, false_fn=lambda:0.0)
+
+        #     tf.summary.image('pred_view', self.predicted_view, max_outputs=1, collections=["scalar"])
+        #     tf.summary.image('gt_view', self.inputs.state.vp_frame, max_outputs=1, collections=["scalar"])
+
+        #     self.dyn_loss = pos_l1_loss + angle_l1_loss + vel_l1_loss
+
+        #     if const.IS_PREDICT_CONTACT:
+        #         #if const.PRETRAIN_CONTACT:
+        #         #    self.dyn_loss = contact_loss
+        #         #else:
+        #         self.dyn_loss += 0.01 * contact_loss
+
+        #     # do not train dynamics in trainv mode
+        #     self.real_total_loss = self.dyn_loss + vp_loss
+        #     self.loss_ = self.dyn_loss*is_trainset_coeff + vp_loss
+
+        #     pos_eud_loss = utils.losses.eudloss(est_xyz_delta, gt_xyz_delta,\
+        #                                         mask = self.target.all_class[:,:self.T,:])
+        #     # agent loss
+        #     est_xyz_delta_object, est_xyz_delta_agent = self.split_states_g(est_xyz_delta)
+        #     est_orn_delta_object, est_orn_delta_agent = self.split_states_g(est_orn_delta)
+        #     gt_xyz_delta_object, gt_xyz_delta_agent = self.split_states_g(gt_xyz_delta)
+        #     gt_orn_delta_object, gt_orn_delta_agent = self.split_states_g(gt_orn_delta)
+
+        #     tf.summary.histogram("gt_xyz_delta_object", tf.linalg.norm(gt_xyz_delta_object[:,0,0,:], axis=-1),\
+        #                          collections=["scalar", "all"])
+        #     tf.summary.histogram("gt_xyz_delta_object_l1", tf.reduce_sum(tf.abs(gt_xyz_delta_object[:,0,0,:]), axis=-1),\
+        #                          collections=["scalar", "all"])
+
+        #     tf.summary.histogram("est_xyz_delta_object", tf.linalg.norm(est_xyz_delta_object[:,0,0,:], axis=-1),\
+        #                          collections=["scalar", "all"])
+        #     tf.summary.histogram("est_xyz_delta_object_l1", tf.reduce_sum(tf.abs(est_xyz_delta_object[:,0,0,:]), axis=-1),\
+        #                          collections=["scalar", "all"])
+        #     tf.summary.histogram("gt_orn_delta_object", tf.linalg.norm(\
+        #                           tf.sign(gt_orn_delta_object[:, 0,0,:1]) * gt_orn_delta_object[:,0,0,:] \
+        #                           - tf.expand_dims(self.orn_base, 0), axis=-1), collections=["scalar", "all"])
+        #     tf.summary.histogram("gt_orn_delta_object_l1", tf.reduce_sum(tf.abs(\
+        #                           tf.sign(gt_orn_delta_object[:, 0, 0, :1]) * gt_orn_delta_object[:,0,0,:] \
+        #                           - tf.expand_dims(self.orn_base, 0)), axis=-1), collections=["scalar", "all"])
+
+        #     mask_object, mask_agent = self.split_states_g(tf.expand_dims(self.target.all_class[:,:self.T,:], -1))
+
+        #     pos_object_loss = utils.losses.l2loss(est_xyz_delta_object, gt_xyz_delta_object,
+        #                                         mask=mask_object)
+
+        #     pos_object_eud_loss = utils.losses.eudloss(est_xyz_delta_object, gt_xyz_delta_object,\
+        #                                                 mask = mask_object[...,0])
+
+
+        #     pos_agent_loss = utils.losses.l2loss(est_xyz_delta_agent, gt_xyz_delta_agent,
+        #                                         mask=mask_agent)
+
             
+
+        #     orn_object_loss = utils.losses.quatloss(est_orn_delta_object, gt_orn_delta_object,
+        #                                         mask=mask_object[...,0])
+
+        #     orn_object_angle_loss = utils.losses.quat_angle_loss(est_orn_delta_object, gt_orn_delta_object, mask=mask_object[...,0])
+
+
+        #     orn_agent_loss = utils.losses.quatloss(est_orn_delta_agent, gt_orn_delta_agent,
+        #                                         mask=mask_agent[...,0])
+
+        #     # object_loss
+
+        #     self.loss_ = utils.tfpy.print_val(self.loss_, "loss")
+        #     self.real_total_loss = utils.tfpy.print_val(self.real_total_loss, "real_total_loss")
+        #     if const.DEBUG_LOSSES:
+        #         vp_loss = utils.tfpy.print_val(vp_loss, "vp_loss")
+        #         angle_loss = utils.tfpy.print_val(angle_loss, "angle_loss")
+        #         angle_l1_loss = utils.tfpy.print_val(angle_loss, "angle_l1_loss")
+        #         pos_eud_loss = utils.tfpy.print_val(pos_eud_loss, "pos_eud_loss")
+        #         pos_loss = utils.tfpy.print_val(pos_loss, "pos_loss")
+        #         vel_loss = utils.tfpy.print_val(vel_loss, "vel_loss")
+
+        #         pos_object_loss = utils.tfpy.print_val(pos_object_loss, "pos_object_loss")
+        #         pos_agent_loss = utils.tfpy.print_val(pos_agent_loss, "pos_agent_loss")
+        #         orn_object_loss = utils.tfpy.print_val(orn_object_loss, "orn_object_loss")
+        #         orn_agent_loss = utils.tfpy.print_val(orn_agent_loss, "orn_agent_loss")
+
+        #         est_orn  = tf.concat([est_orn_delta_object[:,:,0,:], gt_orn_delta_object[:,:,0,:]], -1)
+        #         est_orn = utils.tfpy.print_val(est_orn, "est_orn_delta_object")
+        #         if const.IS_PREDICT_CONTACT:
+        #             contact_loss = utils.tfpy.print_val(contact_loss, "contact_loss")
+        #             contact_acc = utils.tfpy.print_val(contact_acc, "contact_acc")
+
+        #         self.extra_out["est_orn_delta_object"] = est_orn
+        #     summ.scalar("loss", self.loss_, collections=["scalar", "all"])
+        #     summ.scalar("real_total_loss", self.real_total_loss, collections=["scalar", "all"])
+        #     summ.scalar("angle_loss", angle_loss, collections=["scalar", "all"])
+        #     summ.scalar("angle_l1_loss", angle_l1_loss, collections=["scalar", "all"])
+        #     summ.scalar("pos_loss", pos_loss, collections=["scalar", "all"])
+        #     summ.scalar("pos_eud_loss", pos_eud_loss, collections=["scalar", "all"])
+        #     summ.scalar("vel_loss", vel_loss, collections=["scalar", "all"])
+        #     summ.scalar("pos_object_loss", pos_object_loss, collections=["scalar", "all"])
+        #     summ.scalar("pos_agent_loss", pos_agent_loss, collections=["scalar", "all"])
+        #     summ.scalar("orn_object_loss", orn_object_loss, collections=["scalar", "all"])
+        #     summ.scalar("orn_agent_loss", orn_agent_loss, collections=["scalar", "all"])
+
+        #     summ.scalar("pos_object_eud_loss", pos_object_eud_loss, collections=["scalar", "all"])
+        #     summ.scalar("orn_object_angle_loss", orn_object_angle_loss, collections=["scalar", "all"])
+
+        #     if const.IS_PREDICT_CONTACT:
+        #         summ.scalar("contact_loss", contact_loss, collections=["scalar", "all"])
+        #         summ.scalar("contact_acc", contact_acc, collections=["scalar", "all"])
+
+
+    def setup_data(self, data):
+        # st()
         self.__dict__.update(data)
 
         # create ground truth voxel at the first step
 
-        self.T = const.max_T
-        self.rollout_T = np.minimum(self.T, 5)
-        self.nobjs = 2
-        self.njoints = 1
-        self.object_static_dim = 4
-        self.crop_size=const.crop_size
+        self.T = const.max_T +1
+        # self.crop_size=const.crop_size
         self.bs = const.BS
-        self.orn_base = tf.constant([1, 0, 0, 0], dtype=tf.float32)
-
-        voxel_size = int(const.S)
         # calculate the rois
         # batch_size x nrois x 3, from [-1.5, 1.5] -> [0,1]
-        self.input_images = self.inputs.state.frames[:, 0, :, :, :, :]
-        self.object_first_state = self.inputs.state.obj_state[:, 0, :, :]
+        # self.input_images = self.inputs.state.frames[:, 0, :, :, :, :]
+        if const.run_full:
+            self.rollout_T = np.minimum(self.T, 5)
+            self.nobjs = 2
+            self.njoints = 1
+            self.object_static_dim = 4
 
-        object_state = self.inputs.state.obj_state[:, 0, :, :]
-        object_size = self.inputs.state.resize_factor
-        self.gt_object_size = object_size
-        self.object_state = object_state
-        voxel = self.inputs.state.voxels
-        if const.IS_PREDICT_CONTACT:
-            self.gt_is_contact = self.compute_contact()
+            self.orn_base = tf.constant([1, 0, 0, 0], dtype=tf.float32)
+            voxel_size = int(const.S)
+            self.object_first_state = self.inputs.state.obj_state[:, 0, :, :]
 
-        #self.debug_output()
-        #import ipdb; ipdb.set_trace()
-        """
-        this is not working
-        import imageio
-        #import ipdb; ipdb.set_trace()
-        for batch_id in range(2):
-            imageio.mimsave(f"dump/input_b{batch_id}.gif",\
-               [img.numpy() for img in tf.unstack(self.inputs.state.frames[batch_id, :, 0, :, :, 2:], axis=0)], 'GIF', duration=5)
-        self.inputs.state.frames
-        """
-        self.pad_out, extra_out = self.draw_object_in_3dtensor(object_state, object_size, voxel, voxel_size, debug=True)
+            object_state = self.inputs.state.obj_state[:, 0, :, :]
+            object_size = self.inputs.state.resize_factor
+            self.gt_object_size = object_size
+            self.object_state = object_state
+            voxel = self.inputs.state.voxels
+            if const.IS_PREDICT_CONTACT:
+                self.gt_is_contact = self.compute_contact()
 
-        if const.MASK_AGENT:
-            hand_mask = np.zeros((64, 64, 64, 1))
-            hand_mask[:, 10:, :, :] = 1
-            hand_mask[26:38, :10, 26:38] = 1
-            hand_mask = tf.constant(hand_mask, dtype=tf.float32)
-            hand_mask = tf.tile(tf.expand_dims(hand_mask, 0), [const.BS * self.T, 1, 1, 1, 1])
+            #self.debug_output()
+            #import ipdb; ipdb.set_trace()
+            """
+            this is not working
+            import imageio
+            #import ipdb; ipdb.set_trace()
+            for batch_id in range(2):
+                imageio.mimsave(f"dump/input_b{batch_id}.gif",\
+                   [img.numpy() for img in tf.unstack(self.inputs.state.frames[batch_id, :, 0, :, :, 2:], axis=0)], 'GIF', duration=5)
+            self.inputs.state.frames
+            """
+            self.pad_out, extra_out = self.draw_object_in_3dtensor(object_state, object_size, voxel, voxel_size, debug=True)
 
-            hand_class_labels = tf.ones(tf.shape(hand_mask)[0], dtype=tf.float32)
-            hand_size = 32 * tf.ones(tf.shape(hand_mask)[0], dtype=tf.int32)
+            if const.MASK_AGENT:
+                hand_mask = np.zeros((64, 64, 64, 1))
+                hand_mask[:, 10:, :, :] = 1
+                hand_mask[26:38, :10, 26:38] = 1
+                hand_mask = tf.constant(hand_mask, dtype=tf.float32)
+                hand_mask = tf.tile(tf.expand_dims(hand_mask, 0), [const.BS * self.T, 1, 1, 1, 1])
 
-            agent_loc = tf.reshape(self.inputs.state.agent_state[:,:,:,:3], [const.BS * self.T, 3])
-            ones = tf.ones_like(agent_loc[..., 0], dtype=tf.float32)
-            agent_center = ((tf.stack([agent_loc[..., 0], 0.5*ones, \
-                       agent_loc[..., 2]], -1)/const.boundary_to_center) + 1.0) * 0.5
+                hand_class_labels = tf.ones(tf.shape(hand_mask)[0], dtype=tf.float32)
+                hand_size = 32 * tf.ones(tf.shape(hand_mask)[0], dtype=tf.int32)
 
-            agent_hwd = tf.stack([ones * 0.35, ones, ones * 0.35], -1)/(2 * const.boundary_to_center)
-            agent_rois = tf.stack([agent_center - agent_hwd, agent_center + agent_hwd], -1)
-            #agent should be [z, 1, x], hwd = [d, 1, w]
+                agent_loc = tf.reshape(self.inputs.state.agent_state[:,:,:,:3], [const.BS * self.T, 3])
+                ones = tf.ones_like(agent_loc[..., 0], dtype=tf.float32)
+                agent_center = ((tf.stack([agent_loc[..., 0], 0.5*ones, \
+                           agent_loc[..., 2]], -1)/const.boundary_to_center) + 1.0) * 0.5
 
-            f = lambda x: utils.voxel.crop_mask_to_full_mask_precise(*x)
+                agent_hwd = tf.stack([ones * 0.35, ones, ones * 0.35], -1)/(2 * const.boundary_to_center)
+                agent_rois = tf.stack([agent_center - agent_hwd, agent_center + agent_hwd], -1)
+                #agent should be [z, 1, x], hwd = [d, 1, w]
 
-            agent_mask, agent_rois = tf.map_fn(f, [agent_rois, hand_class_labels, hand_mask, hand_size], dtype=(tf.float32, tf.int32))
-            self.agent_mask = agent_mask
-        if const.DEBUG_UNPROJECT: 
-            from utils.vis_np import save_voxel
-            for t in range(self.T):
-                pad_out, _ = self.draw_object_in_3dtensor(self.inputs.state.obj_state[:, t, :, :],\
-                    object_size, voxel, voxel_size, debug=True)
-        
-                for batch_id in range(const.BS):
-                    save_voxel(pad_out[batch_id * self.nobjs, :, :, :, 0], f"dump/pad_out_t{t}_b{batch_id}.binvox")
-                    #save_voxel(agent_mask[batch_id * self.T + t, :, :, :, 0], f"dump/agent_mask_t{t}_b{batch_id}.binvox")
-        self.gt_mask = self.pad_out
+                f = lambda x: utils.voxel.crop_mask_to_full_mask_precise(*x)
 
+                agent_mask, agent_rois = tf.map_fn(f, [agent_rois, hand_class_labels, hand_mask, hand_size], dtype=(tf.float32, tf.int32))
+                self.agent_mask = agent_mask
+            if const.DEBUG_UNPROJECT: 
+                from utils.vis_np import save_voxel
+                for t in range(self.T):
+                    pad_out, _ = self.draw_object_in_3dtensor(self.inputs.state.obj_state[:, t, :, :],\
+                        object_size, voxel, voxel_size, debug=True)
+            
+                    for batch_id in range(const.BS):
+                        save_voxel(pad_out[batch_id * self.nobjs, :, :, :, 0], f"dump/pad_out_t{t}_b{batch_id}.binvox")
+                        #save_voxel(agent_mask[batch_id * self.T + t, :, :, :, 0], f"dump/agent_mask_t{t}_b{batch_id}.binvox")
+            self.gt_mask = self.pad_out
+ 
     def normalize_quat(self, input):
         xyz, orn, vel = self.split_states(input, "h13")
         orn_n_dims = len(orn.get_shape())
@@ -343,6 +348,7 @@ class BulletPush3DTensor4_cotrain(BulletPushBase):
                 return filtered_delta, tf.stack(objects_contact, 1)[...,0]
             return delta
 
+
     def get_inputs2Ddec_gqn3d(self, inputs):
         aligned_inputs = self.align_to_query_gqn3d(inputs) #4 scales
         projected_inputs = grnn_op.project_inputs(aligned_inputs)
@@ -411,114 +417,115 @@ class BulletPush3DTensor4_cotrain(BulletPushBase):
         # (batch_size x T) x 32 x 32 x 32 x dim
         memory_3D = self.building_3D_tensor()
         
-
+        self.memory_3D = tf.stop_gradient(memory_3D)
         ####################33 view pred here ###################
         inputs2Ddec = self.get_inputs2Ddec_gqn3d([memory_3D])
         outputs2Ddec = self.get_outputs2Ddec_gqn3d(inputs2Ddec)
         self.predicted_view = outputs2Ddec
+        # st()
+
+        if const.run_full:
+
+            #memory_3D = self.debug_3d_tensor
+            ## todo: if we have rpn here, we want it to convert rpn into raw_object_state
+            raw_object_state = self.gt_raw_object_states
+            object_size = tf.tile(tf.expand_dims(self.gt_object_size, 1), [1, self.T, 1, 1])
+            raw_agent_state = self.gt_raw_agent_states
 
 
+            # frozen state cannot be access by the prediction network, but can be updated based on the
+            # the prediction, for example, accumulated delta_orn
+            frozen_states=dict()
+            object_states, frozen_object_states = self.raw_object_state_to_full_states(raw_object_state,raw_agent_state, self.inputs.action.actions,  object_size, memory_3D)
+            agent_states, _ = self.raw_agent_state_to_full_states(raw_agent_state)
+            frozen_states.update(frozen_object_states)
 
-        #memory_3D = self.debug_3d_tensor
-        ## todo: if we have rpn here, we want it to convert rpn into raw_object_state
-        raw_object_state = self.gt_raw_object_states
-        object_size = tf.tile(tf.expand_dims(self.gt_object_size, 1), [1, self.T, 1, 1])
-        raw_agent_state = self.gt_raw_agent_states
+            # batch_size x T x nobjs (including agent hand) x dim
+            #states = tf.concat([object_states, agent_states], 2)
+            states = dict()
+            states["object_states"] = object_states
+            states["agent_states"] = agent_states
+            node_predict_dim = dict()
+            node_predict_dim["object"] = 13
+            node_predict_dim["agent"] = 13
 
+            actions = self.inputs.action.actions
+            
+            
+            t = 0
+            dynamics = self.Dynamics(self, class_utils.get_dict_state_t(states, t),\
+                node_predict_dim=node_predict_dim)
+            
+            # one step froward
+            est_dyn_states_delta = []
+            for t in range(self.T):
+                reuse=True
+                if t == 0:
+                    reuse=False
+                if const.PRETRAIN_CONTACT:
+                    gt_contact = self.gt_is_contact[:, t, :]
+                else:
+                    gt_contact = None
+                est_dyn_states_delta.append(dynamics.predict_one_step(\
+                    class_utils.get_dict_state_t(states, t), actions[:,t,:],\
+                    gt_contact=gt_contact, reuse=reuse))
 
-        # frozen state cannot be access by the prediction network, but can be updated based on the
-        # the prediction, for example, accumulated delta_orn
-        frozen_states=dict()
-        object_states, frozen_object_states = self.raw_object_state_to_full_states(raw_object_state,raw_agent_state, self.inputs.action.actions,  object_size, memory_3D)
-        agent_states, _ = self.raw_agent_state_to_full_states(raw_agent_state)
-        frozen_states.update(frozen_object_states)
-
-        # batch_size x T x nobjs (including agent hand) x dim
-        #states = tf.concat([object_states, agent_states], 2)
-        states = dict()
-        states["object_states"] = object_states
-        states["agent_states"] = agent_states
-        node_predict_dim = dict()
-        node_predict_dim["object"] = 13
-        node_predict_dim["agent"] = 13
-
-        actions = self.inputs.action.actions
-        
-        
-        t = 0
-        dynamics = self.Dynamics(self, class_utils.get_dict_state_t(states, t),\
-            node_predict_dim=node_predict_dim)
-        
-        # one step froward
-        est_dyn_states_delta = []
-        for t in range(self.T):
-            reuse=True
-            if t == 0:
-                reuse=False
-            if const.PRETRAIN_CONTACT:
-                gt_contact = self.gt_is_contact[:, t, :]
-            else:
-                gt_contact = None
-            est_dyn_states_delta.append(dynamics.predict_one_step(\
-                class_utils.get_dict_state_t(states, t), actions[:,t,:],\
-                gt_contact=gt_contact, reuse=reuse))
-
-        if const.IS_PREDICT_CONTACT:
-            pred_contact = [item[1] for item in est_dyn_states_delta]
-            self.pred_contact = tf.stack(pred_contact, 1)
-            est_dyn_states_delta = [item[0] for item in est_dyn_states_delta]
-
-        #import ipdb; ipdb.set_trace()
-        self.est_dyn_states_delta = tf.stack(est_dyn_states_delta, 1)
-
-        est_states, est_frozen_states = self.update_state_with_delta(states, frozen_states,self.est_dyn_states_delta)
-        #est_states, est_frozen_states = self.update_state_with_delta(states, frozen_states,gt_delta)
-
-        self.est_states = est_states
-        start_t = tf.cast(tf.random.uniform([1], minval=-0.499999, maxval=self.T - 0.000001 - self.rollout_T + 1, dtype=tf.float32)[0], tf.int32)
-
-        # 5 steps rollout
-        est_states_rollout = []
-        est_frozen_states_rollout = []
-        start_state = class_utils.get_dict_state_t(states, start_t) #states[:, start_t, :, :]
-        frozen_state = class_utils.get_dict_state_t(frozen_states, start_t)
-        current_state = start_state
-        current_frozen_state = frozen_state
-        for t in range(self.rollout_T):
-            #delta_state = dynamics.predict_one_step(current_state, actions[:, start_t + t, :], reuse=reuse)
-            if const.PRETRAIN_CONTACT:
-                gt_contact = self.gt_is_contact[:, start_t + t, :]
-            else:
-                gt_contact = None
-            delta_state = dynamics.predict_one_step(current_state, actions[:, start_t + t, :], gt_contact=gt_contact, reuse=True)
             if const.IS_PREDICT_CONTACT:
-                delta_state, pred_contact = delta_state
-            ## for debugging
-            #delta_state = gt_delta[:, start_t + t, :, :]
+                pred_contact = [item[1] for item in est_dyn_states_delta]
+                self.pred_contact = tf.stack(pred_contact, 1)
+                est_dyn_states_delta = [item[0] for item in est_dyn_states_delta]
 
-            if const.USE_AGENT_GT:
-                est_obj = delta_state[..., :self.nobjs, :]
-                gt_agent =  self.target.delta_agent_state[:, start_t + t, :, :]
-                delta_state = tf.concat([est_obj, gt_agent], axis=1)
+            #import ipdb; ipdb.set_trace()
+            self.est_dyn_states_delta = tf.stack(est_dyn_states_delta, 1)
 
-            est_state, est_frozen_state = self.update_state_with_delta(current_state, current_frozen_state, delta_state, actions = actions[:, tf.minimum(start_t + t + 1, self.T - 1), :])
+            est_states, est_frozen_states = self.update_state_with_delta(states, frozen_states,self.est_dyn_states_delta)
+            #est_states, est_frozen_states = self.update_state_with_delta(states, frozen_states,gt_delta)
 
-            est_states_rollout.append(est_state)
-            est_frozen_states_rollout.append(est_frozen_state)
-            current_frozen_state = est_frozen_state
-            current_state = est_state
-        est_states_rollout = class_utils.concat_dict_states(est_states_rollout)
-        est_frozen_states_rollout = class_utils.concat_dict_states(est_frozen_states_rollout)
-        
-        if const.DEBUG_UNPROJECT:
-            from utils.vis_np import save_voxel
-            for t in range(5):
-                for batch_id in range(2):
-                    save_voxel(est_frozen_states_rollout["object_3d_tensor"][batch_id, t, 0, :, :, :, 2], f"dump/frozen_t{t}_b{batch_id}.binvox")
-        
-        self.est_states_rollout = est_states_rollout
-        if const.mode=="test":
-            self.rollout_summary_(est_states, est_frozen_states, est_states_rollout, est_frozen_states_rollout, start_t, self.rollout_T)
+            self.est_states = est_states
+            start_t = tf.cast(tf.random.uniform([1], minval=-0.499999, maxval=self.T - 0.000001 - self.rollout_T + 1, dtype=tf.float32)[0], tf.int32)
+
+            # 5 steps rollout
+            est_states_rollout = []
+            est_frozen_states_rollout = []
+            start_state = class_utils.get_dict_state_t(states, start_t) #states[:, start_t, :, :]
+            frozen_state = class_utils.get_dict_state_t(frozen_states, start_t)
+            current_state = start_state
+            current_frozen_state = frozen_state
+            for t in range(self.rollout_T):
+                #delta_state = dynamics.predict_one_step(current_state, actions[:, start_t + t, :], reuse=reuse)
+                if const.PRETRAIN_CONTACT:
+                    gt_contact = self.gt_is_contact[:, start_t + t, :]
+                else:
+                    gt_contact = None
+                delta_state = dynamics.predict_one_step(current_state, actions[:, start_t + t, :], gt_contact=gt_contact, reuse=True)
+                if const.IS_PREDICT_CONTACT:
+                    delta_state, pred_contact = delta_state
+                ## for debugging
+                #delta_state = gt_delta[:, start_t + t, :, :]
+
+                if const.USE_AGENT_GT:
+                    est_obj = delta_state[..., :self.nobjs, :]
+                    gt_agent =  self.target.delta_agent_state[:, start_t + t, :, :]
+                    delta_state = tf.concat([est_obj, gt_agent], axis=1)
+
+                est_state, est_frozen_state = self.update_state_with_delta(current_state, current_frozen_state, delta_state, actions = actions[:, tf.minimum(start_t + t + 1, self.T - 1), :])
+
+                est_states_rollout.append(est_state)
+                est_frozen_states_rollout.append(est_frozen_state)
+                current_frozen_state = est_frozen_state
+                current_state = est_state
+            est_states_rollout = class_utils.concat_dict_states(est_states_rollout)
+            est_frozen_states_rollout = class_utils.concat_dict_states(est_frozen_states_rollout)
+            
+            if const.DEBUG_UNPROJECT:
+                from utils.vis_np import save_voxel
+                for t in range(5):
+                    for batch_id in range(2):
+                        save_voxel(est_frozen_states_rollout["object_3d_tensor"][batch_id, t, 0, :, :, :, 2], f"dump/frozen_t{t}_b{batch_id}.binvox")
+            
+            self.est_states_rollout = est_states_rollout
+            if const.mode=="test":
+                self.rollout_summary_(est_states, est_frozen_states, est_states_rollout, est_frozen_states_rollout, start_t, self.rollout_T)
 
     #############  3D tenor #################
     def building_3D_tensor(self):
@@ -529,12 +536,14 @@ class BulletPush3DTensor4_cotrain(BulletPushBase):
                 for view_id in range(3):
                     scipy.misc.imsave(f"dump/input_image_b{batch_id}_v{view_id}.png", 
                               self.inputs.state.frames[batch_id, 0, view_id, :, :, 2:])
+                    scipy.misc.imsave(f"dump/input_depth_b{batch_id}_v{view_id}.png", self.inputs.state.frames[batch_id, 0, view_id, :, :,1])                    
                 #view_id = 0
                 #for t in range(self.T + 1):
                 #    scipy.misc.imsave(f"dump/input_image_b{batch_id}_t{t}_v{view_id}.png",
                 #              self.inputs.state.frames[batch_id, t, view_id, :, :, 2:])
 
         inputs2Denc = self.pass_2Denc()
+        self.inputs2Denc = inputs2Denc
         precomputed_outline = None
         if const.OUTLINE_PRECOMPUTED:
             depth_ori = tf.unstack(self.inputs.state.depth_ori, axis=2)
@@ -543,9 +552,13 @@ class BulletPush3DTensor4_cotrain(BulletPushBase):
             unproject_depth_ori = grnn_op.unproject_depth_and_get_outline(depth_ori2)
             precomputed_outline = unproject_depth_ori
             output = [utils.voxel.resize_voxel(voxel, 0.25) for voxel in unproject_depth_ori]
-
-        self.unprojected_features = grnn_op.unproject_inputs(inputs2Denc, use_outline=const.USE_OUTLINE,\
+        # import pickle
+        # inputs2Denc = pickle.load(open("input.p","rb"))
+        # st()
+        unprojected_features = grnn_op.unproject_inputs(inputs2Denc, use_outline=const.USE_OUTLINE,\
                                                               debug_unproject=const.DEBUG_UNPROJECT)
+        self.unprojected_features_check = unprojected_features
+        self.unprojected_features = unprojected_features
         def merge_feat(feat_, output_):
             final_feat = []
             for view_id, feat_view in enumerate(feat_):
@@ -674,6 +687,8 @@ class BulletPush3DTensor4_cotrain(BulletPushBase):
 
 
         output = grnn_op.get_outputs2Denc(all_frames, is_training=self.is_training, is_not_bn=const.IS_NOT_BN_IN_2D)
+        self.output_check = output
+
         output = grnn_op.get_outputs2Ddec(output, is_training=self.is_training, fs_2D=const.fs_2D, is_not_bn=const.IS_NOT_BN_IN_2D)
 
         #if const.DEBUG_UNPROJECT:
@@ -858,11 +873,12 @@ class BulletPush3DTensor4_cotrain(BulletPushBase):
         self.phis = phis
         self.base_theta = tf.ones_like(thetas[0], dtype=tf.float32) * 180.0
         self.base_phi = tf.zeros_like(phis[0], dtype=tf.float32) # want everything to lie on ground
-
-        self.orn_reset_base = tf.constant(np.array([1, 0, 0, 0], dtype=np.float32))
-        gt_raw_object_states = self.inputs.state.obj_state[:, :self.T, :, :]
-        self.gt_raw_object_states = self.reset_orn(gt_raw_object_states)
-        self.gt_raw_agent_states = self.inputs.state.agent_state[:, :self.T, :, :]
+        # st()
+        if const.run_full:
+            self.orn_reset_base = tf.constant(np.array([1, 0, 0, 0], dtype=np.float32))
+            gt_raw_object_states = self.inputs.state.obj_state[:, :self.T, :, :]
+            self.gt_raw_object_states = self.reset_orn(gt_raw_object_states)
+            self.gt_raw_agent_states = self.inputs.state.agent_state[:, :self.T, :, :]
 
     def raw_agent_state_to_full_states(self, raw_agent_state):
         # add 0 in the first dimension as object code

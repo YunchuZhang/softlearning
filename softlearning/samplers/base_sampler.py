@@ -14,15 +14,20 @@ class BaseSampler(object):
         self._store_last_n_paths = store_last_n_paths
         self._last_n_paths = deque(maxlen=store_last_n_paths)
         self.filter_keys = filter_keys
-
+        self.initialized =False
         self.env = None
         self.policy = None
         self.pool = None
 
-    def initialize(self, env, policy, pool):
+    def initialize(self, env, policy, pool,memory3D=None,obs_ph=None,session=None):
         self.env = env
         self.policy = policy
         self.pool = pool
+        self.initialized =True
+        self.memory3D = memory3D
+        self.obs_ph = obs_ph
+        self.session = session
+
 
     def set_policy(self, policy):
         self.policy = policy

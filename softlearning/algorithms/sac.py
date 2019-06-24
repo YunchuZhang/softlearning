@@ -4,9 +4,12 @@ from numbers import Number
 import numpy as np
 import tensorflow as tf
 from tensorflow.python.training import training_util
+from softlearning.map3D import constants as const
+const.set_experiment("rl_new")
 
 from .rl_algorithm import RLAlgorithm
-
+import ipdb
+st = ipdb.set_trace
 
 def td_target(reward, discount, next_value):
     return reward + discount * next_value
@@ -32,7 +35,7 @@ class SAC(RLAlgorithm):
             pool,
             plotter=None,
             tf_summaries=False,
-
+            map3D = None,
             lr=3e-4,
             reward_scale=1.0,
             target_entropy='auto',
@@ -42,7 +45,7 @@ class SAC(RLAlgorithm):
             action_prior='uniform',
             reparameterize=False,
             store_extra_policy_info=False,
-
+            batch_size=None,
             save_full_state=False,
             observation_keys=None,
             **kwargs,
@@ -72,10 +75,11 @@ class SAC(RLAlgorithm):
         super(SAC, self).__init__(**kwargs)
 
         self._training_environment = training_environment
-        self._evaluation_environment = evaluation_environment
+        self._evaluation_environment = training_environment
         self._policy = policy
 
         self._Qs = Qs
+        self.map3D = map3D
         self._Q_targets = tuple(tf.keras.models.clone_model(Q) for Q in Qs)
 
         self._pool = pool
@@ -98,7 +102,7 @@ class SAC(RLAlgorithm):
 
         self._reparameterize = reparameterize
         self._store_extra_policy_info = store_extra_policy_info
-
+        self.batch_size = batch_size
         self._save_full_state = save_full_state
 
         self._observation_keys = (
@@ -120,6 +124,10 @@ class SAC(RLAlgorithm):
 
         self._init_global_step()
         self._init_placeholders()
+        self._init_map3D()
+        # st()
+        # st()
+
         self._init_actor_update()
         self._init_critic_update()
 
@@ -144,71 +152,70 @@ class SAC(RLAlgorithm):
             - terminals
         """
         self._iteration_ph = tf.placeholder(
-            tf.int64, shape=None, name='iteration')
+            tf.int64, shape=self.batch_size, name='iteration')
 
         self._observations_phs = [tf.placeholder(
             tf.float32,
-            shape=(None, *shape),
+            shape=(self.batch_size, *shape),
             name='observations.{}'.format(key)
         ) for key, shape in zip(self._observation_keys,
                                 self._observation_shape)]
 
         self._next_observations_phs = [tf.placeholder(
             tf.float32,
-            shape=(None, *shape),
+            shape=(self.batch_size, *shape),
             name='next_observations.{}'.format(key)
         ) for key, shape in zip(self._observation_keys,
                                 self._observation_shape)]
 
         #self._observations_ph = tf.placeholder(
         #    tf.float32,
-        #    shape=(None, *self._observation_shape),
+        #    shape=(self.batch_size, *self._observation_shape),
         #    name='observation',
         #)
 
         #self._next_observations_ph = tf.placeholder(
         #    tf.float32,
-        #    shape=(None, *self._observation_shape),
+        #    shape=(self.batch_size, *self._observation_shape),
         #    name='next_observation',
         #)
-
         self._actions_ph = tf.placeholder(
             tf.float32,
-            shape=(None, *self._action_shape),
+            shape=(self.batch_size, *self._action_shape),
             name='actions',
         )
 
         self._rewards_ph = tf.placeholder(
             tf.float32,
-            shape=(None, 1),
+            shape=(self.batch_size, 1),
             name='rewards',
         )
 
         self._terminals_ph = tf.placeholder(
             tf.float32,
-            shape=(None, 1),
+            shape=(self.batch_size, 1),
             name='terminals',
         )
 
         if self._store_extra_policy_info:
             self._log_pis_ph = tf.placeholder(
                 tf.float32,
-                shape=(None, 1),
+                shape=(self.batch_size, 1),
                 name='log_pis',
             )
             self._raw_actions_ph = tf.placeholder(
                 tf.float32,
-                shape=(None, *self._action_shape),
+                shape=(self.batch_size, *self._action_shape),
                 name='raw_actions',
             )
 
     def _get_Q_target(self):
-        next_actions = self._policy.actions(self._next_observations_phs)
+        next_actions = self._policy.actions(self.memory_next)
         next_log_pis = self._policy.log_pis(
-            self._next_observations_phs, next_actions)
+            self.memory_next, next_actions)
 
         next_Qs_values = tuple(
-            Q([*self._next_observations_phs, next_actions])
+            Q([*self.memory_next, next_actions])
             for Q in self._Q_targets)
 
         min_next_Q = tf.reduce_min(next_Qs_values, axis=0)
@@ -220,6 +227,28 @@ class SAC(RLAlgorithm):
             next_value=(1 - self._terminals_ph) * next_value)
 
         return Q_target
+
+    def _init_map3D(self):
+        obs_images, obs_zmap, obs_camAngle,obs_images_goal,obs_zmap_goal,obs_camAngle_goal = [tf.expand_dims(i,1) for i in self._observations_phs[:6]]
+        obs_zmap = tf.expand_dims(obs_zmap,-1)
+        obs_zmap_goal = tf.expand_dims(obs_zmap_goal,-1)
+
+        # st()
+        memory = self.map3D(obs_images,obs_camAngle,obs_zmap, is_training=None,reuse=False)
+        memory_goal = self.map3D(obs_images_goal, obs_camAngle_goal ,obs_zmap_goal, is_training=None,reuse=True)
+        self.memory = [tf.concat([memory,memory_goal],-1)]
+
+
+        next_obs_images, next_obs_zmap, next_obs_camAngle,next_obs_images_goal, next_obs_zmap_goal, next_obs_camAngle_goal = [tf.expand_dims(i,1) for i in self._observations_phs[:6]]
+
+        next_obs_zmap = tf.expand_dims(next_obs_zmap,-1)
+        next_obs_zmap_goal = tf.expand_dims(next_obs_zmap_goal,-1)
+
+        memory_next = self.map3D(next_obs_images,next_obs_camAngle,next_obs_zmap, is_training=None,reuse=True)
+        memory_next_goal = self.map3D(next_obs_images_goal,next_obs_camAngle_goal,next_obs_zmap_goal, is_training=None,reuse=True)
+        self.memory_next = [tf.concat([memory_next,memory_next_goal],-1)]
+
+        # st()
 
     def _init_critic_update(self):
         """Create minimization operation for critic Q-function.
@@ -233,10 +262,10 @@ class SAC(RLAlgorithm):
         """
         Q_target = tf.stop_gradient(self._get_Q_target())
 
-        assert Q_target.shape.as_list() == [None, 1]
+        assert Q_target.shape.as_list() == [self.batch_size, 1]
 
         Q_values = self._Q_values = tuple(
-            Q([*self._observations_phs, self._actions_ph])
+            Q([*self.memory, self._actions_ph])
             for Q in self._Qs)
 
         Q_losses = self._Q_losses = tuple(
@@ -276,10 +305,10 @@ class SAC(RLAlgorithm):
         and Section 5 in [1] for further information of the entropy update.
         """
 
-        actions = self._policy.actions(self._observations_phs)
-        log_pis = self._policy.log_pis(self._observations_phs, actions)
+        actions = self._policy.actions(self.memory)
+        log_pis = self._policy.log_pis(self.memory, actions)
 
-        assert log_pis.shape.as_list() == [None, 1]
+        assert log_pis.shape.as_list() == [self.batch_size, 1]
 
         log_alpha = self._log_alpha = tf.get_variable(
             'log_alpha',
@@ -311,7 +340,7 @@ class SAC(RLAlgorithm):
             policy_prior_log_probs = 0.0
 
         Q_log_targets = tuple(
-            Q([*self._observations_phs, actions])
+            Q([*self.memory, actions])
             for Q in self._Qs)
         min_Q_log_target = tf.reduce_min(Q_log_targets, axis=0)
 
@@ -323,7 +352,7 @@ class SAC(RLAlgorithm):
         else:
             raise NotImplementedError
 
-        assert policy_kl_losses.shape.as_list() == [None, 1]
+        assert policy_kl_losses.shape.as_list() == [self.batch_size, 1]
 
         policy_loss = tf.reduce_mean(policy_kl_losses)
 
@@ -392,7 +421,7 @@ class SAC(RLAlgorithm):
             feed_dict[self._raw_actions_ph] = batch['raw_actions']
 
         if iteration is not None:
-            feed_dict[self._iteration_ph] = iteration
+            feed_dict[self._iteration_ph] = np.array(iteration).reshape(self._iteration_ph.shape)
 
         return feed_dict
 
@@ -412,11 +441,11 @@ class SAC(RLAlgorithm):
 
         feed_dict = self._get_feed_dict(iteration, batch)
 
-        (Q_values, Q_losses, alpha, global_step) = self._session.run(
+        (Q_values, Q_losses, alpha, global_step,memory) = self._session.run(
             (self._Q_values,
              self._Q_losses,
              self._alpha,
-             self.global_step),
+             self.global_step,self.memory),
             feed_dict)
 
         diagnostics = OrderedDict({
@@ -425,9 +454,9 @@ class SAC(RLAlgorithm):
             'Q_loss': np.mean(Q_losses),
             'alpha': alpha,
         })
-
+        # st()
         policy_diagnostics = self._policy.get_diagnostics(
-            batch['observations'])
+            memory)
         diagnostics.update({
             f'policy/{key}': value
             for key, value in policy_diagnostics.items()

@@ -1,9 +1,17 @@
+# import __init__path
+import sys
+import sys
+# sys.path.append("/Users/mihirprabhudesai/Documents/projects/rl/softlearning/softlearning/map3D")
+# print(sys.path)
+# print("check")
+import __init__path
 from nets.Net import Net
 import constants as const
-import utils
-from utils import voxel
-from utils import vis_tf
 
+import utils_map
+from utils_map import voxel
+from utils_map import vis_tf
+# import 
 import tensorflow as tf
 import numpy as np
 from munch import Munch
@@ -13,16 +21,18 @@ from .modules import grnn_op
 from .modules import vis_op
 import tfquaternion as tfq
 import copy
+import ipdb
 
-
+st = ipdb.set_trace
 
 class BulletPushBase(Net):
     
-    def go_up_to_loss(self,val,is_training=None):
-        if const.eager:
-            self.is_training = tf.constant(is_training, tf.bool)
+    def go_up_to_loss(self, index=None, is_training=None):
+        # if const.eager:
+        #     self.is_training = tf.constant(is_training, tf.bool)
+        # st()
         self.orn_reset_base = tf.constant([1, 0, 0, 0], dtype=tf.float32)
-        self.setup_data(val)
+        self.setup_data(index)
         self.extra_out = dict()
         with tf.variable_scope("main"):
             self.predict()
@@ -204,7 +214,8 @@ class BulletPushBase(Net):
                 "output_top_diff": self.vis_output_top_diff
             }
         else:
-            self.vis = Munch()
+            self.vis = {"pred_views":self.predicted_view,"query_views":self.inputs.state.vp_frame}
+            # self.vis = {}
     def build_evaluator(self):
         if const.mode == "test":
             self.evaluator = {
@@ -562,4 +573,3 @@ class BulletPushBase(Net):
             previous_images1 = resize_images
             previous_images2 = resize_images2
         self.rollout_images_vis = rollout_images
-        #vis_tf.gif_summary("gif_summary", tf.dtypes.cast(tf.stack(rollout_images, 1) * 128.0, tf.uint8), 12, 1, collections=["image", "all"])

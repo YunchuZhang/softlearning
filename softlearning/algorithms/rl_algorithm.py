@@ -7,6 +7,9 @@ import os
 
 import tensorflow as tf
 import numpy as np
+import time
+import ipdb
+st = ipdb.set_trace
 
 from softlearning.samplers import rollouts
 from softlearning.misc.utils import save_video
@@ -70,7 +73,7 @@ class RLAlgorithm(tf.contrib.checkpoint.Checkpointable):
             self._eval_render_mode = 'rgb_array'
         else:
             self._eval_render_mode = eval_render_mode
-
+        # st()
         self._session = session or tf.keras.backend.get_session()
 
         self._epoch = 0
@@ -87,8 +90,10 @@ class RLAlgorithm(tf.contrib.checkpoint.Checkpointable):
                 " n_initial_exploration_steps > 0.")
 
         self.sampler.initialize(env, initial_exploration_policy, pool)
+        t =  time.time()
         while pool.size < self._n_initial_exploration_steps:
             self.sampler.sample()
+            print(time.time()-t, pool.size)
             #print("initial exploration sample")
 
         print("finished initial exploration")
@@ -147,13 +152,15 @@ class RLAlgorithm(tf.contrib.checkpoint.Checkpointable):
         policy = self._policy
         pool = self._pool
 
+
         if not self._training_started:
             self._init_training()
 
             self._initial_exploration_hook(
                 training_environment, self._initial_exploration_policy, pool)
-
-        self.sampler.initialize(training_environment, policy, pool)
+        print("initializing")
+        self.sampler.initialize(training_environment, policy, pool,memory3D=self.memory,obs_ph=self._observations_phs,session=self._session)
+        print("initialized")
 
         gt.reset_root()
         gt.rename_root('RLAlgorithm')
@@ -176,11 +183,15 @@ class RLAlgorithm(tf.contrib.checkpoint.Checkpointable):
 
                 self._timestep_before_hook()
                 gt.stamp('timestep_before_hook')
-
+                # st()
+                print("sampling start")
                 self._do_sampling(timestep=self._total_timestep)
+                print("sampling end",pool.size,self.sampler._min_pool_size,self.sampler.batch_ready())
+                print(samples_now,start_samples,self._epoch_length,"params")
                 gt.stamp('sample')
 
                 if self.ready_to_train:
+                    print("training")
                     self._do_training_repeats(timestep=self._total_timestep)
                 gt.stamp('train')
 
@@ -192,6 +203,7 @@ class RLAlgorithm(tf.contrib.checkpoint.Checkpointable):
             training_paths = self.sampler.get_last_n_paths(
                 math.ceil(self._epoch_length / self.sampler._max_path_length))
             gt.stamp('training_paths')
+
             evaluation_paths = self._evaluation_paths(
                 policy, evaluation_environment)
             gt.stamp('evaluation_paths')
@@ -210,6 +222,8 @@ class RLAlgorithm(tf.contrib.checkpoint.Checkpointable):
             gt.stamp('epoch_after_hook')
 
             sampler_diagnostics = self.sampler.get_diagnostics()
+
+            # st()
 
             diagnostics = self.get_diagnostics(
                 iteration=self._total_timestep,
@@ -258,13 +272,14 @@ class RLAlgorithm(tf.contrib.checkpoint.Checkpointable):
 
     def _evaluation_paths(self, policy, evaluation_env):
         if self._eval_n_episodes < 1: return ()
-
+        # st()
         with policy.set_deterministic(self._eval_deterministic):
             paths = rollouts(
                 self._eval_n_episodes,
                 evaluation_env,
                 policy,
                 self.sampler._max_path_length,
+                memory3D=self.memory,obs_ph=self._observations_phs,session=self._session,
                 render_mode=self._eval_render_mode)
 
         should_save_video = (
@@ -328,9 +343,12 @@ class RLAlgorithm(tf.contrib.checkpoint.Checkpointable):
         if trained_enough: return
 
         for i in range(self._n_train_repeat):
+            t = time.time()
+            print("start training")
             self._do_training(
                 iteration=timestep,
                 batch=self._training_batch())
+            print("training 1 step",time.time()-t)
 
         self._num_train_steps += self._n_train_repeat
         self._train_steps_this_epoch += self._n_train_repeat

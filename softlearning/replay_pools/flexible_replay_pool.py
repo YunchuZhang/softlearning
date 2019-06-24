@@ -10,7 +10,7 @@ from .replay_pool import ReplayPool
 class FlexibleReplayPool(ReplayPool):
     def __init__(self, max_size, fields_attrs, **kwargs):
         super(FlexibleReplayPool, self).__init__()
-        st()
+        # st()
         max_size = int(max_size)
         self._max_size = max_size
 

@@ -47,7 +47,7 @@ class SimpleReplayPool(FlexibleReplayPool):
         self.concat_observations=concat_observations
         self._observation_space = env.observation_space
         self._action_space = env.action_space
-        st()
+        # st()
 
         observation_fields = normalize_observation_fields(self._observation_space)
         # It's a bit memory inefficient to save the observations twice,
@@ -144,7 +144,7 @@ class SimpleReplayPool(FlexibleReplayPool):
                 value = normalize_image(value)
                 batch[key] = value
 
-        if self.concat_observations:
+        if self.concat_observations and False:
             observations = np.concatenate([
                 batch['observations.{}'.format(key)]
                 for key in observation_keys
@@ -158,6 +158,8 @@ class SimpleReplayPool(FlexibleReplayPool):
             batch['observations'] = observations
             batch['next_observations'] = next_observations
 
+        # field_name_filter = ["observations."+i for i in observation_keys]
+        
         if field_name_filter is not None:
             filtered_fields = self.filter_fields(
                 batch.keys(), field_name_filter)

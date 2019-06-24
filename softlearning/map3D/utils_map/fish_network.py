@@ -317,7 +317,6 @@ def compute_kl_loss(mu_q, ln_var_q, mu_p, ln_var_p):
 def make_lstmConv(inputs, cam_posrot, output_image, network_description,
                   stochastic=True, weight_decay=0.0, is_training=True, scope='', reuse=False, output_debug=False):
     is_convLSTM_start = False
-    st()
     out = inputs
     extra = dict()
     with tf.variable_scope(scope, reuse=reuse):

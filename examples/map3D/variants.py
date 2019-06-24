@@ -4,6 +4,8 @@ import numpy as np
 from softlearning.misc.utils import get_git_rev, deep_update
 import softlearning.map3D.constants as map3D_constants
 from softlearning.map3D.nets.BulletPush3DTensor import BulletPush3DTensor4_cotrain
+import ipdb
+st = ipdb.set_trace
 
 M = 256
 REPARAMETERIZE = True
@@ -47,7 +49,7 @@ ALGORITHM_PARAMS_BASE = {
     'type': 'SAC',
 
     'kwargs': {
-        'epoch_length': 5000,
+        'epoch_length': 1000,
         'train_every_n_steps': 10,
         'n_train_repeat': 1,
         'eval_render_mode': None,
@@ -72,7 +74,7 @@ ALGORITHM_PARAMS_ADDITIONAL = {
             'target_entropy': 'auto',
             'store_extra_policy_info': False,
             'action_prior': 'uniform',
-            'n_initial_exploration_steps': int(1e3),
+            'n_initial_exploration_steps': int(1e2),
         }
     },
     'SQL': {
@@ -247,7 +249,7 @@ NUM_CHECKPOINTS = 10
 SIMPLE_SAMPLER_PARAMS = {
     'type': 'SimpleSampler',
     'kwargs': {
-        'batch_size': 256,
+        'batch_size': 1,
     }
 }
 
@@ -284,7 +286,7 @@ SIMPLE_REPLAY_POOL_PARAMS = {
     'kwargs': {
         'max_size': tune.sample_from(lambda spec: (
             {
-                'SimpleReplayPool': int(1e6),
+                'SimpleReplayPool': int(2e5),
                 'TrajectoryReplayPool': int(1e4),
             }.get(
                 spec.get('config', spec)
@@ -295,13 +297,22 @@ SIMPLE_REPLAY_POOL_PARAMS = {
     }
 }
 
+SIMPLE_REPLAY_POOL_PARAMS_TEMP = {
+    'type': 'SimpleReplayPool',
+    'kwargs': {
+        'max_size': 2e5,
+        'batch_size': 1,
+    }
+}
+
 
 HER_REPLAY_POOL_PARAMS = {
     'type': 'HerReplayPool',
     'kwargs': {
-        'max_size': 1e6,
-        'desired_goal_key': 'state_desired_goal',
-        'achieved_goal_key': 'state_achieved_goal',
+        'max_size': 2e5,
+        'batch_size': 1,
+        'desired_goal_key': 'image_desired_goal',
+        'achieved_goal_key': 'image_achieved_goal',
         'reward_key': 'rewards',
         'terminal_key': 'terminals'
     }
@@ -310,6 +321,7 @@ HER_REPLAY_POOL_PARAMS = {
 
 REPLAY_POOL_PARAMS_BASE = {
     'SimpleReplayPool': SIMPLE_REPLAY_POOL_PARAMS,
+    'SimpleReplayPoolTemp':SIMPLE_REPLAY_POOL_PARAMS_TEMP,
     'HerReplayPool': HER_REPLAY_POOL_PARAMS
 }
 
@@ -421,28 +433,49 @@ def get_variant_spec_3D(universe,
     variant_spec = get_variant_spec_base(
         universe, domain, task, policy, algorithm, sampler, replay_pool, *args, **kwargs)
 
-    map3D_constants.set_experiment("0520_bulletpush3D_4_multicam_bn_mask_nview1_vp")
+    # map3D_constants.set_experiment("0520_bulletpush3D_4_multicam_bn_mask_nview1_vp")
     map3D_model = BulletPush3DTensor4_cotrain()
 
-    if 'image' in task.lower() or 'image' in domain.lower():
-        preprocessor_params = {
-            'type': 'map3D_preprocessor',
-            # TODO: These are just copied and need to be changed
-            'kwargs': {
-                'mapping_model': map3D_model,
-                'output_size': M,
-                'filters': (4, 4),
-                'kernel_sizes': ((3, 3), (3, 3)),
-                'pool_type': 'MaxPool2D',
-                'pool_sizes': ((2, 2), (2, 2)),
-                'pool_strides': (2, 2),
-                'dense_hidden_layer_sizes': (),
-            },
-        }
-        variant_spec['policy_params']['kwargs']['preprocessor_params'] = (
-            preprocessor_params.copy())
-        variant_spec['Q_params']['kwargs']['preprocessor_params'] = (
-            preprocessor_params.copy())
+
+    # variant_spec["Q_params"]["kwargs"]["preprocessor_params"] = {}
+    variant_spec["Q_params"]['input_shape'] = [(32,32,32,16)]
+
+    variant_spec["policy_params"]["input_shape"] = [(32,32,32,16)]
+    # variant["Q_params"]["kwargs"]["preprocessor_params"]["type"] = 'map3D_preprocessor_nonkeras'
+    # variant["Q_params"]["kwargs"]["preprocessor_params"]["kwargs"] = {}
+
+    # variant["Q_params"]["kwargs"]["preprocessor_params"]["kwargs"]["mapping_model"] = BulletPush3DTensor4_cotrain()
+    # st()
+    variant_spec["map3D"] = map3D_model
+    environment_params = variant_spec['environment_params']
+    env_train_params = environment_params['training']
+    # env_train_params["kwargs"] = {}
+    env_train_params["kwargs"]["observation_keys"] = ["image_observation","depth_observation","cam_angles_observation","image_desired_goal","desired_goal_depth","goal_cam_angle","image_achieved_goal"]
+    env_train_params["kwargs"]["map3D"] = map3D_model
+
+    # env_eval_params  = environment_params['evaluation']
+    # env_train_params["kwargs"] = {}
+    # env_eval_params["kwargs"]["observation_keys"] = ["image_observation","depth_observation","cam_angles_observation","image_desired_goal","desired_goal_depth","goal_cam_angle","achieved_goal"]
+    # env_eval_params["kwargs"]["map3D"] = map3D_model
+    # if 'image' in task.lower() or 'image' in domain.lower():
+    #     preprocessor_params = {
+    #         'type': 'map3D_preprocessor',
+    #         # TODO: These are just copied and need to be changed
+    #         'kwargs': {
+    #             'mapping_model': map3D_model,
+    #             'output_size': M,
+    #             'filters': (4, 4),
+    #             'kernel_sizes': ((3, 3), (3, 3)),
+    #             'pool_type': 'MaxPool2D',
+    #             'pool_sizes': ((2, 2), (2, 2)),
+    #             'pool_strides': (2, 2),
+    #             'dense_hidden_layer_sizes': (),
+    #         },
+    #     }
+    #     variant_spec['policy_params']['kwargs']['preprocessor_params'] = (
+    #         preprocessor_params.copy())
+    #     variant_spec['Q_params']['kwargs']['preprocessor_params'] = (
+    #         preprocessor_params.copy())
 
     return variant_spec
 
@@ -452,10 +485,10 @@ def get_variant_spec_3D(universe,
 def get_variant_spec(args):
     universe, domain, task = args.universe, args.domain, args.task
 
-    if ('image' in task.lower()
+    if ('v0' in task.lower()
         or 'blind' in task.lower()
-        or 'image' in domain.lower()):
-        variant_spec = get_variant_spec_image(
+        or 'image' in domain.lower() or True):
+        variant_spec = get_variant_spec_3D(
             universe, domain, task, args.policy, args.algorithm, args.sampler, args.replay_pool)
     else:
         variant_spec = get_variant_spec_base(

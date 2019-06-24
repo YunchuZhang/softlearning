@@ -40,6 +40,7 @@ def rollout(env,
             path_length,
             callback=None,
             render_mode=None,
+            memory3D=None,obs_ph=None,session=None,
             break_on_terminal=True):
 
     pool = replay_pools.SimpleReplayPool(env, max_size=path_length)
@@ -48,7 +49,7 @@ def rollout(env,
         min_pool_size=None,
         batch_size=None)
 
-    sampler.initialize(env, policy, pool)
+    sampler.initialize(env, policy, pool,memory3D=memory3D,obs_ph=obs_ph,session=session)
 
     images = []
     infos = []

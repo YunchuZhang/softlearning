@@ -1,6 +1,9 @@
 from ray import tune
 import numpy as np
 
+import ipdb
+st = ipdb.set_trace
+
 from softlearning.misc.utils import get_git_rev, deep_update
 from multiworld.envs.mujoco.cameras import sawyer_init_camera_zoomed_in
 
@@ -302,6 +305,13 @@ SIMPLE_REPLAY_POOL_PARAMS = {
     }
 }
 
+SIMPLE_REPLAY_POOL_PARAMS_TEMP = {
+    'type': 'SimpleReplayPool',
+    'kwargs': {
+        'max_size': 2e5
+    }
+}
+
 
 HER_REPLAY_POOL_PARAMS = {
     'type': 'HerReplayPool',
@@ -332,8 +342,9 @@ VAE_REPLAY_POOL_PARAMS = {
 
 REPLAY_POOL_PARAMS_BASE = {
     'SimpleReplayPool': SIMPLE_REPLAY_POOL_PARAMS,
+    'SimpleReplayPoolTemp':SIMPLE_REPLAY_POOL_PARAMS_TEMP,
     'HerReplayPool': HER_REPLAY_POOL_PARAMS,
-    'VAEReplayPool': VAE_REPLAY_POOL_PARAMS
+    'VAEReplayPool': VAE_REPLAY_POOL_PARAMS,
 }
 
 
@@ -346,6 +357,7 @@ def get_variant_spec_base(universe, domain, task, policy, algorithm, sampler, re
         algorithm_params,
         ALGORITHM_PARAMS_ADDITIONAL.get(algorithm, {})
     )
+    # st()
     variant_spec = {
         'git_sha': get_git_rev(),
         'vae_params': {
@@ -447,7 +459,6 @@ def get_variant_spec_image(universe,
 
 def get_variant_spec(args):
     universe, domain, task = args.universe, args.domain, args.task
-
     if ('image' in task.lower()
         or 'blind' in task.lower()
         or 'image' in domain.lower()):

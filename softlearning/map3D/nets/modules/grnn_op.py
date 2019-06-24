@@ -1,4 +1,4 @@
-import utils
+import utils_map as utils
 import tensorflow as tf
 from . import summary_op as summ_op
 from . import loss as loss

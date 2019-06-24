@@ -8,9 +8,14 @@ def create_feedforward_Q_function(observation_shape,
                                   observation_preprocessor=None,
                                   name='feedforward_Q',
                                   **kwargs):
+    # st()
+    # if len(observation_shape) == 1:
+    #   input_shapes = (observation_shape, action_shape)
+    # else:
     input_shapes = (*observation_shape, action_shape)
+
+
     preprocessors = (observation_preprocessor, None)
-    st()
     return feedforward_model(
         input_shapes,
         *args,

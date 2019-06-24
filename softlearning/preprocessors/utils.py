@@ -1,5 +1,6 @@
 from copy import deepcopy
-
+import ipdb
+st = ipdb.set_trace
 
 def get_convnet_preprocessor(observation_shape,
                              name='convnet_preprocessor',
@@ -21,6 +22,13 @@ def get_map3D_preprocessor(observation_shape,
     return preprocessor
 
 
+def get_map3D_preprocessor_nonkeras(observation_shape,
+                           name='map3D_preprocessor',
+                           **kwargs):
+    from .convnet import map3D_preprocessor_nonkeras
+    preprocessor = map3D_preprocessor_nonkeras(name=name, **kwargs)
+    return preprocessor
+
 def get_feedforward_preprocessor(observation_shape,
                                  name='feedforward_preprocessor',
                                  **kwargs):
@@ -34,6 +42,7 @@ def get_feedforward_preprocessor(observation_shape,
 PREPROCESSOR_FUNCTIONS = {
     'convnet_preprocessor': get_convnet_preprocessor,
     'map3D_preprocessor': get_map3D_preprocessor,
+    'map3D_preprocessor_nonkeras' : get_map3D_preprocessor_nonkeras,
     'feedforward_preprocessor': get_feedforward_preprocessor,
     None: lambda *args, **kwargs: None
 }
@@ -42,7 +51,7 @@ PREPROCESSOR_FUNCTIONS = {
 def get_preprocessor_from_params(env, preprocessor_params, *args, **kwargs):
     if preprocessor_params is None:
         return None
-
+    # st()
     preprocessor_type = preprocessor_params.get('type', None)
     preprocessor_kwargs = deepcopy(preprocessor_params.get('kwargs', {}))
 

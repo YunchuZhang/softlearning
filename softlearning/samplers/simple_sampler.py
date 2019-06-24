@@ -3,6 +3,7 @@ from collections import defaultdict
 import numpy as np
 import ipdb
 st = ipdb.set_trace
+from scipy.misc import imsave
 
 from .base_sampler import BaseSampler
 
@@ -37,17 +38,23 @@ class SimpleSampler(BaseSampler):
 
         return processed_observation
 
+
     def sample(self):
         # st()
         if self._current_observation is None:
             self._current_observation = self.env.reset()
+        active_obs = self.env.convert_to_active_observation(self._current_observation)
+        
+        if self.initialized and self.memory3D:
+            active_obs = self.session.run(self.memory3D,feed_dict={self.obs_ph[0]:active_obs[0],self.obs_ph[1]:active_obs[1],self.obs_ph[2]:active_obs[2],\
+                self.obs_ph[3]:active_obs[3],self.obs_ph[4]:active_obs[4],self.obs_ph[5]:active_obs[5]})
 
-        action = self.policy.actions_np(
-            self.env.convert_to_active_observation(
-                self._current_observation)
-        )[0]
+
+        action = self.policy.actions_np(active_obs)[0]
+        
 
         next_observation, reward, terminal, info = self.env.step(action)
+        imsave("check_02.png",next_observation["desired_goal_depth"][0])
         self._path_length += 1
         self._path_return += reward
         self._total_samples += 1

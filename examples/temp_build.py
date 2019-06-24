@@ -1,60 +1,169 @@
-        variant = copy.deepcopy(self._variant)
+import importlib
+import sys
+import ipdb
+st = ipdb.set_trace
+import copy
+from softlearning.environments.utils import get_environment_from_params,get_environment_from_params_custom
+from softlearning.algorithms.utils import get_algorithm_from_variant
+from softlearning.policies.utils import get_policy_from_variant, get_policy
+from softlearning.replay_pools.utils import get_replay_pool_from_variant
+from softlearning.samplers.utils import get_sampler_from_variant
+from softlearning.value_functions.utils import get_Q_function_from_variant
 
-        vae_params = variant['vae_params']
-        vae_train_params = variant['vae_train_params']
+from softlearning.misc.utils import set_seed, initialize_tf_variables
+from examples.instrument import run_example_local
 
-        vae = ConvVAE(
-            vae_params['representation_size'],
-            **vae_params['kwargs']
-        )
+from softlearning.vae.conv_vae import ConvVAE
+from softlearning.vae.vae_trainer import ConvVAETrainer
+from softlearning.map3D import constants as const
+from softlearning.map3D.nets.BulletPush3DTensor import BulletPush3DTensor4_cotrain
+import tensorflow as tf
+import sys
 
-        vae_trainer = ConvVAETrainer(
-            vae,
-            **vae_train_params['kwargs']
-        )
+sys.path.append("/Users/mihirprabhudesai/Documents/projects/rl/softlearning/softlearning/map3D")
+# import utils
+# sys.path.append("../")
+# st()
+# from examples import rig
 
-        environment_params = variant['environment_params']
-        env_train_params = environment_params['training']
-        env_train_params['kwargs']['vae'] = vae
+def add_command_line_args_to_variant_spec(variant_spec, command_line_args):
+    variant_spec['run_params'].update({
+        'checkpoint_frequency': (
+            command_line_args.checkpoint_frequency
+            if command_line_args.checkpoint_frequency is not None
+            else variant_spec['run_params'].get('checkpoint_frequency', 0)
+        ),
+        'checkpoint_at_end': (
+            command_line_args.checkpoint_at_end
+            if command_line_args.checkpoint_at_end is not None
+            else variant_spec['run_params'].get('checkpoint_at_end', True)
+        ),
+    })
 
-        training_environment = self.training_environment = (
-            get_environment_from_params(env_train_params))
+    variant_spec['restore'] = command_line_args.restore
 
-        if 'evaluation' in environment_params:
-            eval_env_params = environment_params['evaluation']
-            eval_env_params['kwargs']['vae'] = vae
-            #eval_env_params['kwargs']['render_rollouts'] = True
-            #eval_env_params['kwargs']['render_goals'] = True
+    return variant_spec
 
-            evaluation_environment = self.evaluation_environment = (
-                get_environment_from_params(eval_env_params))
+op="map3d"
 
-        else:
-            evaluation_environment = training_environment
+if op =="vae":
+    example_module_name = "examples.rig"
+    example_argv = ('--universe=vae', '--checkpoint-frequency=0', '--domain=SawyerReachXYEnv', '--task=v1', '--trial-gpus=1', '--exp-name=vae-test', '--replay_pool=VAEReplayPool', '--algorithm=SAC_VAE')
 
-        replay_pool = self.replay_pool = (
-            get_replay_pool_from_variant(variant, training_environment))
-        sampler = self.sampler = get_sampler_from_variant(variant)
-        st()
-        Qs = self.Qs = get_Q_function_from_variant(
-            variant, training_environment)
-        policy = self.policy = get_policy_from_variant(
-            variant, training_environment, Qs)
-        initial_exploration_policy = self.initial_exploration_policy = (
-            get_policy('UniformPolicy', training_environment))
+elif op == "map3d":
+    example_module_name = "examples.map3D"
+    example_argv = ('--universe=gym', '--checkpoint-frequency=0', '--domain=SawyerPushAndReachEnvEasy', '--task=v0', '--trial-gpus=1', '--exp-name=test', '--replay_pool=SimpleReplayPoolTemp', '--algorithm=SAC')
 
-        self.algorithm = get_algorithm_from_variant(
-            variant=self._variant,
-            VAETrainer=vae_trainer,
-            training_environment=training_environment,
-            evaluation_environment=evaluation_environment,
-            policy=policy,
-            initial_exploration_policy=initial_exploration_policy,
-            Qs=Qs,
-            pool=replay_pool,
-            sampler=sampler,
-            session=self._session)
 
-        initialize_tf_variables(self._session, only_uninitialized=True)
 
-        self._built = True
+
+example_module = importlib.import_module(example_module_name)
+
+example_args = example_module.get_parser().parse_args(example_argv)
+# print("example_args",example_args)
+variant_spec = example_module.get_variant_spec(example_args)
+# st()
+# print(variant_spec)
+trainable_class = example_module.get_trainable_class(example_args)
+
+variant_spec = add_command_line_args_to_variant_spec(variant_spec, example_args)
+# # st()
+_variant = variant_spec
+variant = copy.deepcopy(_variant)\
+
+variant["Q_params"]["kwargs"]["preprocessor_params"] = {}
+variant["Q_params"]['input_shape'] = [(32,32,32,16)]
+
+variant["policy_params"]["input_shape"] = [(32,32,32,16)]
+# variant["Q_params"]["kwargs"]["preprocessor_params"]["type"] = 'map3D_preprocessor_nonkeras'
+# variant["Q_params"]["kwargs"]["preprocessor_params"]["kwargs"] = {}
+
+# variant["Q_params"]["kwargs"]["preprocessor_params"]["kwargs"]["mapping_model"] = BulletPush3DTensor4_cotrain()
+
+environment_params = variant['environment_params']
+env_train_params = environment_params['training']
+env_train_params["kwargs"] = {}
+env_train_params["kwargs"]["observation_keys"] = ["image_observation","depth_observation","cam_angles_observation","image_desired_goal","desired_goal_depth","goal_cam_angle","achieved_goal"]
+
+batch_size = variant['sampler_params']['kwargs']['batch_size']
+
+bulledtPush = BulletPush3DTensor4_cotrain()
+# if op == "vae":
+#     vae_params = variant['vae_params']
+#     vae_train_params = variant['vae_train_params']
+
+#     vae = ConvVAE(
+#         vae_params['representation_size'],
+#         **vae_params['kwargs']
+#     )
+
+#     vae_trainer = ConvVAETrainer(
+#         vae,
+#         **vae_train_params['kwargs']
+#     )
+#     env_train_params['kwargs']['vae'] = vae
+
+# st()
+# batch_size = 
+# st()
+training_environment = training_environment = (
+    get_environment_from_params_custom(env_train_params))
+
+# if 'evaluation' in environment_params:
+#     eval_env_params = environment_params['evaluation']
+#     eval_env_params['kwargs']['vae'] = vae
+#     #eval_env_params['kwargs']['render_rollouts'] = True
+#     #eval_env_params['kwargs']['render_goals'] = True
+#     # st()
+#     evaluation_environment = evaluation_environment = (
+#         get_environment_from_params(eval_env_params))
+
+# else:
+#     evaluation_environment = training_environment
+# st()
+# st()
+
+replay_pool = replay_pool = (
+    get_replay_pool_from_variant(variant, training_environment))
+
+sampler = sampler = get_sampler_from_variant(variant)
+# st()
+Qs = Qs = get_Q_function_from_variant(variant, training_environment)
+# st()
+policy = policy = get_policy_from_variant(
+    variant, training_environment, Qs)
+# st()
+initial_exploration_policy = initial_exploration_policy = (
+    get_policy('UniformPolicy', training_environment))
+# st()
+_session = tf.Session
+
+if op == "vae":
+    algorithm = get_algorithm_from_variant(
+        variant=_variant,
+        VAETrainer=vae_trainer,
+        training_environment=training_environment,
+        evaluation_environment=training_environment,
+        policy=policy,
+        initial_exploration_policy=initial_exploration_policy,
+        Qs=Qs,
+        pool=replay_pool,
+        sampler=sampler,
+        session=_session)
+elif op == "map3d":
+    algorithm = get_algorithm_from_variant(
+        variant=_variant,
+        map3D =bulledtPush,
+        training_environment=training_environment,
+        evaluation_environment=training_environment,
+        policy=policy,
+        batch_size = batch_size,
+        initial_exploration_policy=initial_exploration_policy,
+        Qs=Qs,
+        pool=replay_pool,
+        observation_keys = env_train_params["kwargs"]["observation_keys"] ,
+        sampler=sampler,
+        session=_session)
+# initialize_tf_variables(_session, only_uninitialized=True)
+
+# _built = True
