@@ -4,8 +4,7 @@ from . import camera
 import constants as const
 import numpy as np
 from . import tfutil
-import ipdb
-st = ipdb.set_trace
+
 import tfquaternion as tfq
 
 """
@@ -1355,7 +1354,7 @@ def unproject_voxel(voxel, cam_int=None, debug=False):
 def unproject_image(img_, cam_int=None, debug=False):
     #step 1: convert to voxel
     #step 2: call unproject_voxel
-    # st()
+
     size = int(img_.shape[1])
 
     def unflatten(img):

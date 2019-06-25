@@ -159,7 +159,7 @@ class RLAlgorithm(tf.contrib.checkpoint.Checkpointable):
             self._initial_exploration_hook(
                 training_environment, self._initial_exploration_policy, pool)
         print("initializing")
-        self.sampler.initialize(training_environment, policy, pool,memory3D=self.memory,obs_ph=self._observations_phs,session=self._session)
+        self.sampler.initialize(training_environment, policy, pool,memory3D=self.memory,obs_ph= self._observations_phs,session=self._session)
         print("initialized")
 
         gt.reset_root()
@@ -184,22 +184,21 @@ class RLAlgorithm(tf.contrib.checkpoint.Checkpointable):
                 self._timestep_before_hook()
                 gt.stamp('timestep_before_hook')
                 # st()
-                print("sampling start")
                 self._do_sampling(timestep=self._total_timestep)
-                print("sampling end",pool.size,self.sampler._min_pool_size,self.sampler.batch_ready())
-                print(samples_now,start_samples,self._epoch_length,"params")
-                gt.stamp('sample')
 
+                # print(samples_now,start_samples,self._epoch_length,"params")
+                gt.stamp('sample')
+                # print("training")
                 if self.ready_to_train:
-                    print("training")
                     self._do_training_repeats(timestep=self._total_timestep)
+
                 gt.stamp('train')
 
                 self._timestep_after_hook()
                 gt.stamp('timestep_after_hook')
 
             #print("finished training paths")
-
+            print("evaluating")
             training_paths = self.sampler.get_last_n_paths(
                 math.ceil(self._epoch_length / self.sampler._max_path_length))
             gt.stamp('training_paths')
@@ -217,7 +216,7 @@ class RLAlgorithm(tf.contrib.checkpoint.Checkpointable):
                 gt.stamp('evaluation_metrics')
             else:
                 evaluation_metrics = {}
-
+            print("evaluation done")
             self._epoch_after_hook(training_paths)
             gt.stamp('epoch_after_hook')
 
@@ -344,11 +343,9 @@ class RLAlgorithm(tf.contrib.checkpoint.Checkpointable):
 
         for i in range(self._n_train_repeat):
             t = time.time()
-            print("start training")
             self._do_training(
                 iteration=timestep,
                 batch=self._training_batch())
-            print("training 1 step",time.time()-t)
 
         self._num_train_steps += self._n_train_repeat
         self._train_steps_this_epoch += self._n_train_repeat

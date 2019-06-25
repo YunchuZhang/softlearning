@@ -44,10 +44,15 @@ class SimpleSampler(BaseSampler):
         if self._current_observation is None:
             self._current_observation = self.env.reset()
         active_obs = self.env.convert_to_active_observation(self._current_observation)
-        
-        if self.initialized and self.memory3D:
-            active_obs = self.session.run(self.memory3D,feed_dict={self.obs_ph[0]:active_obs[0],self.obs_ph[1]:active_obs[1],self.obs_ph[2]:active_obs[2],\
+        # st()
+        active_obs =[np.repeat(i,4,0)  for i in active_obs]
+
+        if self.initialized and self.memory3D_sampler:
+            active_obs = self.session.run(self.memory3D_sampler,feed_dict={self.obs_ph[0]:active_obs[0],self.obs_ph[1]:active_obs[1],self.obs_ph[2]:active_obs[2],\
                 self.obs_ph[3]:active_obs[3],self.obs_ph[4]:active_obs[4],self.obs_ph[5]:active_obs[5]})
+            active_obs = active_obs[:1]
+            # active_obs =  np.ones([1, 32, 32, 32, 16])
+            # st()
 
 
         action = self.policy.actions_np(active_obs)[0]

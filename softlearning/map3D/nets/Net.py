@@ -75,7 +75,7 @@ class Net:
         angles = tf.convert_to_tensor(angles)
         zmaps = tf.convert_to_tensor(zmaps)
 
-        input_T = images.get_shape()[0].value
+        input_T = images.get_shape()[1].value
         # randomly select a chunk that has length of max_T
         start_t = tf.cast(tf.random.uniform([1], minval=0, maxval=input_T-0.000001 - self.max_T,dtype=tf.float32)[0], tf.int32)        
         images = self.clip_data(images, start_t, self.max_T+1)
@@ -254,9 +254,11 @@ class Net:
         self.optimizer = tf.train.AdamOptimizer(const.lr, const.mom)
         self.opt = utils.tfutil.make_opt_op(self.optimizer, fn)
 
-    def __call__(self,images,angles,zmaps, is_training=None,reuse=False):
+    def __call__(self,images,angles,zmaps,is_training=None,reuse=False):
         #index is passed to the data_selector, to control which data is used
         #self.go_up_to_loss(index)
+        # if batch_size:
+        #     const.BS = batch_size
         with tf.compat.v1.variable_scope("Variables",reuse=reuse):
             val = self.data(images,zmaps,angles)
             self.optimize(lambda: self.go_up_to_loss(val,is_training))

@@ -38,7 +38,7 @@ POLICY_PARAMS_FOR_DOMAIN.update({
     'gaussian': POLICY_PARAMS_FOR_DOMAIN['GaussianPolicy'],
 })
 
-DEFAULT_MAX_PATH_LENGTH = 1000
+DEFAULT_MAX_PATH_LENGTH = 50
 MAX_PATH_LENGTH_PER_DOMAIN = {
     'Point2DEnv': 50,
     'Pendulum': 200,
@@ -50,10 +50,10 @@ ALGORITHM_PARAMS_BASE = {
 
     'kwargs': {
         'epoch_length': 1000,
-        'train_every_n_steps': 10,
+        'train_every_n_steps': 2,
         'n_train_repeat': 1,
         'eval_render_mode': None,
-        'eval_n_episodes': 10,
+        'eval_n_episodes': 5,
         'eval_deterministic': True,
 
         'discount': 0.99,
@@ -145,7 +145,7 @@ ALGORITHM_PARAMS_PER_DOMAIN = {
                 'n_initial_exploration_steps': (
                     MAX_PATH_LENGTH_PER_DOMAIN.get(
                         domain, DEFAULT_MAX_PATH_LENGTH
-                    ) * 10),
+                    ) * 5),
             }
         } for domain in NUM_EPOCHS_PER_DOMAIN
     }
@@ -249,7 +249,7 @@ NUM_CHECKPOINTS = 10
 SIMPLE_SAMPLER_PARAMS = {
     'type': 'SimpleSampler',
     'kwargs': {
-        'batch_size': 1,
+        'batch_size': 4,
     }
 }
 
@@ -300,8 +300,7 @@ SIMPLE_REPLAY_POOL_PARAMS = {
 SIMPLE_REPLAY_POOL_PARAMS_TEMP = {
     'type': 'SimpleReplayPool',
     'kwargs': {
-        'max_size': 2e5,
-        'batch_size': 1,
+        'max_size': 2e5
     }
 }
 
@@ -310,9 +309,8 @@ HER_REPLAY_POOL_PARAMS = {
     'type': 'HerReplayPool',
     'kwargs': {
         'max_size': 2e5,
-        'batch_size': 1,
-        'desired_goal_key': 'image_desired_goal',
-        'achieved_goal_key': 'image_achieved_goal',
+        'desired_goal_key': 'state_desired_goal',
+        'achieved_goal_key': 'state_achieved_goal',
         'reward_key': 'rewards',
         'terminal_key': 'terminals'
     }
@@ -450,9 +448,29 @@ def get_variant_spec_3D(universe,
     environment_params = variant_spec['environment_params']
     env_train_params = environment_params['training']
     # env_train_params["kwargs"] = {}
-    env_train_params["kwargs"]["observation_keys"] = ["image_observation","depth_observation","cam_angles_observation","image_desired_goal","desired_goal_depth","goal_cam_angle","image_achieved_goal"]
+    env_train_params["kwargs"]["observation_keys"] = ["image_observation","depth_observation","cam_angles_observation","image_desired_goal","desired_goal_depth","goal_cam_angle"]
     env_train_params["kwargs"]["map3D"] = map3D_model
 
+
+
+
+    preprocessor_params = {
+        'type': 'convnet3d_preprocessor',
+        'input_shape':(32,32,32,16),
+        'kwargs': {
+            'output_size': 128,
+            'conv_filters': (16,32,64,128,128),
+            'conv_kernel_sizes': (4,4,4,4,3),
+            'pool_type': 'MaxPool3D',
+            'pool_sizes':(2,2,2,2,2),
+            'pool_strides': (2,2,2,2,2),
+            'dense_hidden_layer_sizes': (64, 64),
+        },
+    }
+    variant_spec['policy_params']['kwargs']['preprocessor_params'] = (
+        preprocessor_params.copy())
+    variant_spec['Q_params']['kwargs']['preprocessor_params'] = (
+        preprocessor_params.copy())
     # env_eval_params  = environment_params['evaluation']
     # env_train_params["kwargs"] = {}
     # env_eval_params["kwargs"]["observation_keys"] = ["image_observation","depth_observation","cam_angles_observation","image_desired_goal","desired_goal_depth","goal_cam_angle","achieved_goal"]

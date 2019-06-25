@@ -105,7 +105,6 @@ def unproject(inputs, cam_int=None, resize = False):
 
 def unproject2(inputs, use_outline=False, use_meshgrid=False, debug_unproject = False,
                cam_int=None, resize = False):
-    # st()
     if resize:
         inputs = tf.image.resize_images(inputs, (const.S, const.S))
     size = int(inputs.shape[1])

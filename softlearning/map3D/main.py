@@ -82,20 +82,20 @@ import numpy as np
 bulletpush = BulletPush3DTensor4_cotrain()
 
 import pickle
-req=False
+req=True
 if req:
     val = pickle.load(open("softlearning/map3D/req.p","rb"))
 else:
     val = pickle.load(open("softlearning/map3D/og.p","rb"))
 
-st()
+# st()
 # st()
 # img =  np.concatenate([np.expand_dims(val["observations.image_observation"],0),np.ones([const.BS,1,4,84,84,1])],-1).reshape([const.BS,1,4,84,84,4])
 # # n
 # depth = val["observations.depth_observation"].reshape([const.BS,1,4,84,84,1])
 # cam_angle = val["observations.cam_angles_observation"].reshape([const.BS,1,4,2])
 if req:
-    img =  np.concatenate([np.expand_dims(val["observations.image_observation"],0),np.ones([const.BS,1,4,84,84,1])],-1).reshape([const.BS,1,4,84,84,4])
+    img =  np.concatenate([np.expand_dims(val["observations.image_observation"],0),np.ones([1,1,4,84,84,1])],-1).reshape([1,1,4,84,84,4])
     cam_angle = np.expand_dims(val["observations.cam_angles_observation"],0)
     depth = np.expand_dims(np.expand_dims(val["observations.depth_observation"],0),-1)
     N=4
@@ -116,22 +116,44 @@ else:
     img_ph = tf.placeholder(tf.int32, [const.BS, 1, N, 84, 84, 4],"images")
     cam_angle_ph = tf.placeholder(tf.float32, [const.BS, 1, N, 2],"angles")
     depth_ph = tf.placeholder(tf.float32, [const.BS, 1, N, 84, 84, 1],"zmapss")
+    img_ph2 = tf.placeholder(tf.int32, [const.BS, 1, N, 84, 84, 4],"images2")
+    cam_angle_ph2 = tf.placeholder(tf.float32, [const.BS, 1, N, 2],"angles2")
+    depth_ph2 = tf.placeholder(tf.float32, [const.BS, 1, N, 84, 84, 1],"zmapss2")
+    img_ph3 = tf.placeholder(tf.int32, [1, 1, N, 84, 84, 4],"images3")
+    cam_angle_ph3 = tf.placeholder(tf.float32, [1, 1, N, 2],"angles3")
+    depth_ph3 = tf.placeholder(tf.float32, [1, 1, N, 84, 84, 1],"zmapss3")
 
 if eager:
     m3dt = bulletpush(img,cam_angle,depth)
+
 
 else:
 # st()
     sess = tf.keras.backend.get_session()
 
     m3dt = bulletpush(img_ph,cam_angle_ph,depth_ph)
+    m3dt2 = bulletpush(img_ph2,cam_angle_ph2,depth_ph2,reuse=True)
+    bulletpush.set_batchSize(1)
+    m3dt3 = bulletpush(img_ph3,cam_angle_ph3,depth_ph3,reuse=True)
+
 # st()
 val = tf.keras.layers.Conv2D(3, 1, 1, 'SAME',name="new")(tf.ones([1,64,64,3]))
-st()
-setup(sess)
-# sess.run(tf.global_variables_initializer())
-a = sess.run(bulletpush.predicted_view,feed_dict={img_ph:img,cam_angle_ph:cam_angle,depth_ph:depth})
-imsave("out.png",a[0])
+# setup(sess)
+# st()
+a_f = {img_ph:np.repeat(img,4,0),cam_angle_ph:np.repeat(cam_angle,4,0),depth_ph:np.repeat(depth,4,0)}
+b_f = {img_ph2:np.ones_like(np.repeat(img,4,0)),cam_angle_ph2:np.repeat(cam_angle,4,0),depth_ph2:np.repeat(depth,4,0)}
+c_f = {img_ph3:img,cam_angle_ph3:cam_angle,depth_ph3:depth}
+
+sess.run(tf.global_variables_initializer())
+a = sess.run(m3dt,feed_dict=a_f)
+b = sess.run(m3dt2,feed_dict=b_f)
+c = sess.run(m3dt3,feed_dict=c_f)
+a_f.update(b_f)
+c = sess.run(m3dt2+m3dt,feed_dict=a_f)
+
+print(np.sum(a+b),np.sum(c))
+
+# imsave("out.png",a[0])
 # st()
 
 # st()

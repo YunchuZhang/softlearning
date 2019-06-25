@@ -30,7 +30,7 @@ def get_Q_function_from_variant(variant, env, *args, **kwargs):
 
     preprocessor_params = Q_kwargs.pop('preprocessor_params', None)
     preprocessor = get_preprocessor_from_params(env, preprocessor_params)
-
+    # st()
     return VALUE_FUNCTIONS[Q_type](
         observation_shape=Q_obs_shape,
         action_shape=env.action_space.shape,

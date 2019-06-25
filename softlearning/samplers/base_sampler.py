@@ -24,7 +24,7 @@ class BaseSampler(object):
         self.policy = policy
         self.pool = pool
         self.initialized =True
-        self.memory3D = memory3D
+        self.memory3D_sampler = memory3D
         self.obs_ph = obs_ph
         self.session = session
 

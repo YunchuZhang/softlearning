@@ -152,7 +152,7 @@ class SAC(RLAlgorithm):
             - terminals
         """
         self._iteration_ph = tf.placeholder(
-            tf.int64, shape=self.batch_size, name='iteration')
+            tf.int64, shape=None, name='iteration')
 
         self._observations_phs = [tf.placeholder(
             tf.float32,
@@ -160,6 +160,13 @@ class SAC(RLAlgorithm):
             name='observations.{}'.format(key)
         ) for key, shape in zip(self._observation_keys,
                                 self._observation_shape)]
+
+        self._sampler_observations_phs = [tf.placeholder(
+            tf.float32,
+            shape=(1, *shape),
+            name='sampler_observations.{}'.format(key)
+        ) for key, shape in zip(self._observation_keys[:6],
+                                self._observation_shape[:6])]
 
         self._next_observations_phs = [tf.placeholder(
             tf.float32,
@@ -229,6 +236,19 @@ class SAC(RLAlgorithm):
         return Q_target
 
     def _init_map3D(self):
+        # self.map3D.set_batchSize(1)
+        
+        # sampler_obs_images, sampler_obs_zmap, sampler_obs_camAngle,sampler_obs_images_goal, sampler_obs_zmap_goal, sampler_obs_camAngle_goal = [tf.expand_dims(i,1) for i in self._sampler_observations_phs[:6]]
+
+        # sampler_obs_zmap = tf.expand_dims(sampler_obs_zmap,-1)
+        # sampler_obs_zmap_goal = tf.expand_dims(sampler_obs_zmap_goal,-1)
+
+        # memory_sampler = self.map3D(sampler_obs_images,sampler_obs_camAngle,sampler_obs_zmap, is_training=None,reuse=False)
+        # memory_sampler_goal = self.map3D(sampler_obs_images_goal,sampler_obs_camAngle_goal,sampler_obs_zmap_goal, is_training=None,reuse=True)
+        # self.memory_sampler = [tf.concat([memory_sampler,memory_sampler_goal],-1)]
+        # # self.memory_sampler = 1
+        # self.map3D.set_batchSize(4)
+
         obs_images, obs_zmap, obs_camAngle,obs_images_goal,obs_zmap_goal,obs_camAngle_goal = [tf.expand_dims(i,1) for i in self._observations_phs[:6]]
         obs_zmap = tf.expand_dims(obs_zmap,-1)
         obs_zmap_goal = tf.expand_dims(obs_zmap_goal,-1)
@@ -239,7 +259,7 @@ class SAC(RLAlgorithm):
         self.memory = [tf.concat([memory,memory_goal],-1)]
 
 
-        next_obs_images, next_obs_zmap, next_obs_camAngle,next_obs_images_goal, next_obs_zmap_goal, next_obs_camAngle_goal = [tf.expand_dims(i,1) for i in self._observations_phs[:6]]
+        next_obs_images, next_obs_zmap, next_obs_camAngle,next_obs_images_goal, next_obs_zmap_goal, next_obs_camAngle_goal = [tf.expand_dims(i,1) for i in self._next_observations_phs[:6]]
 
         next_obs_zmap = tf.expand_dims(next_obs_zmap,-1)
         next_obs_zmap_goal = tf.expand_dims(next_obs_zmap_goal,-1)
@@ -247,6 +267,12 @@ class SAC(RLAlgorithm):
         memory_next = self.map3D(next_obs_images,next_obs_camAngle,next_obs_zmap, is_training=None,reuse=True)
         memory_next_goal = self.map3D(next_obs_images_goal,next_obs_camAngle_goal,next_obs_zmap_goal, is_training=None,reuse=True)
         self.memory_next = [tf.concat([memory_next,memory_next_goal],-1)]
+
+
+
+        # # # st()
+
+        
 
         # st()
 
@@ -390,7 +416,8 @@ class SAC(RLAlgorithm):
         """Runs the operations for updating training and target ops."""
 
         feed_dict = self._get_feed_dict(iteration, batch)
-
+        # st()
+        # self.map3D.set_batch_size(self.batch_size)
         self._session.run(self._training_ops, feed_dict)
 
         if iteration % self._target_update_interval == 0:
@@ -415,13 +442,17 @@ class SAC(RLAlgorithm):
             self._next_observations_phs[i]: batch['next_observations.{}'.format(key)]
             for i, key in enumerate(self._observation_keys)
         })
-
+        
+        # feed_dict.update({
+        #     self._sampler_observations_phs[i]: batch['next_observations.{}'.format(key)][:1]
+        #     for i, key in enumerate(self._observation_keys)
+        # })
         if self._store_extra_policy_info:
             feed_dict[self._log_pis_ph] = batch['log_pis']
             feed_dict[self._raw_actions_ph] = batch['raw_actions']
 
         if iteration is not None:
-            feed_dict[self._iteration_ph] = np.array(iteration).reshape(self._iteration_ph.shape)
+            feed_dict[self._iteration_ph] = iteration
 
         return feed_dict
 

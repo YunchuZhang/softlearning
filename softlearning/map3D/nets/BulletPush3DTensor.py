@@ -185,7 +185,8 @@ class BulletPush3DTensor4_cotrain(BulletPushBase):
         #         summ.scalar("contact_loss", contact_loss, collections=["scalar", "all"])
         #         summ.scalar("contact_acc", contact_acc, collections=["scalar", "all"])
 
-
+    def set_batchSize(self,bs):
+        const.BS = bs
     def setup_data(self, data):
         # st()
         self.__dict__.update(data)
@@ -417,7 +418,7 @@ class BulletPush3DTensor4_cotrain(BulletPushBase):
         # (batch_size x T) x 32 x 32 x 32 x dim
         memory_3D = self.building_3D_tensor()
         
-        self.memory_3D = tf.stop_gradient(memory_3D)
+        self.memory_3D = memory_3D
         ####################33 view pred here ###################
         inputs2Ddec = self.get_inputs2Ddec_gqn3d([memory_3D])
         outputs2Ddec = self.get_outputs2Ddec_gqn3d(inputs2Ddec)
