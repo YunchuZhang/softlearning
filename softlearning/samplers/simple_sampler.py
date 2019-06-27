@@ -3,7 +3,7 @@ from collections import defaultdict
 import numpy as np
 import ipdb
 st = ipdb.set_trace
-from scipy.misc import imsave
+#from scipy.misc import imsave
 
 from .base_sampler import BaseSampler
 
@@ -59,7 +59,7 @@ class SimpleSampler(BaseSampler):
         
 
         next_observation, reward, terminal, info = self.env.step(action)
-        imsave("check_02.png",next_observation["desired_goal_depth"][0])
+        #imsave("check_02.png",next_observation["desired_goal_depth"][0])
         self._path_length += 1
         self._path_return += reward
         self._total_samples += 1
