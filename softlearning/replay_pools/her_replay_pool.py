@@ -10,6 +10,7 @@ class HerReplayPool(SimpleReplayPool):
                  env,
                  desired_goal_key,
                  achieved_goal_key,
+                 compute_reward_keys,
                  reward_key,
                  terminal_key,
                  *args,
@@ -27,7 +28,8 @@ class HerReplayPool(SimpleReplayPool):
 
         # Need to include both 'state' and non-'state' for image_env vs base environment
         # self._reward_keys = ('image_achieved_goal', 'image_desired_goal')
-        self._reward_keys = ('state_achieved_goal', 'state_desired_goal', 'achieved_goal', 'desired_goal')
+        #self._reward_keys = ('state_achieved_goal', 'state_desired_goal', 'achieved_goal', 'desired_goal')
+        self._compute_reward_keys = compute_reward_keys
         # st()
         super(HerReplayPool, self).__init__(*args, env, **kwargs)
 
@@ -89,14 +91,14 @@ class HerReplayPool(SimpleReplayPool):
 
                 if self.env.is_multiworld_env:
                     observation = {key: np.array([batch['next_observations.{}'.format(key)][batch_idx]])
-                                   for key in self._reward_keys}
+                                   for key in self._compute_reward_keys.values()}
                     #print(observation)
                     # st()
                     rewards[batch_idx] = self.env.compute_reward(actions=np.array([actions[batch_idx]]),
                                                                  observations=observation)
                 else:
-                    rewards[batch_idx] = self.env.compute_reward(achieved_goal=achieved_goals[batch_idx],
-                                                                  desired_goal=future_achieved_goal,
+                    rewards[batch_idx] = self.env.compute_reward(achieved_goal=batch[self._compute_reward_keys['achieved']][batch_idx],
+                                                                  desired_goal=self.fields[self._compute_reward_keys['desired']][future_sample_idx],
                                                                   info=None)
                 if future_sample_offset == 0:
                     terminals[batch_idx] = True

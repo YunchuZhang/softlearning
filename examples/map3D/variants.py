@@ -309,8 +309,15 @@ HER_REPLAY_POOL_PARAMS = {
     'type': 'HerReplayPool',
     'kwargs': {
         'max_size': 2e5,
-        'desired_goal_key': 'state_desired_goal',
-        'achieved_goal_key': 'state_achieved_goal',
+        'compute_reward_keys': {'achieved': 'state_achieved_goal',
+                                'desired': 'state_desired_goal',
+                                # These are required by the multiworld ImageEnv
+                                # but may not be actually used to calculate
+                                # the reward
+                                'image_env_dummy': 'achieved_goal',
+                                'image_env_dummy2': 'desired_goal'},
+        'desired_goal_key': 'image_desired_goal',
+        'achieved_goal_key': 'image_achieved_goal',
         'reward_key': 'rewards',
         'terminal_key': 'terminals'
     }

@@ -93,7 +93,7 @@ class RLAlgorithm(tf.contrib.checkpoint.Checkpointable):
         t =  time.time()
         while pool.size < self._n_initial_exploration_steps:
             self.sampler.sample()
-            print(time.time()-t, pool.size)
+            #print(time.time()-t, pool.size)
             #print("initial exploration sample")
 
         print("finished initial exploration")

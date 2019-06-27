@@ -407,6 +407,9 @@ class SAC(RLAlgorithm):
         for Q, Q_target in zip(self._Qs, self._Q_targets):
             source_params = Q.get_weights()
             target_params = Q_target.get_weights()
+            #print("param shapes")
+            #for param in source_params:
+            #    print(param.shape)
             Q_target.set_weights([
                 tau * source + (1.0 - tau) * target
                 for source, target in zip(source_params, target_params)

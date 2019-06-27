@@ -123,7 +123,7 @@ def add_ray_init_args(parser):
     parser.add_argument(
         '--temp-dir',
         type=str,
-        default="/projects/katefgroup/mprabhud/tmp",
+        default=None,
         help=init_help_string("If provided, it will specify the root temporary"
                               " directory for the Ray process."))
 
