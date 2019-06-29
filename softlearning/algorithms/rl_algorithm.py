@@ -4,7 +4,7 @@ from itertools import count
 import gtimer as gt
 import math
 import os
-import cProfile
+
 import tensorflow as tf
 import numpy as np
 import time
@@ -184,13 +184,11 @@ class RLAlgorithm(tf.contrib.checkpoint.Checkpointable):
                 self._timestep_before_hook()
                 gt.stamp('timestep_before_hook')
                 # st()
-                print("sampling")
-
                 self._do_sampling(timestep=self._total_timestep)
 
                 # print(samples_now,start_samples,self._epoch_length,"params")
                 gt.stamp('sample')
-                print("training")
+                # print("training")
                 if self.ready_to_train:
                     self._do_training_repeats(timestep=self._total_timestep)
 

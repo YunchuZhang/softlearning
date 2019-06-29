@@ -6,7 +6,7 @@ import tensorflow as tf
 from tensorflow.python.training import training_util
 from softlearning.map3D import constants as const
 const.set_experiment("rl_new")
-import time
+
 from .rl_algorithm import RLAlgorithm
 import ipdb
 st = ipdb.set_trace
@@ -421,15 +421,11 @@ class SAC(RLAlgorithm):
         feed_dict = self._get_feed_dict(iteration, batch)
         # st()
         # self.map3D.set_batch_size(self.batch_size)
-        t = time.time()
         self._session.run(self._training_ops, feed_dict)
-        print(time.time() -t,"sess run sac")
+
         if iteration % self._target_update_interval == 0:
             # Run target ops here.
-            t = time.time()
             self._update_target()
-            print(time.time() -t,"update targets")
-
 
     def _get_feed_dict(self, iteration, batch):
         """Construct TensorFlow feed_dict from sample batch."""
@@ -449,7 +445,6 @@ class SAC(RLAlgorithm):
             self._next_observations_phs[i]: batch['next_observations.{}'.format(key)]
             for i, key in enumerate(self._observation_keys)
         })
-        st()
         
         # feed_dict.update({
         #     self._sampler_observations_phs[i]: batch['next_observations.{}'.format(key)][:1]
