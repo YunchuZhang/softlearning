@@ -89,18 +89,17 @@ class SimpleReplayPool(FlexibleReplayPool):
         if not isinstance(self._observation_space, Dict):
             return super(SimpleReplayPool, self).add_samples(samples)
 
-
         dict_observations = defaultdict(list)
         for observation in samples['observations']:
             for key, value in observation.items():
-                if 'image' in key and value is not None:
+                if ('image' in key or key in ["observation","desired_goal","achieved_goal"]) and (value is not None):
                     value = unnormalize_image(value)
                 dict_observations[key].append(value)
 
         dict_next_observations = defaultdict(list)
         for next_observation in samples['next_observations']:
             for key, value in next_observation.items():
-                if 'image' in key and value is not None:
+                if('image' in key or key in ["observation","desired_goal","achieved_goal"]) and (value is not None):
                     value = unnormalize_image(value)
                 dict_next_observations[key].append(value)
 
@@ -140,7 +139,7 @@ class SimpleReplayPool(FlexibleReplayPool):
             observation_keys = tuple(self._observation_space.spaces.keys())
 
         for key, value in batch.items():
-            if 'image' in key and value is not None:
+            if ('image' in key or key in ["observation","desired_goal","achieved_goal"]) and value is not None:
                 value = normalize_image(value)
                 batch[key] = value
 

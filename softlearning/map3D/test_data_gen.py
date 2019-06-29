@@ -64,7 +64,6 @@ st()
 # imsave("check_03.png",replay_pool.fields["observations.desired_goal_depth"][0,0])
 observation = sampler.random_batch()
 
-
 save_images.save_some_samples(sampler)
 # def save_replay_buffer(fields):
 #   # key_val = fields.keys()

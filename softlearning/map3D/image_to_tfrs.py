@@ -25,8 +25,8 @@ const.W = 84
 #IN_DIR = '/home/ricson/data/ShapeNetCore.v1/all_chairs'
 # IN_DIR = '/home/sajaved/projects/text2scene/3dProbNeuralProgNet/data/CLEVR/clevr-dataset-gen/output/CLEVR_64_GEN_TEST/images/train/'
 # OUT_DIR = '/home/sajaved/projects/text2scene/3dProbNeuralProgNet/data/CLEVR/clevr-dataset-gen/output/CLEVR_64_GEN_TEST/tfrs'
-IN_DIR = 'data/images/train/'
-OUT_DIR = 'data/tfrs/train/'
+IN_DIR = '/Users/mihirprabhudesai/Documents/projects/rl/softlearning/data/images'
+OUT_DIR = '/Users/mihirprabhudesai/Documents/projects/rl/softlearning/data/tfrs'
 the_file = open('mujocopickplace_train', 'w')
 
 PHIS = list(range(-120, -180, -20))
@@ -257,22 +257,24 @@ def write_tf(tfexample, path):
 
 
 def job(xxx_todo_changeme):
-    (i, obj_path) = xxx_todo_changeme
-    print(i, obj_path)
-    out_path = out_path_for_obj_path(obj_path)
-    tfexample,dictVal = tf_for_obj(np_for_obj(obj_path))
-    import pickle
-    pickle.dump(dictVal,open("og.p","wb"))
-    out_path="out"
-    st()
-    write_tf(tfexample, out_path)
+    # (i, obj_path) = xxx_todo_changeme
+    print(xxx_todo_changeme)
+    # out_path = out_path_for_obj_path(obj_path)
+    # tfexample,dictVal = tf_for_obj(np_for_obj(obj_path))
+    # import pickle
+    # pickle.dump(dictVal,open("og.p","wb"))
+    # out_path="out"
+    # st()
+    # write_tf(tfexample, out_path)
 
 
 
 def main(mt):
     if mt:
         p = pp.ProcessPool(4)
-        jobs = sorted(list(enumerate(enum_obj_paths())))
+        # jobs = sorted(list(enumerate(enum_obj_paths())))
+        # jobs = [(1,1),(1,1),(1,1)]
+        jobs = list(range(10))
         # st()
         # print(jobs)
         # job(jobs[0])
@@ -283,4 +285,4 @@ def main(mt):
 
 
 if __name__ == '__main__':
-    main(False)  # set false for debug
+    main(True)  # set false for debug

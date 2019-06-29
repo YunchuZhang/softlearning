@@ -1,7 +1,6 @@
 #from nets.Net import Net
 from .BulletPushBase import BulletPushBase
 import constants as const
-const.set_experiment("rl_new")
 
 import utils_map as utils
 from utils_map import voxel
@@ -31,7 +30,7 @@ class BulletPush3DTensor4_cotrain(BulletPushBase):
 
 
     def loss(self):
-        if const.loss=="l1":
+        if const.LOSS_FN=="l1":
             vp_loss = utils.losses.l1loss(self.predicted_view, self.inputs.state.vp_frame)            
         else:
             vp_loss = utils.losses.binary_ce_loss(self.predicted_view, self.inputs.state.vp_frame)
@@ -418,7 +417,7 @@ class BulletPush3DTensor4_cotrain(BulletPushBase):
         # (batch_size x T) x 32 x 32 x 32 x dim
         memory_3D = self.building_3D_tensor()
         
-        self.memory_3D = memory_3D
+        self.memory_3D = tf.identity(memory_3D,name="3dstuff")
         ####################33 view pred here ###################
         inputs2Ddec = self.get_inputs2Ddec_gqn3d([memory_3D])
         outputs2Ddec = self.get_outputs2Ddec_gqn3d(inputs2Ddec)

@@ -18,12 +18,6 @@ class Net:
         self.is_training =True
         self.weights = {}
         self.opname = const.opname
-        const.fx = const.W / 2.0 * 1.0 / math.tan(const.fov * math.pi / 180 / 2)
-        const.fy = const.fx
-        const.focal_length = const.fx / (const.W / 2.0)
-
-        const.x0 = const.W / 2.0
-        const.y0 = const.H / 2.0
         # self.setup_data(val)
         # self.predict()
         # self.extra_out = dict()
@@ -60,7 +54,6 @@ class Net:
             zmaps = gather_image_(zmaps, idx)
             angles = gather_angles_(angles, idx)
             return images, zmaps, angles, idx
-
         # if const.mode == "test":
         #     images_front = images[:, 13, :, :, :3]
         #     images_side = images[:, 8, :, :, :3]
@@ -72,21 +65,25 @@ class Net:
             nviews += const.NUM_PREDS
 
         images, zmaps, angles, idx = extract_rand_view(images, zmaps, angles, nviews)
+
         angles = tf.convert_to_tensor(angles)
         zmaps = tf.convert_to_tensor(zmaps)
 
         input_T = images.get_shape()[1].value
         # randomly select a chunk that has length of max_T
+        
         start_t = tf.cast(tf.random.uniform([1], minval=0, maxval=input_T-0.000001 - self.max_T,dtype=tf.float32)[0], tf.int32)        
+
         images = self.clip_data(images, start_t, self.max_T+1)
         angles = self.clip_data(angles, start_t, self.max_T+1)
         zmaps = self.clip_data(zmaps, start_t, self.max_T+1)
+
         # xyzorn_objects = self.clip_data(xyzorn_objects, start_t, self.max_T+1)
         # object_class = self.clip_data(object_class, start_t, self.max_T + 1)
         # xyzorn_agent = self.clip_data(xyzorn_agent, start_t, self.max_T + 1)
         # actions = self.clip_data(actions, start_t, self.max_T)
 
-        images = images/255.0 
+        # images = images
         #tf.compat.as_text(raw_seq_filename, encoding='utf-8')
 
         names = ['images', 'angles', 'zmaps']
@@ -144,6 +141,7 @@ class Net:
     def data(self,images,zmaps,angles):
         #data = self.child.data_for_selector(self.q_ph)
         # st()
+        # self.images_val = images
         data = self.init_Inputs(images,zmaps,angles)
         # st()
 
@@ -154,6 +152,7 @@ class Net:
         data.images = self.clip_data(data.images, start_t, self.max_T + 1)
         data.angles = self.clip_data(data.angles, start_t, self.max_T + 1)
         data.zmaps = self.clip_data(data.zmaps, start_t, self.max_T + 1)
+
         if const.run_full:
             data.xyzorn_objects = self.clip_data(data.xyzorn_objects, start_t, self.max_T + 1)
             data.object_class = self.clip_data(data.object_class, start_t, self.max_T + 1)
@@ -170,6 +169,7 @@ class Net:
         images = tf.cast(data.images, tf.uint8)
         angles = tf.cast(data.angles, tf.float32)
         zmaps = tf.cast(data.zmaps, tf.float32)
+
     def get_delta(self, xyzorn, xyzorn_after):
         delta_pos = xyzorn_after[:,:,:,:3] - xyzorn[:,:,:,:3]
         #quat1 = tfq.Quaternion(tf.concat([xyzorn[:,:,:,6:7], xyzorn[:,:,:,3:6]], 3))
@@ -254,11 +254,21 @@ class Net:
         self.optimizer = tf.train.AdamOptimizer(const.lr, const.mom)
         self.opt = utils.tfutil.make_opt_op(self.optimizer, fn)
 
-    def __call__(self,images,angles,zmaps,is_training=None,reuse=False):
+    def __call__(self,images,angles,zmaps,batch_size=None,exp_name=None,is_training=None,reuse=False):
         #index is passed to the data_selector, to control which data is used
         #self.go_up_to_loss(index)
-        # if batch_size:
-        #     const.BS = batch_size
+        # st()
+        if exp_name:
+            const.set_experiment(exp_name)
+            self.__dict__.update(const.__dict__)
+        if batch_size:
+            const.BS = batch_size
+        const.fx = const.W / 2.0 * 1.0 / math.tan(const.fov * math.pi / 180 / 2)
+        const.fy = const.fx
+        const.focal_length = const.fx / (const.W / 2.0)
+
+        const.x0 = const.W / 2.0
+        const.y0 = const.H / 2.0
         with tf.compat.v1.variable_scope("Variables",reuse=reuse):
             val = self.data(images,zmaps,angles)
             self.optimize(lambda: self.go_up_to_loss(val,is_training))

@@ -6,9 +6,9 @@ import types
 
 class Config(object):
     def __init__(self, name, step=0):
-        utils.utils.ensure(const.ckpt_cfg_dir)
-        utils.utils.ensure(path.join(const.ckpt_cfg_dir, name.split("/")[0]))
-        self.name = path.join(const.ckpt_cfg_dir, name)
+        utils.utils.ensure(path.join(const.ckpt_base,const.ckpt_cfg_dir))
+        utils.utils.ensure(path.join(const.ckpt_base,const.ckpt_cfg_dir, name.split("/")[0]))
+        self.name = path.join(const.ckpt_base,const.ckpt_cfg_dir, name)
         self.snapshot_const(self.name + ".pickle")
         self.dct = {}
         self.step = step
