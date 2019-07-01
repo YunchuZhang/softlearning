@@ -159,7 +159,12 @@ class RLAlgorithm(tf.contrib.checkpoint.Checkpointable):
             self._initial_exploration_hook(
                 training_environment, self._initial_exploration_policy, pool)
         print("initializing")
-        self.sampler.initialize(training_environment, policy, pool,memory3D=self.memory,obs_ph= self._observations_phs,session=self._session)
+        self.sampler.initialize(training_environment,
+                                None,
+                                pool,
+                                policy_graph=self._actions,
+                                obs_ph=self._observations_phs,
+                                session=self._session)
         print("initialized")
 
         gt.reset_root()
@@ -276,9 +281,11 @@ class RLAlgorithm(tf.contrib.checkpoint.Checkpointable):
             paths = rollouts(
                 self._eval_n_episodes,
                 evaluation_env,
-                policy,
+                None,
                 self.sampler._max_path_length,
-                memory3D=self.memory,obs_ph=self._observations_phs,session=self._session,
+                policy_graph=self._actions,
+                obs_ph=self._observations_phs,
+                session=self._session,
                 render_mode=self._eval_render_mode)
 
         should_save_video = (

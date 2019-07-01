@@ -331,8 +331,8 @@ class SAC(RLAlgorithm):
         and Section 5 in [1] for further information of the entropy update.
         """
 
-        actions = self._policy.actions(self.memory)
-        log_pis = self._policy.log_pis(self.memory, actions)
+        self._actions = self._policy.actions(self.memory)
+        log_pis = self._policy.log_pis(self.memory, self._actions)
 
         assert log_pis.shape.as_list() == [self.batch_size, 1]
 
@@ -361,12 +361,12 @@ class SAC(RLAlgorithm):
             policy_prior = tf.contrib.distributions.MultivariateNormalDiag(
                 loc=tf.zeros(self._action_shape),
                 scale_diag=tf.ones(self._action_shape))
-            policy_prior_log_probs = policy_prior.log_prob(actions)
+            policy_prior_log_probs = policy_prior.log_prob(self._actions)
         elif self._action_prior == 'uniform':
             policy_prior_log_probs = 0.0
 
         Q_log_targets = tuple(
-            Q([*self.memory, actions])
+            Q([*self.memory, self._actions])
             for Q in self._Qs)
         min_Q_log_target = tf.reduce_min(Q_log_targets, axis=0)
 

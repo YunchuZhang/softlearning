@@ -49,11 +49,11 @@ ALGORITHM_PARAMS_BASE = {
     'type': 'SAC',
 
     'kwargs': {
-        'epoch_length': 1000,
+        'epoch_length': 10,
         'train_every_n_steps': 2,
         'n_train_repeat': 1,
         'eval_render_mode': None,
-        'eval_n_episodes': 5,
+        'eval_n_episodes': 0,
         'eval_deterministic': True,
 
         'discount': 0.99,
@@ -308,7 +308,7 @@ SIMPLE_REPLAY_POOL_PARAMS_TEMP = {
 HER_REPLAY_POOL_PARAMS = {
     'type': 'HerReplayPool',
     'kwargs': {
-        'max_size': 2e5,
+        'max_size': 1e3,
         'compute_reward_keys': {'achieved': 'state_achieved_goal',
                                 'desired': 'state_desired_goal',
                                 # These are required by the multiworld ImageEnv
@@ -466,11 +466,11 @@ def get_variant_spec_3D(universe,
         'input_shape':(32,32,32,16),
         'kwargs': {
             'output_size': 128,
-            'conv_filters': (16,32,64,128,128),
-            'conv_kernel_sizes': (4,4,4,4,3),
+            'conv_filters': (4,8),
+            'conv_kernel_sizes': (4,4),
             'pool_type': 'MaxPool3D',
-            'pool_sizes':(2,2,2,2,2),
-            'pool_strides': (2,2,2,2,2),
+            'pool_sizes':(2,2),
+            'pool_strides': (2,2),
             'dense_hidden_layer_sizes': (64, 64),
         },
     }

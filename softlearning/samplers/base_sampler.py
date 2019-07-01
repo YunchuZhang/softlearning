@@ -1,6 +1,8 @@
 from collections import deque, OrderedDict
 from itertools import islice
 
+import tensorflow as tf
+
 
 class BaseSampler(object):
     def __init__(self,
@@ -19,14 +21,15 @@ class BaseSampler(object):
         self.policy = None
         self.pool = None
 
-    def initialize(self, env, policy, pool,memory3D=None,obs_ph=None,session=None):
+
+    def initialize(self, env, policy, pool, policy_graph=None, obs_ph=None, session=None):
         self.env = env
         self.policy = policy
         self.pool = pool
-        self.initialized =True
-        self.memory3D_sampler = memory3D
+        self.policy_graph = policy_graph
         self.obs_ph = obs_ph
         self.session = session
+        self._train_writer = None
 
 
     def set_policy(self, policy):

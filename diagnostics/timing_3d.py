@@ -3,6 +3,7 @@
 
 import ray
 import tensorflow as tf
+from tensorflow.core.protobuf import rewriter_config_pb2
 
 from examples.map3D.variants import *
 
@@ -23,9 +24,13 @@ from softlearning.value_functions.utils import get_Q_function_from_variant
 from softlearning.misc.utils import set_seed, initialize_tf_variables
 
 
-#gpu_options = tf.GPUOptions(allow_growth=False)
-#session = tf.Session(config=tf.ConfigProto(gpu_options=gpu_options))
-session = tf.Session()
+gpu_options = tf.GPUOptions(allow_growth=False)
+config_proto = tf.ConfigProto(gpu_options=gpu_options)
+#config_proto = tf.ConfigProto(log_device_placement=False, allow_soft_placement=True, device_count={'GPU': 0})
+#off = rewriter_config_pb2.RewriterConfig.OFF
+##config_proto.graph_options.rewrite_options.arithmetic_optimization = off
+#config_proto.graph_options.rewrite_options.memory_optimization=4
+session = tf.Session(config=config_proto)
 tf.keras.backend.set_session(session)
 session = tf.keras.backend.get_session()
 
@@ -74,5 +79,7 @@ initialize_tf_variables(session, only_uninitialized=True)
 
 train_gen = algorithm.train()
 
-for _ in range(10):
-    next(train_gen)
+#with tf.contrib.tfprof.ProfileContext('/tmp/train_dir') as pctx:
+
+#for _ in range(10):
+next(train_gen)

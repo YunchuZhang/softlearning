@@ -1,5 +1,7 @@
 from collections import defaultdict
 
+import tensorflow as tf
+
 import numpy as np
 import ipdb
 st = ipdb.set_trace
@@ -19,6 +21,7 @@ class SimpleSampler(BaseSampler):
         self._n_episodes = 0
         self._current_observation = None
         self._total_samples = 0
+
 
     def _process_observations(self,
                               observation,
@@ -45,18 +48,28 @@ class SimpleSampler(BaseSampler):
             self._current_observation = self.env.reset()
         active_obs = self.env.convert_to_active_observation(self._current_observation)
         # st()
-        active_obs =[np.repeat(i,4,0)  for i in active_obs]
+        active_obs = [np.repeat(i, 4, 0)  for i in active_obs]
 
-        if self.initialized and self.memory3D_sampler:
-            active_obs = self.session.run(self.memory3D_sampler,feed_dict={self.obs_ph[0]:active_obs[0],self.obs_ph[1]:active_obs[1],self.obs_ph[2]:active_obs[2],\
-                self.obs_ph[3]:active_obs[3],self.obs_ph[4]:active_obs[4],self.obs_ph[5]:active_obs[5]})
-            active_obs = active_obs[:1]
+        if self._train_writer is None and self.session is not None:
+            self._train_writer = tf.summary.FileWriter('train_metadata', self.session.graph)
+
+        if self.policy_graph is not None:
+            run_options = tf.RunOptions(trace_level=tf.RunOptions.FULL_TRACE)
+            run_metadata = tf.RunMetadata()
+            action = self.session.run(self.policy_graph,
+                                      feed_dict={ph : v
+                                                 for ph, v in
+                                                 #zip(self.obs_ph, active_obs)})[0]
+                                                 zip(self.obs_ph, active_obs)},
+                                      options=run_options,
+                                      run_metadata=run_metadata)[0]
+            self._train_writer.add_run_metadata(run_metadata, 'step%03d' % self._total_samples)
+            #self._train_writer.add_summary(summary, self._total_samples)
+            
+        else:
+            action = self.policy.actions_np(active_obs)[0]
             # active_obs =  np.ones([1, 32, 32, 32, 16])
             # st()
-
-
-        action = self.policy.actions_np(active_obs)[0]
-        
 
         next_observation, reward, terminal, info = self.env.step(action)
         #imsave("check_02.png",next_observation["desired_goal_depth"][0])
@@ -105,7 +118,8 @@ class SimpleSampler(BaseSampler):
                                         self._path_return)
             self._last_path_return = self._path_return
 
-            self.policy.reset()
+            if self.policy is not None:
+                self.policy.reset()
             self._current_observation = None
             self._path_length = 0
             self._path_return = 0

@@ -129,7 +129,7 @@ class ExperimentRunner(tune.Trainable):
 
         initialize_tf_variables(self._session, only_uninitialized=True)
         # st()
-        self.map3d_setup(self._session,map3D=bulledtPush)
+        #self.map3d_setup(self._session,map3D=bulledtPush)
 
         self._built = True
 
