@@ -214,6 +214,7 @@ class BulletPushBase(Net):
                 "output_top_diff": self.vis_output_top_diff
             }
         else:
+            self.summ = tf.summary.merge_all()
             self.vis = {"pred_views":self.predicted_view,"query_views":self.inputs.state.vp_frame}
             # self.vis = {}
     def build_evaluator(self):

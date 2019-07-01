@@ -1,5 +1,6 @@
 from copy import deepcopy
-
+import ipdb
+st = ipdb.set_trace
 import numpy as np
 
 from softlearning import replay_pools
@@ -34,7 +35,6 @@ def get_sampler_from_variant(variant, *args, **kwargs):
 
     return sampler
 
-
 def rollout(env,
             policy,
             path_length,
@@ -48,7 +48,7 @@ def rollout(env,
         max_path_length=path_length,
         min_pool_size=None,
         batch_size=None)
-
+    # st()
     sampler.initialize(env, policy, pool,memory3D=memory3D,obs_ph=obs_ph,session=session)
 
     images = []
@@ -57,6 +57,7 @@ def rollout(env,
     t = 0
     for t in range(path_length):
         observation, reward, terminal, info = sampler.sample()
+        print(reward)
         infos.append(info)
 
         if callback is not None:

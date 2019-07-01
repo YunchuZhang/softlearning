@@ -189,7 +189,7 @@ train_on_val = False
 
 IS_VIEW_PRED = train_vp
 ckpt_base = ""
-
+detector= False
 ####
 
 T0 = time.time()
@@ -736,7 +736,8 @@ OG("rl_new",
    )
 OG("rl_temp","rl_new",ckpt_cfg_dir="ckpt_cfg")
 
-OG("rl_new_reach","rl_new")
+OG("rl_new_reach","rl_new",load_name="rl_new/1")
+OG("rl_new_reach_detect","rl_new",load_name="rl_new_detector/1",detector=True)
 
 
 ############################## SLAM Baseline #######################################

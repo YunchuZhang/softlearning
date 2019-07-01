@@ -23,17 +23,20 @@ import numpy as np
 st = ipdb.set_trace
 
 class ExperimentRunner():
-	def _setup(self, variant):
+	def _setup(self,exp_name, variant,eager=False):
 		# st()
 		set_seed(np.random.randint(0, 10000))
+		self.eager = eager
 
 		self._variant = variant
+
+		# self.detector = detector
 
 		gpu_options = tf.GPUOptions(allow_growth=True)
 		session = tf.Session(config=tf.ConfigProto(gpu_options=gpu_options))
 		tf.keras.backend.set_session(session)
 		self._session = tf.keras.backend.get_session()
-
+		self.exp_name = exp_name
 		self.train_generator = None
 		self._built = False
 
@@ -55,6 +58,7 @@ class ExperimentRunner():
 		# if not const.eager:
 		#     tf.get_default_graph().finalize()
 		# print('finished graph initialization in %f seconds' % (time() - T1))
+		return step
 
 	def initsaver(self):
 		self.savers = {}
@@ -94,6 +98,9 @@ class ExperimentRunner():
 
 
 	def map_load(self,sess, name,map3D=None):
+		# st()
+		if not path.exists(path.join(self.algorithm.model.ckpt_base,self.algorithm.model.ckpt_cfg_dir, name)):
+			return 0
 		config = Config(name)
 		config.load()
 		# st()
@@ -124,11 +131,17 @@ class ExperimentRunner():
 		return config.step
 
 	def _train(self):
-		for i in range(100):
+		for i in range(self.step,self.step+100):
 			self.algorithm.train_epoch(i)
 			# st()
-			if i % 2 ==0:
+			if i % 10 ==0:
 				self.save(self._session,self.algorithm.model.load_name,i)
+				num = 0
+				print("Further Sampling")
+				while num < 1000:
+					self.sampler.sample()
+					num = num+1
+					# print(num,1e3)
 
 
 	def _build(self):
@@ -161,6 +174,9 @@ class ExperimentRunner():
 			batch_size = batch_size,
 			observation_keys = observation_keys,
 			sampler=sampler,
+			eager_enabled = self.eager,
+			# detector = self.detector,
+			exp_name=self.exp_name,
 			session=self._session)
 		
 
@@ -168,8 +184,9 @@ class ExperimentRunner():
 
 		initialize_tf_variables(self._session, only_uninitialized=True)
 		# st()
-		self.map3d_setup(self._session,map3D=bulledtPush)
-
+		# if not self.algorithm.detector:
+		self.step = self.map3d_setup(self._session,map3D=bulledtPush)
+		# st()
 		self.initsaver()
 
 		self._built = True

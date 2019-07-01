@@ -3,8 +3,13 @@ from collections import defaultdict
 import numpy as np
 import ipdb
 st = ipdb.set_trace
+# <<<<<<< Updated upstream
 #from scipy.misc import imsave
 
+# =======
+# from scipy.misc import imsave
+# import time
+# >>>>>>> Stashed changes
 from .base_sampler import BaseSampler
 
 class SimpleSampler(BaseSampler):
@@ -38,28 +43,41 @@ class SimpleSampler(BaseSampler):
 
         return processed_observation
 
-
+    def forward(self,active_obs):
+        active_obs = self.session.run(self.memory3D_sampler,feed_dict={self.obs_ph[0]:active_obs[0],self.obs_ph[1]:active_obs[1],self.obs_ph[2]:active_obs[2],\
+            self.obs_ph[3]:active_obs[3],self.obs_ph[4]:active_obs[4],self.obs_ph[5]:active_obs[5]})        
+        return active_obs
+    
     def sample(self):
-        # st()
         if self._current_observation is None:
             self._current_observation = self.env.reset()
         active_obs = self.env.convert_to_active_observation(self._current_observation)
         # st()
+        # if preprocess:
         active_obs =[np.repeat(i,4,0)  for i in active_obs]
 
+        if len(active_obs[0].shape) == 5 and len(active_obs[4].shape) == 5:
+            # for case when we train 3d code
+            active_obs[0] = np.concatenate([active_obs[0],np.ones_like(active_obs[0][...,:1])],-1)
+            active_obs[4] = np.concatenate([active_obs[4],np.ones_like(active_obs[4][...,:1])],-1)
         if self.initialized and self.memory3D_sampler:
-            active_obs = self.session.run(self.memory3D_sampler,feed_dict={self.obs_ph[0]:active_obs[0],self.obs_ph[1]:active_obs[1],self.obs_ph[2]:active_obs[2],\
-                self.obs_ph[3]:active_obs[3],self.obs_ph[4]:active_obs[4],self.obs_ph[5]:active_obs[5]})
+            a = time.time()
+            active_obs = self.forward(active_obs)
+            print(time.time()-a,"sampler sess")
             active_obs = active_obs[:1]
+        else:
+            active_obs  = [i[:1] for i in active_obs]
             # active_obs =  np.ones([1, 32, 32, 32, 16])
             # st()
-
+        # st()
 
         action = self.policy.actions_np(active_obs)[0]
         
 
         next_observation, reward, terminal, info = self.env.step(action)
+
         #imsave("check_02.png",next_observation["desired_goal_depth"][0])
+
         self._path_length += 1
         self._path_return += reward
         self._total_samples += 1
@@ -92,6 +110,7 @@ class SimpleSampler(BaseSampler):
             self._current_path[key].append(value)
 
         if terminal or self._path_length >= self._max_path_length:
+            # st()
             last_path = {
                 field_name: np.array(values)
                 for field_name, values in self._current_path.items()

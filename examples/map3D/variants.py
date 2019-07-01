@@ -53,7 +53,7 @@ ALGORITHM_PARAMS_BASE = {
         'train_every_n_steps': 2,
         'n_train_repeat': 1,
         'eval_render_mode': None,
-        'eval_n_episodes': 5,
+        'eval_n_episodes': 1,
         'eval_deterministic': True,
 
         'discount': 0.99,
@@ -74,7 +74,7 @@ ALGORITHM_PARAMS_ADDITIONAL = {
             'target_entropy': 'auto',
             'store_extra_policy_info': False,
             'action_prior': 'uniform',
-            'n_initial_exploration_steps': int(1e2),
+            'n_initial_exploration_steps': int(5e3),
         }
     },
     'SQL': {
@@ -249,7 +249,7 @@ NUM_CHECKPOINTS = 10
 SIMPLE_SAMPLER_PARAMS = {
     'type': 'SimpleSampler',
     'kwargs': {
-        'batch_size': 4,
+        'batch_size': 10,
     }
 }
 
@@ -286,7 +286,7 @@ SIMPLE_REPLAY_POOL_PARAMS = {
     'kwargs': {
         'max_size': tune.sample_from(lambda spec: (
             {
-                'SimpleReplayPool': int(2e5),
+                'SimpleReplayPool': int(5e3),
                 'TrajectoryReplayPool': int(1e4),
             }.get(
                 spec.get('config', spec)
@@ -300,7 +300,7 @@ SIMPLE_REPLAY_POOL_PARAMS = {
 SIMPLE_REPLAY_POOL_PARAMS_TEMP = {
     'type': 'SimpleReplayPool',
     'kwargs': {
-        'max_size': 2e5
+        'max_size': 5e3
     }
 }
 
@@ -455,7 +455,7 @@ def get_variant_spec_3D(universe,
     environment_params = variant_spec['environment_params']
     env_train_params = environment_params['training']
     # env_train_params["kwargs"] = {}
-    env_train_params["kwargs"]["observation_keys"] = ["image_observation","depth_observation","cam_angles_observation","image_desired_goal","desired_goal_depth","goal_cam_angle"]
+    env_train_params["kwargs"]["observation_keys"] = ["image_observation","depth_observation","cam_angles_observation","state_observation","image_desired_goal","desired_goal_depth","goal_cam_angle"]
     env_train_params["kwargs"]["map3D"] = map3D_model
 
 

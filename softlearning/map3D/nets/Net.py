@@ -18,6 +18,7 @@ class Net:
         self.is_training =True
         self.weights = {}
         self.opname = const.opname
+        self.detector = False
         # self.setup_data(val)
         # self.predict()
         # self.extra_out = dict()
@@ -254,15 +255,23 @@ class Net:
         self.optimizer = tf.train.AdamOptimizer(const.lr, const.mom)
         self.opt = utils.tfutil.make_opt_op(self.optimizer, fn)
 
-    def __call__(self,images,angles,zmaps,batch_size=None,exp_name=None,is_training=None,reuse=False):
+    def __call__(self,images,angles,zmaps,batch_size=None,exp_name=None,is_training=None,reuse=False,eager=False,position=None):
         #index is passed to the data_selector, to control which data is used
         #self.go_up_to_loss(index)
         # st()
+        # self.exp_name = exp_name
         if exp_name:
             const.set_experiment(exp_name)
             self.__dict__.update(const.__dict__)
         if batch_size:
             const.BS = batch_size
+        if eager:
+            const.eager = eager
+            const.DEBUG_UNPROJECT =True
+
+        # self.detector = detector
+        self.position = tf.layers.flatten(position)
+        # st()
         const.fx = const.W / 2.0 * 1.0 / math.tan(const.fov * math.pi / 180 / 2)
         const.fy = const.fx
         const.focal_length = const.fx / (const.W / 2.0)

@@ -3,10 +3,11 @@ from distutils.util import strtobool
 import json
 import os
 import pickle
-
+import ipdb
+st = ipdb.set_trace
 import tensorflow as tf
 
-from softlearning.environments.utils import get_environment_from_params
+from softlearning.environments.utils import get_environment_from_params,get_environment_from_params_custom
 from softlearning.policies.utils import get_policy_from_variant
 from softlearning.samplers import rollouts
 
@@ -49,14 +50,23 @@ def simulate_policy(args):
         with open(pickle_path, 'rb') as f:
             picklable = pickle.load(f)
 
+    # st()
     environment_params = (
         variant['environment_params']['evaluation']
         if 'evaluation' in variant['environment_params']
         else variant['environment_params']['training'])
-    evaluation_environment = get_environment_from_params(environment_params)
+
+
+    # environment_params["kwargs"]["observation_keys"] = ["observation","desired_goal","achieved_goal","state_observation","state_desired_goal","state_achieved_goal"\
+    # "state_achieved_goal","proprio_observation","proprio_desired_goal","proprio_achieved_goal"]
+
+    # evaluation_environment =  get_environment_from_params_custom(environment_params)
+
+    evaluation_environment =  get_environment_from_params(environment_params)
 
     policy = (
         get_policy_from_variant(variant, evaluation_environment, Qs=[None]))
+    
     policy.set_weights(picklable['policy_weights'])
 
     with policy.set_deterministic(args.deterministic):
