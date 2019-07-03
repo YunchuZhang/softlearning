@@ -42,6 +42,7 @@ def rollouts(n_paths,
              policy,
              path_length,
              sampler=None,
+             memory3D=None,obs_ph=None,session=None,
              callback=None,
              render_mode=None,
              break_on_terminal=True):
@@ -56,7 +57,7 @@ def rollouts(n_paths,
             store_last_n_paths=n_paths,
         )
 
-    sampler.initialize(env, policy, pool)
+    sampler.initialize(env, policy, pool,memory3D=memory3D,obs_ph=obs_ph,session=session)
 
     sampler.clear_last_n_paths()
     sampler.store_last_n_paths = n_paths

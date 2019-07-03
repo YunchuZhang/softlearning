@@ -2,7 +2,8 @@ from copy import deepcopy
 
 from softlearning.preprocessors.utils import get_preprocessor_from_params
 from . import vanilla
-
+import ipdb
+st = ipdb.set_trace
 
 def create_double_value_function(value_fn, *args, **kwargs):
     # TODO(hartikainen): The double Q-function should support the same
@@ -24,19 +25,37 @@ VALUE_FUNCTIONS = {
 def get_Q_function_from_variant(variant, env, *args, **kwargs):
     Q_params = variant['Q_params']
     Q_type = Q_params['type']
+    Q_obs_shape = Q_params['input_shape']
     Q_kwargs = deepcopy(Q_params['kwargs'])
 
     preprocessor_params = Q_kwargs.pop('preprocessor_params', None)
     preprocessor = get_preprocessor_from_params(env, preprocessor_params)
-
+    # st()
     return VALUE_FUNCTIONS[Q_type](
-        observation_shape=env.active_observation_shape,
+        observation_shape=Q_obs_shape,
         action_shape=env.action_space.shape,
         *args,
         observation_preprocessor=preprocessor,
         **Q_kwargs,
         **kwargs)
 
+
+# def get_Q_function_from_variant_custom(variant, env, *args, **kwargs):
+#     Q_params = variant['Q_params']
+#     Q_type = Q_params['type']
+#     Q_kwargs = deepcopy(Q_params['kwargs'])
+#     st()
+#     preprocessor_params = Q_kwargs.pop('preprocessor_params', None)
+#     preprocessor = get_preprocessor_from_params(env, preprocessor_params)
+#     tensorShape3d = [(32,32,32,8)]
+
+#     return VALUE_FUNCTIONS[Q_type](
+#         observation_shape=tensorShape3d,
+#         action_shape=env.action_space.shape,
+#         *args,
+#         observation_preprocessor=preprocessor,
+#         **Q_kwargs,
+#         **kwargs)
 
 def get_V_function_from_variant(variant, env, *args, **kwargs):
     V_params = variant['V_params']

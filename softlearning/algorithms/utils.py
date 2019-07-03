@@ -24,10 +24,19 @@ def create_RemoteSAC_algorithm(variant, *args, **kwargs):
     return algorithm
 
 
+def create_SAC_VAE_algorithm(variant, *args, **kwargs):
+    from .sac_vae import SAC_VAE
+
+    algorithm = SAC_VAE(*args, **kwargs)
+
+    return algorithm
+
+
 ALGORITHM_CLASSES = {
     'SAC': create_SAC_algorithm,
     'SQL': create_SQL_algorithm,
     'RemoteSAC': create_RemoteSAC_algorithm,
+    'SAC_VAE': create_SAC_VAE_algorithm,
 }
 
 

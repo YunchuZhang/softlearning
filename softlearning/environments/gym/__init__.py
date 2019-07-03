@@ -7,6 +7,7 @@ implementing a mujoco env, you would implement it under gym.mujoco submodule.
 
 import gym
 import multiworld
+
 multiworld.register_all_envs()
 
 CUSTOM_GYM_ENVIRONMENTS_PATH = __package__

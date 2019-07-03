@@ -1,5 +1,15 @@
 from copy import deepcopy
+import ipdb
+st = ipdb.set_trace
 
+def get_convnet3d_preprocessor(observation_shape,
+                             name='convnet_preprocessor',
+                             **kwargs):
+    from .convnet import convnet3d_preprocessor
+    preprocessor = convnet3d_preprocessor(
+        input_shapes=(observation_shape, ), name=name, **kwargs)
+
+    return preprocessor
 
 def get_convnet_preprocessor(observation_shape,
                              name='convnet_preprocessor',
@@ -10,6 +20,23 @@ def get_convnet_preprocessor(observation_shape,
 
     return preprocessor
 
+
+def get_map3D_preprocessor(observation_shape,
+                           name='map3D_preprocessor',
+                           **kwargs):
+    from .convnet import map3D_preprocessor
+    preprocessor = map3D_preprocessor(
+        input_shapes=observation_shape, name=name, **kwargs
+    )
+    return preprocessor
+
+
+def get_map3D_preprocessor_nonkeras(observation_shape,
+                           name='map3D_preprocessor',
+                           **kwargs):
+    from .convnet import map3D_preprocessor_nonkeras
+    preprocessor = map3D_preprocessor_nonkeras(name=name, **kwargs)
+    return preprocessor
 
 def get_feedforward_preprocessor(observation_shape,
                                  name='feedforward_preprocessor',
@@ -23,6 +50,9 @@ def get_feedforward_preprocessor(observation_shape,
 
 PREPROCESSOR_FUNCTIONS = {
     'convnet_preprocessor': get_convnet_preprocessor,
+    'convnet3d_preprocessor': get_convnet3d_preprocessor,
+    'map3D_preprocessor': get_map3D_preprocessor,
+    'map3D_preprocessor_nonkeras' : get_map3D_preprocessor_nonkeras,
     'feedforward_preprocessor': get_feedforward_preprocessor,
     None: lambda *args, **kwargs: None
 }
@@ -31,8 +61,9 @@ PREPROCESSOR_FUNCTIONS = {
 def get_preprocessor_from_params(env, preprocessor_params, *args, **kwargs):
     if preprocessor_params is None:
         return None
-
+    # st()
     preprocessor_type = preprocessor_params.get('type', None)
+    preprocessor_input_shape = preprocessor_params.get('input_shape', None)
     preprocessor_kwargs = deepcopy(preprocessor_params.get('kwargs', {}))
 
     if preprocessor_type is None:
@@ -40,7 +71,7 @@ def get_preprocessor_from_params(env, preprocessor_params, *args, **kwargs):
 
     preprocessor = PREPROCESSOR_FUNCTIONS[
         preprocessor_type](
-            env.active_observation_shape,
+            preprocessor_input_shape,
             *args,
             **preprocessor_kwargs,
             **kwargs)

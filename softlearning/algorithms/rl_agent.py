@@ -34,6 +34,12 @@ class RLAgent():
 
 
     def init_sampler(self):
+        self.sampler.initialize(training_environment,
+                                policy,
+                                pool,
+                                memory3D=self.memory,
+                                obs_ph=self._observations_phs,
+                                session=self._session)
         self._sampler.initialize(self._env, self._policy, self._pool)
 
     def sampler_diagnostics(self):
@@ -73,30 +79,15 @@ class RLAgent():
             math.ceil(epoch_length / self._sampler._max_path_length))
     
     def evaluation_paths(self, num_episodes, eval_deterministic, render_mode):
-        if self._eval_n_episodes < 1: return ()
-
-        with policy.set_deterministic(self._eval_deterministic):
+        with self._policy.set_deterministic(eval_deterministic):
             paths = rollouts(
-                self._eval_n_episodes,
-                evaluation_env,
-                policy,
-                self.sampler._max_path_length,
-                sampler=copy.deepcopy(self.sampler),
-                render_mode=self._eval_render_mode)
+                num_episodes,
+                self._eval_env,
+                self._policy,
+                self._sampler._max_path_length,
+                render_mode=render_mode)
 
-        should_save_video = (
-            self._video_save_frequency > 0
-            and self._epoch % self._video_save_frequency == 0)
-
-        if should_save_video:
-            for i, path in enumerate(paths):
-                video_frames = path.pop('images')
-                video_file_name = f'evaluation_path_{self._epoch}_{i}.avi'
-                video_file_path = os.path.join(
-                    os.getcwd(), 'videos', video_file_name)
-                save_video(video_frames, video_file_path)
-
-        return paths
+            return paths
 
     def env_path_info(self, paths):
         return self._env.get_path_infos(paths)

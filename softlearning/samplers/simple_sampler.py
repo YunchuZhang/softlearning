@@ -1,6 +1,9 @@
 from collections import defaultdict
 
 import numpy as np
+import ipdb
+st = ipdb.set_trace
+#from scipy.misc import imsave
 
 from .base_sampler import BaseSampler
 
@@ -35,17 +38,27 @@ class SimpleSampler(BaseSampler):
 
         return processed_observation
 
+
     def sample(self):
+        # st()
         if self._current_observation is None:
             self._current_observation = self.env.reset()
+        active_obs = self.env.convert_to_active_observation(self._current_observation)
+        # st()
+        active_obs =[np.repeat(i,4,0)  for i in active_obs]
 
-        action = self.policy.actions_np([
-            self.env.convert_to_active_observation(
-                self._current_observation)[None]
-        ])[0]
+        if self.initialized and self.memory3D_sampler:
+            active_obs = self.session.run(self.memory3D_sampler,feed_dict={self.obs_ph[0]:active_obs[0],self.obs_ph[1]:active_obs[1],self.obs_ph[2]:active_obs[2],\
+                self.obs_ph[3]:active_obs[3],self.obs_ph[4]:active_obs[4],self.obs_ph[5]:active_obs[5]})
+            active_obs = active_obs[:1]
+            # active_obs =  np.ones([1, 32, 32, 32, 16])
+            # st()
+
+
+        action = self.policy.actions_np(active_obs)[0]
+        
 
         next_observation, reward, terminal, info = self.env.step(action)
-        #print(next_observation)
         self._path_length += 1
         self._path_return += reward
         self._total_samples += 1
@@ -58,6 +71,21 @@ class SimpleSampler(BaseSampler):
             next_observation=next_observation,
             info=info,
         )
+        
+        # processed_sample_filter = {}
+        # observation_keys = []
+
+        # if self.filter_keys:
+        #     for i in self.filter_keys:
+        #         i.split(".")
+        # processed_sample_filter["observations"] = {}
+        # processed_sample_filter["next_observations"] = {}
+
+        # for i in self.observation_keys:
+        #     processed_sample_filter["observations"][i] = processed_sample["observations"][i]
+
+        # processed_sample = processed_sample_filter
+        # st()
 
         for key, value in processed_sample.items():
             self._current_path[key].append(value)
@@ -67,7 +95,9 @@ class SimpleSampler(BaseSampler):
                 field_name: np.array(values)
                 for field_name, values in self._current_path.items()
             }
+            # st()
             self.pool.add_path(last_path)
+            # st()
             self._last_n_paths.appendleft(last_path)
 
             self._max_path_return = max(self._max_path_return,
@@ -85,7 +115,6 @@ class SimpleSampler(BaseSampler):
     def random_batch(self, batch_size=None, **kwargs):
         batch_size = batch_size or self._batch_size
         observation_keys = getattr(self.env, 'observation_keys', None)
-
         return self.pool.random_batch(
             batch_size, observation_keys=observation_keys, **kwargs)
 

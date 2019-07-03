@@ -9,6 +9,9 @@ from softlearning.misc.utils import initialize_tf_variables
 
 from .rl_agent import RLAgent
 
+from softlearning.map3D import constants as const
+const.set_experiment("rl_new")
+
 def td_target(reward, discount, next_value):
     return reward + discount * next_value
 
@@ -33,12 +36,14 @@ class SACAgent(RLAgent):
             discount=0.99,
             tau=5e-3,
             target_update_interval=1,
+            batch_size=None,
             action_prior='uniform',
             reparameterize=False,
             store_extra_policy_info=False,
             save_full_state=False,
             remote=False,
             n_initial_exploration_steps=0,
+            map3D=None
     ):
         """
         Args:
@@ -94,12 +99,19 @@ class SACAgent(RLAgent):
 
         self._remote = remote
 
+        self.map3D = map3D
+        self.batch_size = batch_size
+
+        self._observation_keys = (
+            observation_keys
+            or list(self._training_environment.observation_space.spaces.keys()))
+
         observation_shape = self._env.active_observation_shape
         action_shape = self._env.action_space.shape
 
-        assert len(observation_shape) == 1, observation_shape
+        #assert len(observation_shape) == 1, observation_shape
         self._observation_shape = observation_shape
-        assert len(action_shape) == 1, action_shape
+        #assert len(action_shape) == 1, action_shape
         self._action_shape = action_shape
 
         self._build()
@@ -129,6 +141,7 @@ class SACAgent(RLAgent):
 
         self._init_global_step()
         self._init_placeholders()
+        self._init_map3D()
         self._init_actor_update()
         self._init_critic_update()
 
@@ -155,57 +168,93 @@ class SACAgent(RLAgent):
         self._iteration_ph = tf.placeholder(
             tf.int64, shape=None, name='iteration')
 
-        self._observations_ph = tf.placeholder(
+        self._observations_phs = [tf.placeholder(
             tf.float32,
-            shape=(None, *self._observation_shape),
-            name='observation',
-        )
+            shape=(self.batch_size, *shape),
+            name='observations.{}'.format(key)
+        ) for key, shape in zip(self._observation_keys,
+                                self._observation_shape)]
 
-        self._next_observations_ph = tf.placeholder(
+        self._next_observations_phs = [tf.placeholder(
             tf.float32,
-            shape=(None, *self._observation_shape),
-            name='next_observation',
-        )
+            shape=(self.batch_size, *shape),
+            name='next_observations.{}'.format(key)
+        ) for key, shape in zip(self._observation_keys,
+                                self._observation_shape)]
 
         self._actions_ph = tf.placeholder(
             tf.float32,
-            shape=(None, *self._action_shape),
+            shape=(self.batch_size, *self._action_shape),
             name='actions',
         )
 
         self._rewards_ph = tf.placeholder(
             tf.float32,
-            shape=(None, 1),
+            shape=(self.batch_size, 1),
             name='rewards',
         )
 
         self._terminals_ph = tf.placeholder(
             tf.float32,
-            shape=(None, 1),
+            shape=(self.batch_size, 1),
             name='terminals',
         )
 
         if self._store_extra_policy_info:
             self._log_pis_ph = tf.placeholder(
                 tf.float32,
-                shape=(None, 1),
+                shape=(self.batch_size, 1),
                 name='log_pis',
             )
             self._raw_actions_ph = tf.placeholder(
                 tf.float32,
-                shape=(None, *self._action_shape),
+                shape=(self.batch_size, *self._action_shape),
                 name='raw_actions',
             )
+
+
+    def _init_map3D(self):
+        # self.map3D.set_batchSize(1)
+        
+        # sampler_obs_images, sampler_obs_zmap, sampler_obs_camAngle,sampler_obs_images_goal, sampler_obs_zmap_goal, sampler_obs_camAngle_goal = [tf.expand_dims(i,1) for i in self._sampler_observations_phs[:6]]
+
+        # sampler_obs_zmap = tf.expand_dims(sampler_obs_zmap,-1)
+        # sampler_obs_zmap_goal = tf.expand_dims(sampler_obs_zmap_goal,-1)
+
+        # memory_sampler = self.map3D(sampler_obs_images,sampler_obs_camAngle,sampler_obs_zmap, is_training=None,reuse=False)
+        # memory_sampler_goal = self.map3D(sampler_obs_images_goal,sampler_obs_camAngle_goal,sampler_obs_zmap_goal, is_training=None,reuse=True)
+        # self.memory_sampler = [tf.concat([memory_sampler,memory_sampler_goal],-1)]
+        # # self.memory_sampler = 1
+        # self.map3D.set_batchSize(4)
+
+        obs_images, obs_zmap, obs_camAngle,obs_images_goal,obs_zmap_goal,obs_camAngle_goal = [tf.expand_dims(i,1) for i in self._observations_phs[:6]]
+        obs_zmap = tf.expand_dims(obs_zmap,-1)
+        obs_zmap_goal = tf.expand_dims(obs_zmap_goal,-1)
+
+        # st()
+        memory = self.map3D(obs_images,obs_camAngle,obs_zmap, is_training=None,reuse=False)
+        memory_goal = self.map3D(obs_images_goal, obs_camAngle_goal ,obs_zmap_goal, is_training=None,reuse=True)
+        self.memory = [tf.concat([memory,memory_goal],-1)]
+
+        next_obs_images, next_obs_zmap, next_obs_camAngle,next_obs_images_goal, next_obs_zmap_goal, next_obs_camAngle_goal = [tf.expand_dims(i,1) for i in self._next_observations_phs[:6]]
+
+        next_obs_zmap = tf.expand_dims(next_obs_zmap,-1)
+        next_obs_zmap_goal = tf.expand_dims(next_obs_zmap_goal,-1)
+
+        memory_next = self.map3D(next_obs_images,next_obs_camAngle,next_obs_zmap, is_training=None,reuse=True)
+        memory_next_goal = self.map3D(next_obs_images_goal,next_obs_camAngle_goal,next_obs_zmap_goal, is_training=None,reuse=True)
+        self.memory_next = [tf.concat([memory_next,memory_next_goal],-1)]
+
 
     def _get_Q_target(self):
         import tensorflow as tf
 
-        next_actions = self._policy.actions([self._next_observations_ph])
+        next_actions = self._policy.actions(self.memory_next)
         next_log_pis = self._policy.log_pis(
-            [self._next_observations_ph], next_actions)
+            [self.memory_next, next_actions)
 
         next_Qs_values = tuple(
-            Q([self._next_observations_ph, next_actions])
+            Q([*self.memory_next, next_actions])
             for Q in self._Q_targets)
 
         min_next_Q = tf.reduce_min(next_Qs_values, axis=0)
@@ -232,10 +281,10 @@ class SACAgent(RLAgent):
 
         Q_target = tf.stop_gradient(self._get_Q_target())
 
-        assert Q_target.shape.as_list() == [None, 1]
+        assert Q_target.shape.as_list() == [self.batch_size, 1]
 
         Q_values = self._Q_values = tuple(
-            Q([self._observations_ph, self._actions_ph])
+            Q([*self.memory_next, self._actions_ph])
             for Q in self._Qs)
 
         Q_losses = self._Q_losses = tuple(
@@ -276,10 +325,10 @@ class SACAgent(RLAgent):
         """
         import tensorflow as tf
 
-        actions = self._policy.actions([self._observations_ph])
-        log_pis = self._policy.log_pis([self._observations_ph], actions)
+        actions = self._policy.actions(self.memory)
+        log_pis = self._policy.log_pis(self.memory, actions)
 
-        assert log_pis.shape.as_list() == [None, 1]
+        assert log_pis.shape.as_list() == [self.batch_size, 1]
 
         log_alpha = self._log_alpha = tf.get_variable(
             'log_alpha',
@@ -311,7 +360,7 @@ class SACAgent(RLAgent):
             policy_prior_log_probs = 0.0
 
         Q_log_targets = tuple(
-            Q([self._observations_ph, actions])
+            Q([*self.memory, actions])
             for Q in self._Qs)
         min_Q_log_target = tf.reduce_min(Q_log_targets, axis=0)
 
@@ -323,7 +372,7 @@ class SACAgent(RLAgent):
         else:
             raise NotImplementedError
 
-        assert policy_kl_losses.shape.as_list() == [None, 1]
+        assert policy_kl_losses.shape.as_list() == [self.batch_size, 1]
 
         policy_loss = tf.reduce_mean(policy_kl_losses)
 
@@ -381,12 +430,20 @@ class SACAgent(RLAgent):
         """Construct TensorFlow feed_dict from sample batch."""
 
         feed_dict = {
-            self._observations_ph: batch['observations'],
             self._actions_ph: batch['actions'],
-            self._next_observations_ph: batch['next_observations'],
             self._rewards_ph: batch['rewards'],
             self._terminals_ph: batch['terminals'],
         }
+
+        feed_dict.update({
+            self._observations_phs[i]: batch['observations.{}'.format(key)]
+            for i, key in enumerate(self._observation_keys)
+        })
+
+        feed_dict.update({
+            self._next_observations_phs[i]: batch['next_observations.{}'.format(key)]
+            for i, key in enumerate(self._observation_keys)
+        })
 
         if self._store_extra_policy_info:
             feed_dict[self._log_pis_ph] = batch['log_pis']
@@ -399,17 +456,17 @@ class SACAgent(RLAgent):
 
     def get_diagnostics(self, iteration, batch):
         feed_dict = self._get_feed_dict(iteration, batch)
-        (Q_values, Q_losses, alpha, global_step) = self._session.run(
+        (Q_values, Q_losses, alpha, global_step, memory) = self._session.run(
             (self._Q_values,
              self._Q_losses,
              self._alpha,
-             self.global_step),
+             self.global_step,
+             self.memory),
             feed_dict)
         return Q_values, Q_losses, alpha, global_step
 
     def policy_diagnostics(self, batch):
-        return self._policy.get_diagnostics(
-            batch['observations'])
+        return self._policy.get_diagnostics(memory)
 
     def get_weights(self):
         return self.variables.get_weights()

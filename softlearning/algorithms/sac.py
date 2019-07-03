@@ -6,12 +6,16 @@ import os
 from .rl_algorithm import RLAlgorithm
 from .sac_agent import SACAgent
 
+from .rl_algorithm import RLAlgorithm
+
+
 class SAC(RLAlgorithm):
     def __init__(
             self,
             variant,
             plotter=None,
             tf_summaries=False,
+            map3D = None,
             lr=3e-4,
             reward_scale=1.0,
             target_entropy='auto',
@@ -24,6 +28,8 @@ class SAC(RLAlgorithm):
             save_full_state=False,
             remote=False,
             n_initial_exploration_steps=0,
+            batch_size=None,
+            observation_keys=None,
             **kwargs):
         """
         Args:
@@ -64,6 +70,9 @@ class SAC(RLAlgorithm):
             save_full_state=save_full_state,
             remote=remote,
             n_initial_exploration_steps=n_initial_exploration_steps,
+            map3D=map3D,
+            batch_size=batch_size,
+            observation_keys=observation_keys
         )
         self._plotter = plotter
 
@@ -102,6 +111,7 @@ class SAC(RLAlgorithm):
     def _training_paths(self, epoch_length):
         return self.agent.training_paths(epoch_length)
 
+
     def _evaluation_paths(self):
         if self._eval_n_episodes < 1: return ()
 
@@ -122,6 +132,7 @@ class SAC(RLAlgorithm):
                 save_video(video_frames, video_file_path)
 
         return paths
+
 
     def _env_path_info(self, paths):
         return self.agent.env_path_info(paths)
@@ -145,7 +156,6 @@ class SAC(RLAlgorithm):
 
         Also calls the `draw` method of the plotter, if plotter defined.
         """
-
         Q_values, Q_losses, alpha, global_step = self.agent.get_diagnostics(iteration, batch)
 
         diagnostics = OrderedDict({

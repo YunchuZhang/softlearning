@@ -54,8 +54,8 @@ ALGORITHM_PARAMS_BASE = {
     'type': 'SAC',
 
     'kwargs': {
-        'epoch_length': 10000,
-        'train_every_n_steps': 20,
+        'epoch_length': 5000,
+        'train_every_n_steps': 10,
         'n_train_repeat': 1,
         'eval_render_mode': None, 
         'eval_n_episodes': 10,

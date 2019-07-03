@@ -7,7 +7,8 @@ from softlearning.distributions.squash_bijector import SquashBijector
 from softlearning.models.feedforward import feedforward_model
 
 from .base_policy import LatentSpacePolicy
-
+import ipdb
+st = ipdb.set_trace
 
 SCALE_DIAG_MIN_MAX = (-20, 2)
 
@@ -34,17 +35,19 @@ class GaussianPolicy(LatentSpacePolicy):
 
         super(GaussianPolicy, self).__init__(*args, **kwargs)
 
+        # st()
         self.condition_inputs = [
             tf.keras.layers.Input(shape=input_shape)
             for input_shape in input_shapes
         ]
 
-        conditions = tf.keras.layers.Lambda(
-            lambda x: tf.concat(x, axis=-1)
-        )(self.condition_inputs)
-
         if preprocessor is not None:
-            conditions = preprocessor(conditions)
+            conditions = preprocessor(self.condition_inputs)
+        else:
+            conditions = [tf.keras.layers.Flatten()(input_) for input_ in self.condition_inputs]
+            conditions = tf.keras.layers.Lambda(
+                lambda x: tf.concat(x, axis=-1)
+            )(conditions)
 
         shift_and_log_scale_diag = self._shift_and_log_scale_diag_net(
             input_shapes=(conditions.shape[1:], ),
@@ -174,7 +177,7 @@ class GaussianPolicy(LatentSpacePolicy):
         if self._deterministic:
             return self.deterministic_actions_model(conditions)
 
-        return self.actions_model(conditions)
+        return self.actions_model(*conditions)
 
     def log_pis(self, conditions, actions):
         assert not self._deterministic, self._deterministic
