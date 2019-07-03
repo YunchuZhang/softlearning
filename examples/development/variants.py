@@ -38,17 +38,27 @@ DEFAULT_MAX_PATH_LENGTH = 1000
 MAX_PATH_LENGTH_PER_DOMAIN = {
     'Point2DEnv': 50,
     'Pendulum': 200,
+    'SawyerPushAndReachEnvEasy': 200,
+    'SawyerPushAndReachEnvMedium': 200,
+    'SawyerPushAndReachEnvHard': 200,
+    'SawyerPickupEnvYZEasy': 200,
+    'SawyerReachXYEnv': 50,
+    'FetchReach': 50,
+    'FlexFetchReach': 100,
+    'FlexFetchPush': 200,
+    'FlexFetchReachMultiRobot': 100,
+    'FlexFetchPushMultiRobot': 250,
 }
 
 ALGORITHM_PARAMS_BASE = {
     'type': 'SAC',
 
     'kwargs': {
-        'epoch_length': 1000,
-        'train_every_n_steps': 1,
+        'epoch_length': 10000,
+        'train_every_n_steps': 20,
         'n_train_repeat': 1,
-        'eval_render_mode': None,
-        'eval_n_episodes': 1,
+        'eval_render_mode': None, 
+        'eval_n_episodes': 10,
         'eval_deterministic': True,
 
         'discount': 0.99,
@@ -63,7 +73,7 @@ ALGORITHM_PARAMS_ADDITIONAL = {
         'type': 'SAC',
         'kwargs': {
             'reparameterize': REPARAMETERIZE,
-            'lr': 3e-4,
+            'lr': 1e-3,
             'target_update_interval': 1,
             'tau': 5e-3,
             'target_entropy': 'auto',
@@ -116,6 +126,24 @@ NUM_EPOCHS_PER_DOMAIN = {
     'Point2DEnv': int(200),
     'Reacher': int(200),
     'Pendulum': 10,
+    'FetchPush': 1000,
+    'FetchPickAndPlace': 1000,
+    'SawyerReachXYEnv': 1000,
+    'SawyerPushAndReachEnvEasy': 2000,
+    'SawyerPushAndReachEnvMedium': 2000,
+    'SawyerPushAndReachEnvHard': 2000,
+    'SawyerPickupEnvYZEasy': 2000,
+    'FlexFetchReach': 1000,
+    'FlexFetchPush': 1000,
+    'FlexFetchReachMultiRobot': 1000,
+    'FlexFetchPushMultiRobot': 10000,
+}
+
+DEFAULT_ALGORITHM_DOMAIN_PARAMS = {
+    'kwargs': {
+        'n_epochs': DEFAULT_NUM_EPOCHS,
+        'n_initial_exploration_steps': DEFAULT_MAX_PATH_LENGTH * 10
+    }
 }
 
 ALGORITHM_PARAMS_PER_DOMAIN = {
@@ -189,16 +217,143 @@ ENVIRONMENT_PARAMS = {
         'Wall-v0': {
             'observation_keys': ('observation', 'desired_goal'),
         },
+    },
+    'SawyerReachXYEnv': {
+        'v1': {
+            'reward_type': 'hand_success'
+        }
+    },
+    'SawyerPushAndReachEnvEasy': {
+        'v0': {
+            #'reward_type': 'hand_success'
+            #'reward_type': 'hand_distance'
+            'reward_type': 'puck_success',
+            #'fix_goal': True
+        }
+    },
+    'SawyerPushAndReachEnvMedium': {
+        'v0': {
+            #'reward_type': 'hand_success'
+            #'reward_type': 'hand_distance'
+            'reward_type': 'puck_success'
+        }
+    },
+    'SawyerPushAndReachEnvHard': {
+        'v0': {
+            #'reward_type': 'hand_success'
+            #'reward_type': 'hand_distance'
+            'reward_type': 'puck_success'
+        }
+    },
+    'FlexFetchReachMultiRobot': {
+        'v0': {
+            'render': 1
+        }
+    },
+    'FlexFetchPushMultiRobot': {
+        'v0': {
+            'render': 0
+        }
     }
+    #'SawyerPickupEnvYZEasy': {
+    #    'v0': {
+    #        'reward_type': 'hand_and_obj_success'
+    #    }
+    #},
+    #'FetchReach': {
+    #    'v1': {
+    #        'reward_type': 'dense'
+    #    }
+    #}
 }
+
 
 NUM_CHECKPOINTS = 10
 
 
-def get_variant_spec_base(universe, domain, task, policy, algorithm):
+SIMPLE_SAMPLER_PARAMS = {
+    'type': 'SimpleSampler',
+    'kwargs': {
+        'batch_size': 256,
+    }
+}
+
+MULTIAGENT_SAMPLER_PARAMS = {
+    'type': 'MultiAgentSampler',
+    'kwargs': {
+        'batch_size': 256,
+        'num_agents': 5,
+    }
+}
+
+
+SAMPLER_PARAMS_BASE = {
+    'SimpleSampler': SIMPLE_SAMPLER_PARAMS,
+    'MultiAgentSampler': MULTIAGENT_SAMPLER_PARAMS,
+}
+
+
+DEFAULT_SAMPLER_DOMAIN_PARAMS = {
+    'kwargs': {
+        'max_path_length': DEFAULT_MAX_PATH_LENGTH,
+        'min_pool_size': DEFAULT_MAX_PATH_LENGTH
+    }
+}
+
+
+SAMPLER_PARAMS_PER_DOMAIN = {
+    **{
+        domain: {
+            'kwargs': {
+                'max_path_length': MAX_PATH_LENGTH_PER_DOMAIN.get(
+                    domain, DEFAULT_MAX_PATH_LENGTH),
+                'min_pool_size': MAX_PATH_LENGTH_PER_DOMAIN.get(
+                    domain, DEFAULT_MAX_PATH_LENGTH),
+            }
+        } for domain in MAX_PATH_LENGTH_PER_DOMAIN
+    }
+}
+
+
+SIMPLE_REPLAY_POOL_PARAMS = {
+    'type': 'SimpleReplayPool',
+    'kwargs': {
+        'max_size': tune.sample_from(lambda spec: (
+            {
+                'SimpleReplayPool': int(1e6),
+                'TrajectoryReplayPool': int(1e4),
+            }.get(
+                spec.get('config', spec)
+                ['replay_pool_params']
+                ['type'],
+                int(1e6))
+        )),
+    }
+}
+
+
+HER_REPLAY_POOL_PARAMS = {
+    'type': 'HerReplayPool',
+    'kwargs': {
+        'max_size': 1e6,
+        'desired_goal_key': 'desired_goal',
+        'achieved_goal_key': 'achieved_goal',
+        'reward_key': 'rewards',
+        'terminal_key': 'terminals'
+    }
+}
+
+
+REPLAY_POOL_PARAMS_BASE = {
+    'SimpleReplayPool': SIMPLE_REPLAY_POOL_PARAMS,
+    'HerReplayPool': HER_REPLAY_POOL_PARAMS
+}
+
+
+def get_variant_spec_base(universe, domain, task, policy, algorithm, sampler, replay_pool):
     algorithm_params = deep_update(
         ALGORITHM_PARAMS_BASE,
-        ALGORITHM_PARAMS_PER_DOMAIN.get(domain, {})
+        ALGORITHM_PARAMS_PER_DOMAIN.get(domain, DEFAULT_ALGORITHM_DOMAIN_PARAMS)
     )
     algorithm_params = deep_update(
         algorithm_params,
@@ -232,31 +387,13 @@ def get_variant_spec_base(universe, domain, task, policy, algorithm):
             }
         },
         'algorithm_params': algorithm_params,
-        'replay_pool_params': {
-            'type': 'SimpleReplayPool',
-            'kwargs': {
-                'max_size': tune.sample_from(lambda spec: (
-                    {
-                        'SimpleReplayPool': int(1e6),
-                        'TrajectoryReplayPool': int(1e4),
-                    }.get(
-                        spec.get('config', spec)
-                        ['replay_pool_params']
-                        ['type'],
-                        int(1e6))
-                )),
-            }
-        },
-        'sampler_params': {
-            'type': 'SimpleSampler',
-            'kwargs': {
-                'max_path_length': MAX_PATH_LENGTH_PER_DOMAIN.get(
-                    domain, DEFAULT_MAX_PATH_LENGTH),
-                'min_pool_size': MAX_PATH_LENGTH_PER_DOMAIN.get(
-                    domain, DEFAULT_MAX_PATH_LENGTH),
-                'batch_size': 256,
-            }
-        },
+        'replay_pool_params': deep_update(
+            REPLAY_POOL_PARAMS_BASE[replay_pool]
+        ),
+        'sampler_params': deep_update(
+            SAMPLER_PARAMS_BASE[sampler],
+            SAMPLER_PARAMS_PER_DOMAIN.get(domain, DEFAULT_SAMPLER_DOMAIN_PARAMS)
+        ),
         'run_params': {
             'seed': tune.sample_from(
                 lambda spec: np.random.randint(0, 10000)),
@@ -275,10 +412,12 @@ def get_variant_spec_image(universe,
                            task,
                            policy,
                            algorithm,
+                           sampler,
+                           replay_pool,
                            *args,
                            **kwargs):
     variant_spec = get_variant_spec_base(
-        universe, domain, task, policy, algorithm, *args, **kwargs)
+        universe, domain, task, policy, algorithm, sampler, replay_pool, *args, **kwargs)
 
     if 'image' in task.lower() or 'image' in domain.lower():
         preprocessor_params = {
@@ -313,10 +452,10 @@ def get_variant_spec(args):
         or 'blind' in task.lower()
         or 'image' in domain.lower()):
         variant_spec = get_variant_spec_image(
-            universe, domain, task, args.policy, args.algorithm)
+            universe, domain, task, args.policy, args.algorithm, args.sampler, args.replay_pool)
     else:
         variant_spec = get_variant_spec_base(
-            universe, domain, task, args.policy, args.algorithm)
+            universe, domain, task, args.policy, args.algorithm, args.sampler, args.replay_pool)
 
     if args.checkpoint_replay_pool is not None:
         variant_spec['run_params']['checkpoint_replay_pool'] = (

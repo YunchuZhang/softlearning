@@ -6,7 +6,8 @@ implementing a mujoco env, you would implement it under gym.mujoco submodule.
 """
 
 import gym
-
+import multiworld
+multiworld.register_all_envs()
 
 CUSTOM_GYM_ENVIRONMENTS_PATH = __package__
 MUJOCO_ENVIRONMENTS_PATH = f'{CUSTOM_GYM_ENVIRONMENTS_PATH}.mujoco'
@@ -68,6 +69,26 @@ GENERAL_ENVIRONMENT_SPECS = (
         'id': 'MultiGoal-Default-v0',
         'entry_point': (f'{CUSTOM_GYM_ENVIRONMENTS_PATH}'
                         '.multi_goal:MultiGoalEnv')
+    },
+    {
+        'id': 'FlexFetchReach-v0',
+        'entry_point': (f'{CUSTOM_GYM_ENVIRONMENTS_PATH}'
+                        '.flex.flex_wrappers:FetchReach')
+    },
+    {
+        'id': 'FlexFetchPush-v0',
+        'entry_point': (f'{CUSTOM_GYM_ENVIRONMENTS_PATH}'
+                        '.flex.flex_wrappers:FetchPush')
+    },
+    {
+        'id': 'FlexFetchReachMultiRobot-v0',
+        'entry_point': (f'{CUSTOM_GYM_ENVIRONMENTS_PATH}'
+                        '.flex.flex_wrappers:FetchReachMultiRobot')
+    },
+    {
+        'id': 'FlexFetchPushMultiRobot-v0',
+        'entry_point': (f'{CUSTOM_GYM_ENVIRONMENTS_PATH}'
+                        '.flex.flex_wrappers:FetchPushMultiRobot')
     },
 )
 

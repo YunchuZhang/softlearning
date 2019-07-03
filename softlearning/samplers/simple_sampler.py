@@ -4,7 +4,6 @@ import numpy as np
 
 from .base_sampler import BaseSampler
 
-
 class SimpleSampler(BaseSampler):
     def __init__(self, **kwargs):
         super(SimpleSampler, self).__init__(**kwargs)
@@ -46,6 +45,7 @@ class SimpleSampler(BaseSampler):
         ])[0]
 
         next_observation, reward, terminal, info = self.env.step(action)
+        #print(next_observation)
         self._path_length += 1
         self._path_return += reward
         self._total_samples += 1
@@ -74,11 +74,7 @@ class SimpleSampler(BaseSampler):
                                         self._path_return)
             self._last_path_return = self._path_return
 
-            self.policy.reset()
-            self._current_observation = None
-            self._path_length = 0
-            self._path_return = 0
-            self._current_path = defaultdict(list)
+            self.reset()
 
             self._n_episodes += 1
         else:
@@ -103,3 +99,11 @@ class SimpleSampler(BaseSampler):
         })
 
         return diagnostics
+
+    def reset(self):
+        self.policy.reset()
+        self._current_observation = None
+        self._path_length = 0
+        self._path_return = 0
+        self._current_path = defaultdict(list)
+
