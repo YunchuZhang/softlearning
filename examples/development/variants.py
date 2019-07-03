@@ -42,6 +42,7 @@ MAX_PATH_LENGTH_PER_DOMAIN = {
     'SawyerPushAndReachEnvMedium': 200,
     'SawyerPushAndReachEnvHard': 200,
     'SawyerPickupEnvYZEasy': 200,
+    'SawyerReachXYEnv': 50,
     'FetchReach': 50,
     'FlexFetchReach': 100,
     'FlexFetchPush': 200,
@@ -53,9 +54,9 @@ ALGORITHM_PARAMS_BASE = {
     'type': 'SAC',
 
     'kwargs': {
-        'epoch_length': 25000,
-        'train_every_n_steps': 1,
-        'n_train_repeat': 5,
+        'epoch_length': 10000,
+        'train_every_n_steps': 20,
+        'n_train_repeat': 1,
         'eval_render_mode': None, 
         'eval_n_episodes': 10,
         'eval_deterministic': True,
@@ -281,7 +282,7 @@ MULTIAGENT_SAMPLER_PARAMS = {
     'type': 'MultiAgentSampler',
     'kwargs': {
         'batch_size': 256,
-        'num_agents': 50,
+        'num_agents': 5,
     }
 }
 

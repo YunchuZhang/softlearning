@@ -142,6 +142,7 @@ class GymAdapter(SoftlearningEnv):
 
     @property
     def is_multiworld_env(self):
+        # TODO: fix this to work with non-multitask environments
         return hasattr(self._env.env, 'compute_rewards')
 
     def compute_reward(self,

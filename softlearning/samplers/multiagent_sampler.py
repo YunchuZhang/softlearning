@@ -31,12 +31,22 @@ class MultiAgentSampler(BaseSampler):
                               terminals,
                               next_observations,
                               infos):
-        observation = {field_name: values[index]
-                       for field_name, values in observations.items()}
-        next_observation = {field_name: values[index]
-                            for field_name, values in next_observations.items()}
-        info = {field_name: values[index]
-                 for field_name, values in infos.items()}
+
+        # Handles dictionary of lists (i.e. multirobot Flex wrapper)
+        if isinstance(observations, dict):
+            observation = {field_name: values[index]
+                        for field_name, values in observations.items()}
+            next_observation = {field_name: values[index]
+                                for field_name, values in next_observations.items()}
+            info = {field_name: values[index]
+                    for field_name, values in infos.items()}
+
+        # Handles list of dictionaries (i.e. RemoteGymAdapter)
+        elif isinstance(observations, (tuple, list)):
+            observation = observations[index]
+            next_observation = next_observations[index]
+            info = infos[index]
+
         processed_observation = {
             'observations': observation,
             'actions': actions[index],
@@ -101,6 +111,7 @@ class MultiAgentSampler(BaseSampler):
             self._current_observations = next_observations
 
         return next_observations, rewards, terminals, infos
+
 
     def random_batch(self, batch_size=None, **kwargs):
         batch_size = batch_size or self._batch_size
