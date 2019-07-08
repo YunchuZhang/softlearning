@@ -20,27 +20,27 @@ class RLAgent():
             n_initial_exploration_steps=0,
     ):
 
-        self._env = get_environment_from_params_custom(variant['environment_params']['training'])
-        self._eval_env = get_environment_from_params_custom(variant['environment_params']['evaluation'])
+        self._training_environment = get_environment_from_params_custom(variant['environment_params']['training'])
+        self._evaluation_environment = get_environment_from_params_custom(variant['environment_params']['evaluation'])
 
         self._sampler = get_sampler_from_variant(variant)
-        self._pool = get_replay_pool_from_variant(variant, self._env)
+        self._pool = get_replay_pool_from_variant(variant, self._training_environment)
 
-        self._Qs = get_Q_function_from_variant(variant, self._env)
-        self._policy = get_policy_from_variant(variant, self._env, self._Qs)
+        self._Qs = get_Q_function_from_variant(variant, self._training_environment)
+        self._policy = get_policy_from_variant(variant, self._training_environment, self._Qs)
 
-        self._initial_exploration_policy = get_policy('UniformPolicy', self._env)
+        self._initial_exploration_policy = get_policy('UniformPolicy', self._training_environment)
         self._n_initial_exploration_steps = n_initial_exploration_steps
 
 
     def init_sampler(self):
-        self.sampler.initialize(training_environment,
-                                policy,
-                                pool,
+        self._sampler.initialize(self._training_environment,
+                                self._policy,
+                                self._pool,
                                 memory3D=self.memory,
                                 obs_ph=self._observations_phs,
                                 session=self._session)
-        self._sampler.initialize(self._env, self._policy, self._pool)
+
 
     def sampler_diagnostics(self):
         return self._sampler.get_diagnostics()
@@ -60,7 +60,7 @@ class RLAgent():
                 "Initial exploration policy must be provided when"
                 " n_initial_exploration_steps > 0.")
 
-        self._sampler.initialize(self._env, self._initial_exploration_policy, self._pool)
+        self._sampler.initialize(self._training_environment, self._initial_exploration_policy, self._pool)
         while self._pool.size < self._n_initial_exploration_steps:
             self._sampler.sample()
 
@@ -82,24 +82,27 @@ class RLAgent():
         with self._policy.set_deterministic(eval_deterministic):
             paths = rollouts(
                 num_episodes,
-                self._eval_env,
+                self._evaluation_environment,
                 self._policy,
                 self._sampler._max_path_length,
+                memory3D=self.memory,
+                obs_ph=self._observations_phs,
+                session=self._session,
                 render_mode=render_mode)
 
             return paths
 
     def env_path_info(self, paths):
-        return self._env.get_path_infos(paths)
+        return self._training_environment.get_path_infos(paths)
 
     def eval_env_path_info(self, paths):
-        return self._eval_env.get_path_infos(paths)
+        return self._evaluation_environment.get_path_infos(paths)
 
     def render_rollouts(self, paths):
-        if hasattr(self._eval_env, 'render_rollouts'):
+        if hasattr(self._evaluation_environment, 'render_rollouts'):
             # TODO(hartikainen): Make this consistent such that there's no
             # need for the hasattr check.
-            self._eval_env.render_rollouts(paths)
+            self._evaluation_environment.render_rollouts(paths)
 
     @property
     def tf_saveables(self):

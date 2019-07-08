@@ -2,6 +2,7 @@ from numbers import Number
 
 import numpy as np
 import tensorflow as tf
+from tensorflow.core.protobuf import rewriter_config_pb2
 
 import ray
 from ray.experimental.tf_utils import TensorFlowVariables
@@ -41,14 +42,15 @@ class SACAgent(RLAgent):
             discount=0.99,
             tau=5e-3,
             target_update_interval=1,
-            batch_size=None,
             action_prior='uniform',
             reparameterize=False,
             store_extra_policy_info=False,
             save_full_state=False,
             remote=False,
             n_initial_exploration_steps=0,
-            map3D=None
+            batch_size=None,
+            map3D=None,
+            observation_keys=None
     ):
         """
         Args:
@@ -87,7 +89,7 @@ class SACAgent(RLAgent):
 
         self._reward_scale = reward_scale
         self._target_entropy = (
-            -np.prod(self._env.action_space.shape)
+            -np.prod(self._training_environment.action_space.shape)
             if target_entropy == 'auto'
             else target_entropy)
 
@@ -110,8 +112,8 @@ class SACAgent(RLAgent):
             observation_keys
             or list(self._training_environment.observation_space.spaces.keys()))
 
-        observation_shape = self._env.active_observation_shape
-        action_shape = self._env.action_space.shape
+        observation_shape = self._training_environment.active_observation_shape
+        action_shape = self._training_environment.action_space.shape
 
         #assert len(observation_shape) == 1, observation_shape
         self._observation_shape = observation_shape
@@ -120,9 +122,13 @@ class SACAgent(RLAgent):
 
         self._build()
 
-        gpu_options = tf.GPUOptions(allow_growth=True)
-        #self._session = tf.Session(config=tf.ConfigProto(gpu_options=gpu_options))
-        session = tf.Session(config=tf.ConfigProto(gpu_options=gpu_options))
+        #gpu_options = tf.GPUOptions(allow_growth=True)
+        #config_proto = tf.ConfigProto(gpu_options=gpu_options)
+        config_proto = tf.ConfigProto(log_device_placement=False, allow_soft_placement=True, device_count={'GPU': 0})
+        off = rewriter_config_pb2.RewriterConfig.OFF
+        #config_proto.graph_options.rewrite_options.arithmetic_optimization = off
+        config_proto.graph_options.rewrite_options.memory_optimization=4
+        session = tf.Session(config=config_proto)
         tf.keras.backend.set_session(session)
         self._session = tf.keras.backend.get_session()
 
@@ -148,6 +154,7 @@ class SACAgent(RLAgent):
         self._init_map3D()
         self._init_actor_update()
         self._init_critic_update()
+
 
     def _init_global_step(self):
         from tensorflow.python.training import training_util
@@ -231,16 +238,16 @@ class SACAgent(RLAgent):
         # # self.memory_sampler = 1
         # self.map3D.set_batchSize(4)
 
-        obs_images, obs_zmap, obs_camAngle,obs_images_goal,obs_zmap_goal,obs_camAngle_goal = [tf.expand_dims(i,1) for i in self._observations_phs[:6]]
+        obs_images, obs_zmap, obs_camAngle, obs_images_goal, obs_zmap_goal, obs_camAngle_goal = [tf.expand_dims(i,1) for i in self._observations_phs[:6]]
         obs_zmap = tf.expand_dims(obs_zmap,-1)
         obs_zmap_goal = tf.expand_dims(obs_zmap_goal,-1)
 
         # st()
-        memory = self.map3D(obs_images,obs_camAngle,obs_zmap, is_training=None,reuse=False)
-        memory_goal = self.map3D(obs_images_goal, obs_camAngle_goal ,obs_zmap_goal, is_training=None,reuse=True)
+        memory = self.map3D(obs_images, obs_camAngle, obs_zmap, is_training=None, reuse=False)
+        memory_goal = self.map3D(obs_images_goal, obs_camAngle_goal ,obs_zmap_goal, is_training=None, reuse=True)
         self.memory = [tf.concat([memory,memory_goal],-1)]
 
-        next_obs_images, next_obs_zmap, next_obs_camAngle,next_obs_images_goal, next_obs_zmap_goal, next_obs_camAngle_goal = [tf.expand_dims(i,1) for i in self._next_observations_phs[:6]]
+        next_obs_images, next_obs_zmap, next_obs_camAngle, next_obs_images_goal, next_obs_zmap_goal, next_obs_camAngle_goal = [tf.expand_dims(i,1) for i in self._next_observations_phs[:6]]
 
         next_obs_zmap = tf.expand_dims(next_obs_zmap,-1)
         next_obs_zmap_goal = tf.expand_dims(next_obs_zmap_goal,-1)
@@ -458,6 +465,7 @@ class SACAgent(RLAgent):
 
         return feed_dict
 
+
     def get_diagnostics(self, iteration, batch):
         feed_dict = self._get_feed_dict(iteration, batch)
         (Q_values, Q_losses, alpha, global_step, memory) = self._session.run(
@@ -467,13 +475,18 @@ class SACAgent(RLAgent):
              self.global_step,
              self.memory),
             feed_dict)
-        return Q_values, Q_losses, alpha, global_step
+
+        policy_diagnostics = self._policy.get_diagnostics(memory)
+        return Q_values, Q_losses, alpha, global_step, policy_diagnostics
+
 
     def policy_diagnostics(self, batch):
-        return self._policy.get_diagnostics(memory)
+        return self._policy.get_diagnostics(batch)
+
 
     def get_weights(self):
         return self.variables.get_weights()
+
 
     @property
     def tf_saveables(self):

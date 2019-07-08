@@ -14,7 +14,6 @@ def create_feedforward_Q_function(observation_shape,
     # else:
     input_shapes = (*observation_shape, action_shape)
 
-
     preprocessors = (observation_preprocessor, None)
     return feedforward_model(
         input_shapes,

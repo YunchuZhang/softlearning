@@ -120,7 +120,7 @@ class ExperimentRunner(tune.Trainable):
             initial_exploration_policy=initial_exploration_policy,
             Qs=Qs,
             pool=replay_pool,
-            observation_keys = observation_keys,
+            observation_keys=observation_keys,
             sampler=sampler,
             session=self._session)
         

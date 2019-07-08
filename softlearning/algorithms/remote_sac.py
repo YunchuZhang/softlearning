@@ -28,6 +28,8 @@ class RemoteSAC(RLAlgorithm):
             remote=False,
             n_initial_exploration_steps=0,
             avg_weights_every_n_steps=1,
+            batch_size=None,
+            observation_keys=None,
             **kwargs):
         """
         Args:
@@ -72,6 +74,8 @@ class RemoteSAC(RLAlgorithm):
             save_full_state=save_full_state,
             remote=remote,
             n_initial_exploration_steps=n_initial_exploration_steps,
+            batch_size=batch_size,
+            observation_keys=observation_keys
         ) for _ in range(num_agents)]
 
         self._weights_id = self._agents[0].get_weights.remote()
@@ -140,6 +144,7 @@ class RemoteSAC(RLAlgorithm):
 
         return paths
 
+
     def _env_path_info(self, paths):
         return ray.get(self._agents[0].env_path_info.remote(paths))
 
@@ -148,6 +153,7 @@ class RemoteSAC(RLAlgorithm):
 
     def _sampler_diagnostics(self):
         return ray.get(self._agents[0].sampler_diagnostics.remote())
+
 
     def get_diagnostics(self,
                         iteration,
@@ -163,7 +169,7 @@ class RemoteSAC(RLAlgorithm):
         Also calls the `draw` method of the plotter, if plotter defined.
         """
 
-        Q_values, Q_losses, alpha, global_step = ray.get(self._agents[0].get_diagnostics.remote(iteration, batch))
+        Q_values, Q_losses, alpha, global_step, policy_diagnostics = ray.get(self._agents[0].get_diagnostics.remote(iteration, batch))
 
         diagnostics = OrderedDict({
             'Q-avg': np.mean(Q_values),
@@ -172,7 +178,7 @@ class RemoteSAC(RLAlgorithm):
             'alpha': alpha,
         })
 
-        policy_diagnostics = ray.get(self._agents[0].policy_diagnostics.remote(batch))
+        #policy_diagnostics = ray.get(self._agents[0].policy_diagnostics.remote(batch))
         diagnostics.update({
             f'policy/{key}': value
             for key, value in policy_diagnostics.items()
@@ -182,6 +188,7 @@ class RemoteSAC(RLAlgorithm):
             self._plotter.draw()
 
         return diagnostics
+
 
     def _attempt_render(self, paths):
         #self.agent.render_rollouts(paths)
