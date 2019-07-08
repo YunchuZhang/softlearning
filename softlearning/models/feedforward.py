@@ -3,7 +3,6 @@ import tensorflow as tf
 #st = ipdb.set_trace
 
 from softlearning.utils.keras import create_picklable_keras_model
-from softlearning.utils.keras import PicklableKerasModel
 
 
 def feedforward_model(input_shapes,

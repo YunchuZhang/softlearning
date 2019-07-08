@@ -1,6 +1,7 @@
 from numbers import Number
 
 import numpy as np
+import tensorflow as tf
 
 import ray
 from ray.experimental.tf_utils import TensorFlowVariables
@@ -10,10 +11,14 @@ from softlearning.misc.utils import initialize_tf_variables
 from .rl_agent import RLAgent
 
 from softlearning.map3D import constants as const
+from softlearning.map3D.nets.BulletPush3DTensor import BulletPush3DTensor4_cotrain
+
 const.set_experiment("rl_new")
+
 
 def td_target(reward, discount, next_value):
     return reward + discount * next_value
+
 
 class SACAgent(RLAgent):
     """Soft Actor-Critic (SAC)
@@ -68,7 +73,6 @@ class SACAgent(RLAgent):
         """
 
         #print("sac agent kwargs", kwargs)
-        import tensorflow as tf
 
         super(SACAgent, self).__init__(
             variant,
@@ -99,7 +103,7 @@ class SACAgent(RLAgent):
 
         self._remote = remote
 
-        self.map3D = map3D
+        self.map3D = BulletPush3DTensor4_cotrain()
         self.batch_size = batch_size
 
         self._observation_keys = (
@@ -251,7 +255,7 @@ class SACAgent(RLAgent):
 
         next_actions = self._policy.actions(self.memory_next)
         next_log_pis = self._policy.log_pis(
-            [self.memory_next, next_actions)
+            self.memory_next, next_actions)
 
         next_Qs_values = tuple(
             Q([*self.memory_next, next_actions])

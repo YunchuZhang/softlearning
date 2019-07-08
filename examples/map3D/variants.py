@@ -2,8 +2,8 @@ from ray import tune
 import numpy as np
 
 from softlearning.misc.utils import get_git_rev, deep_update
-import softlearning.map3D.constants as map3D_constants
-from softlearning.map3D.nets.BulletPush3DTensor import BulletPush3DTensor4_cotrain
+#import softlearning.map3D.constants as map3D_constants
+#from softlearning.map3D.nets.BulletPush3DTensor import BulletPush3DTensor4_cotrain
 import ipdb
 st = ipdb.set_trace
 
@@ -50,7 +50,7 @@ ALGORITHM_PARAMS_BASE = {
 
     'kwargs': {
         'epoch_length': 1000,
-        'train_every_n_steps': 2,
+        'train_every_n_steps': 10,
         'n_train_repeat': 1,
         'eval_render_mode': None,
         'eval_n_episodes': 5,
@@ -65,7 +65,7 @@ ALGORITHM_PARAMS_BASE = {
 
 ALGORITHM_PARAMS_ADDITIONAL = {
     'SAC': {
-        'type': 'SAC',
+        'type': 'RemoteSAC',
         'kwargs': {
             'reparameterize': REPARAMETERIZE,
             'lr': 1e-3,
@@ -75,6 +75,7 @@ ALGORITHM_PARAMS_ADDITIONAL = {
             'store_extra_policy_info': False,
             'action_prior': 'uniform',
             'n_initial_exploration_steps': int(1e2),
+            'num_agents': 2,
         }
     },
     'SQL': {
@@ -308,7 +309,7 @@ SIMPLE_REPLAY_POOL_PARAMS_TEMP = {
 HER_REPLAY_POOL_PARAMS = {
     'type': 'HerReplayPool',
     'kwargs': {
-        'max_size': 2e5,
+        'max_size': 5e3,
         'compute_reward_keys': {'achieved': 'state_achieved_goal',
                                 'desired': 'state_desired_goal',
                                 # These are required by the multiworld ImageEnv
@@ -439,7 +440,7 @@ def get_variant_spec_3D(universe,
         universe, domain, task, policy, algorithm, sampler, replay_pool, *args, **kwargs)
 
     # map3D_constants.set_experiment("0520_bulletpush3D_4_multicam_bn_mask_nview1_vp")
-    map3D_model = BulletPush3DTensor4_cotrain()
+    #map3D_model = BulletPush3DTensor4_cotrain()
 
 
     # variant_spec["Q_params"]["kwargs"]["preprocessor_params"] = {}
@@ -451,12 +452,12 @@ def get_variant_spec_3D(universe,
 
     # variant["Q_params"]["kwargs"]["preprocessor_params"]["kwargs"]["mapping_model"] = BulletPush3DTensor4_cotrain()
     # st()
-    variant_spec["map3D"] = map3D_model
+    #variant_spec["map3D"] = map3D_model
     environment_params = variant_spec['environment_params']
     env_train_params = environment_params['training']
     # env_train_params["kwargs"] = {}
     env_train_params["kwargs"]["observation_keys"] = ["image_observation","depth_observation","cam_angles_observation","image_desired_goal","desired_goal_depth","goal_cam_angle"]
-    env_train_params["kwargs"]["map3D"] = map3D_model
+    #env_train_params["kwargs"]["map3D"] = map3D_model
 
 
 

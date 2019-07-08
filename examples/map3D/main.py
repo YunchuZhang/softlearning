@@ -97,7 +97,7 @@ class ExperimentRunner(tune.Trainable):
 
         batch_size = variant['sampler_params']['kwargs']['batch_size']
         observation_keys = environment_params['training']["kwargs"]["observation_keys"]
-        bulledtPush = variant["map3D"]
+        #bulledtPush = variant["map3D"]
 
         replay_pool = self.replay_pool = (
             get_replay_pool_from_variant(variant, training_environment))
@@ -112,7 +112,7 @@ class ExperimentRunner(tune.Trainable):
 
         self.algorithm = get_algorithm_from_variant(
             variant=self._variant,
-            map3D =bulledtPush,
+            #map3D =bulledtPush,
             training_environment=training_environment,
             evaluation_environment=training_environment,
             policy=policy,
@@ -129,7 +129,7 @@ class ExperimentRunner(tune.Trainable):
 
         initialize_tf_variables(self._session, only_uninitialized=True)
         # st()
-        self.map3d_setup(self._session,map3D=bulledtPush)
+        #self.map3d_setup(self._session,map3D=bulledtPush)
 
         self._built = True
 

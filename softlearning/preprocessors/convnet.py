@@ -1,9 +1,11 @@
+import tensorflow as tf
+
 from softlearning.models.feedforward import feedforward_model
 from softlearning.utils.keras import create_picklable_keras_model
 
-from softlearning.utils.keras import PicklableKerasModel
 from softlearning.map3D.nets.BulletPush3DTensor import BulletPush3DTensor4_cotrain
 from softlearning.map3D import constants as const
+
 
 def convnet_preprocessor(
         input_shapes,
@@ -20,7 +22,6 @@ def convnet_preprocessor(
         make_picklable=True,
         *args,
         **kwargs):
-    import tensorflow as tf
 
     if data_format == 'channels_last':
         H, W, C = image_shape
@@ -146,7 +147,7 @@ def convnet3d_preprocessor(
         if dense_hidden_layer_sizes
         else flattened)
 
-    model = PicklableKerasModel(inputs, output, name=name)
+    model = create_picklable_keras_model(inputs, output, name=name)
 
     return model
 
@@ -209,7 +210,7 @@ def map3D_preprocessor(
         if dense_hidden_layer_sizes
         else flattened)
 
-    model = PicklableKerasModel(inputs, output, name=name)
+    model = create_picklable_keras_model(inputs, output, name=name)
 
     return model
 
