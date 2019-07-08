@@ -122,12 +122,12 @@ class SACAgent(RLAgent):
 
         self._build()
 
-        #gpu_options = tf.GPUOptions(allow_growth=True)
-        #config_proto = tf.ConfigProto(gpu_options=gpu_options)
-        config_proto = tf.ConfigProto(log_device_placement=False, allow_soft_placement=True, device_count={'GPU': 0})
-        off = rewriter_config_pb2.RewriterConfig.OFF
-        #config_proto.graph_options.rewrite_options.arithmetic_optimization = off
-        config_proto.graph_options.rewrite_options.memory_optimization=4
+        gpu_options = tf.GPUOptions(allow_growth=True)
+        config_proto = tf.ConfigProto(gpu_options=gpu_options)
+        #config_proto = tf.ConfigProto(log_device_placement=False, allow_soft_placement=True, device_count={'GPU': 0})
+        #off = rewriter_config_pb2.RewriterConfig.OFF
+        ##config_proto.graph_options.rewrite_options.arithmetic_optimization = off
+        #config_proto.graph_options.rewrite_options.memory_optimization=4
         session = tf.Session(config=config_proto)
         tf.keras.backend.set_session(session)
         self._session = tf.keras.backend.get_session()
