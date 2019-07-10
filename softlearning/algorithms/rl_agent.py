@@ -10,6 +10,8 @@ from softlearning.value_functions.utils import get_Q_function_from_variant
 
 from softlearning.samplers import rollouts
 
+import copy
+
 class RLAgent():
 
     def __init__(
@@ -80,7 +82,8 @@ class RLAgent():
                 self._sampler._max_path_length,
                 render_mode=render_mode)
 
-        return paths
+            return paths
+
 
     def env_path_info(self, paths):
         return self._env.get_path_infos(paths)

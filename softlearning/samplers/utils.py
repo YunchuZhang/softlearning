@@ -8,7 +8,8 @@ from . import (
     extra_policy_info_sampler,
     remote_sampler,
     base_sampler,
-    simple_sampler)
+    simple_sampler,
+    multiagent_sampler)
 
 
 SAMPLERS = {
@@ -18,6 +19,7 @@ SAMPLERS = {
     'RemoteSampler': remote_sampler.RemoteSampler,
     'Sampler': base_sampler.BaseSampler,
     'SimpleSampler': simple_sampler.SimpleSampler,
+    'MultiAgentSampler': multiagent_sampler.MultiAgentSampler,
 }
 
 
@@ -35,56 +37,68 @@ def get_sampler_from_variant(variant, *args, **kwargs):
     return sampler
 
 
-def rollout(env,
-            policy,
-            path_length,
-            callback=None,
-            render_mode=None,
-            break_on_terminal=True):
+def rollouts(n_paths,
+             env,
+             policy,
+             path_length,
+             sampler=None,
+             callback=None,
+             render_mode=None,
+             break_on_terminal=True):
 
     pool = replay_pools.SimpleReplayPool(env, max_size=path_length)
-    sampler = simple_sampler.SimpleSampler(
-        max_path_length=path_length,
-        min_pool_size=None,
-        batch_size=None)
+
+    if sampler is None:
+        sampler = simple_sampler.SimpleSampler(
+            max_path_length=path_length,
+            min_pool_size=None,
+            batch_size=None,
+            store_last_n_paths=n_paths,
+        )
 
     sampler.initialize(env, policy, pool)
 
-    images = []
-    infos = []
+    sampler.clear_last_n_paths()
+    sampler.store_last_n_paths = n_paths
 
-    t = 0
-    for t in range(path_length):
-        observation, reward, terminal, info = sampler.sample()
-        infos.append(info)
+    videos = []
 
-        if callback is not None:
-            callback(observation)
+    while len(sampler.get_last_n_paths()) < n_paths:
 
-        if render_mode is not None:
-            if render_mode == 'rgb_array':
-                image = env.render(mode=render_mode)
-                images.append(image)
-            else:
-                env.render()
+        sampler.reset()
+        images = []
+        t = 0
 
-        if terminal:
-            policy.reset()
-            if break_on_terminal: break
+        for t in range(path_length):
+            observation, reward, terminal, info = sampler.sample()
 
-    assert pool._size == t + 1
+            if callback is not None:
+                callback(observation)
 
-    path = pool.batch_by_indices(
-        np.arange(pool._size),
-        observation_keys=getattr(env, 'observation_keys', None))
-    path['infos'] = infos
+            if render_mode is not None:
+                if render_mode == 'rgb_array':
+                    image = env.render(mode=render_mode)
+                    images.append(image)
+                else:
+                    env.render()
+
+            if np.count_nonzero(terminal):
+                policy.reset()
+                if break_on_terminal: break
+
+        videos.append(images)
+
+        #assert pool._size == t + 1
+
+    paths = sampler.get_last_n_paths()
 
     if render_mode == 'rgb_array':
-        path['images'] = np.stack(images, axis=0)
+        for i, path in enumerate(paths):
+            path['images'] = np.stack(videos[i], axis=0)
 
-    return path
-
-
-def rollouts(n_paths, *args, **kwargs):
-    paths = [rollout(*args, **kwargs) for i in range(n_paths)]
     return paths
+
+
+def rollout(*args, **kwargs):
+    path = rollouts(1, *args, **kwargs)[0]
+    return path

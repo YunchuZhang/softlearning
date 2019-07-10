@@ -41,16 +41,23 @@ MAX_PATH_LENGTH_PER_DOMAIN = {
     'SawyerPushAndReachEnvEasy': 200,
     'SawyerPushAndReachEnvMedium': 200,
     'SawyerPushAndReachEnvHard': 200,
+    'SawyerPickupEnvYZEasy': 200,
+    'SawyerReachXYEnv': 50,
+    'FetchReach': 50,
+    'FlexFetchReach': 100,
+    'FlexFetchPush': 200,
+    'FlexFetchReachMultiRobot': 100,
+    'FlexFetchPushMultiRobot': 250,
 }
 
 ALGORITHM_PARAMS_BASE = {
     'type': 'SAC',
 
     'kwargs': {
-        'epoch_length': 5000,
-        'train_every_n_steps': 10,
+        'epoch_length': 10000,
+        'train_every_n_steps': 20,
         'n_train_repeat': 1,
-        'eval_render_mode': None,
+        'eval_render_mode': None, 
         'eval_n_episodes': 10,
         'eval_deterministic': True,
 
@@ -122,9 +129,14 @@ NUM_EPOCHS_PER_DOMAIN = {
     'FetchPush': 1000,
     'FetchPickAndPlace': 1000,
     'SawyerReachXYEnv': 1000,
-    'SawyerPushAndReachEnvEasy': 4000,
-    'SawyerPushAndReachEnvMedium': 4000,
-    'SawyerPushAndReachEnvHard': 4000,
+    'SawyerPushAndReachEnvEasy': 2000,
+    'SawyerPushAndReachEnvMedium': 2000,
+    'SawyerPushAndReachEnvHard': 2000,
+    'SawyerPickupEnvYZEasy': 2000,
+    'FlexFetchReach': 1000,
+    'FlexFetchPush': 1000,
+    'FlexFetchReachMultiRobot': 1000,
+    'FlexFetchPushMultiRobot': 10000,
 }
 
 DEFAULT_ALGORITHM_DOMAIN_PARAMS = {
@@ -233,11 +245,26 @@ ENVIRONMENT_PARAMS = {
             'reward_type': 'puck_success'
         }
     },
-    'FetchReach': {
-        'v1': {
-            'reward_type': 'dense'
+    'FlexFetchReachMultiRobot': {
+        'v0': {
+            'render': 1
+        }
+    },
+    'FlexFetchPushMultiRobot': {
+        'v0': {
+            'render': 0
         }
     }
+    #'SawyerPickupEnvYZEasy': {
+    #    'v0': {
+    #        'reward_type': 'hand_and_obj_success'
+    #    }
+    #},
+    #'FetchReach': {
+    #    'v1': {
+    #        'reward_type': 'dense'
+    #    }
+    #}
 }
 
 
@@ -251,9 +278,18 @@ SIMPLE_SAMPLER_PARAMS = {
     }
 }
 
+MULTIAGENT_SAMPLER_PARAMS = {
+    'type': 'MultiAgentSampler',
+    'kwargs': {
+        'batch_size': 256,
+        'num_agents': 5,
+    }
+}
+
 
 SAMPLER_PARAMS_BASE = {
     'SimpleSampler': SIMPLE_SAMPLER_PARAMS,
+    'MultiAgentSampler': MULTIAGENT_SAMPLER_PARAMS,
 }
 
 
@@ -300,8 +336,8 @@ HER_REPLAY_POOL_PARAMS = {
     'type': 'HerReplayPool',
     'kwargs': {
         'max_size': 1e6,
-        'desired_goal_key': 'state_desired_goal',
-        'achieved_goal_key': 'state_achieved_goal',
+        'desired_goal_key': 'desired_goal',
+        'achieved_goal_key': 'achieved_goal',
         'reward_key': 'rewards',
         'terminal_key': 'terminals'
     }

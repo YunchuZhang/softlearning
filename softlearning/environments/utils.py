@@ -3,12 +3,16 @@ from .adapters.gym_adapter import (
     GymAdapter,
 )
 
+from .adapters.remote_gym_adapter import RemoteGymAdapter
+
 ENVIRONMENTS = {
     'gym': GYM_ENVIRONMENTS,
+    'remote_gym': GYM_ENVIRONMENTS,
 }
 
 ADAPTERS = {
     'gym': GymAdapter,
+    'remote_gym': RemoteGymAdapter,
 }
 
 
