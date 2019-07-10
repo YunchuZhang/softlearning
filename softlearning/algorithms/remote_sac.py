@@ -5,7 +5,7 @@ import numpy as np
 import ray
 
 from .rl_algorithm import RLAlgorithm
-from .sac_agent import SACAgent
+from .sac_agent import SACAgent as RemoteSACAgent
 
 
 class RemoteSAC(RLAlgorithm):
@@ -55,7 +55,7 @@ class RemoteSAC(RLAlgorithm):
         #print("sac kwargs", kwargs)
         super(RemoteSAC, self).__init__(**kwargs)
 
-        RemoteSACAgent = ray.remote(SACAgent)
+        #RemoteSACAgent = ray.remote(SACAgent)
 
         self._num_agents = num_agents
 
