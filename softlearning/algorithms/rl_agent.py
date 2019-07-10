@@ -85,6 +85,7 @@ class RLAgent():
                 self._evaluation_environment,
                 self._policy,
                 self._sampler._max_path_length,
+                sampler=copy.deepcopy(self._sampler),
                 memory3D=self.memory,
                 obs_ph=self._observations_phs,
                 session=self._session,
