@@ -9,12 +9,17 @@ def save_replay_buffer(fields):
     angles = fields["observations.cam_angles_observation"][i]
     img_folder_name = "data/images/"+str(i)
     depth_folder_name = img_folder_name.replace("images","depths")
+    env_sample_images = "env_data"
     try:
       os.makedirs(img_folder_name)
     except Exception:
       print("file exists")
     try:
       os.makedirs(depth_folder_name)
+    except Exception:
+      print("file exists")
+    try:
+      os.makedirs(env_sample_images)
     except Exception:
       print("file exists")  
     for view in range(4):
