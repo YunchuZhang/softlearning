@@ -40,7 +40,6 @@ env_n = ImageEnv(env,
 
 # observation_keys_custom = ['image_observation','depth_observation','cam_angles_observation']
 observation_keys = ["image_observation","depth_observation","cam_angles_observation"]
-
 observation_keys_o = ["observations." + i for i in observation_keys]
 # st()
 env_n.reset()
