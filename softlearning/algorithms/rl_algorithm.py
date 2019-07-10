@@ -7,9 +7,6 @@ import os
 
 import tensorflow as tf
 import numpy as np
-import time
-import ipdb
-st = ipdb.set_trace
 
 from softlearning.samplers import rollouts
 from softlearning.misc.utils import save_video
@@ -73,7 +70,7 @@ class RLAlgorithm(tf.contrib.checkpoint.Checkpointable):
             self._eval_render_mode = 'rgb_array'
         else:
             self._eval_render_mode = eval_render_mode
-        # st()
+
         self._session = session or tf.keras.backend.get_session()
 
         self._epoch = 0
@@ -81,7 +78,6 @@ class RLAlgorithm(tf.contrib.checkpoint.Checkpointable):
         self._num_train_steps = 0
 
     def _initial_exploration_hook(self, env, initial_exploration_policy, pool):
-        print("starting initial exploration")
         if self._n_initial_exploration_steps < 1: return
 
         if not initial_exploration_policy:
@@ -90,13 +86,8 @@ class RLAlgorithm(tf.contrib.checkpoint.Checkpointable):
                 " n_initial_exploration_steps > 0.")
 
         self.sampler.initialize(env, initial_exploration_policy, pool)
-        t =  time.time()
         while pool.size < self._n_initial_exploration_steps:
             self.sampler.sample()
-            #print(time.time()-t, pool.size)
-            #print("initial exploration sample")
-
-        print("finished initial exploration")
 
     def _training_before_hook(self):
         """Method called before the actual training loops."""
@@ -152,15 +143,13 @@ class RLAlgorithm(tf.contrib.checkpoint.Checkpointable):
         policy = self._policy
         pool = self._pool
 
-
         if not self._training_started:
             self._init_training()
 
             self._initial_exploration_hook(
                 training_environment, self._initial_exploration_policy, pool)
-        print("initializing")
-        self.sampler.initialize(training_environment, policy, pool,memory3D=self.memory,obs_ph= self._observations_phs,session=self._session)
-        print("initialized")
+
+        self.sampler.initialize(training_environment, policy, pool)
 
         gt.reset_root()
         gt.rename_root('RLAlgorithm')
@@ -183,26 +172,20 @@ class RLAlgorithm(tf.contrib.checkpoint.Checkpointable):
 
                 self._timestep_before_hook()
                 gt.stamp('timestep_before_hook')
-                # st()
-                self._do_sampling(timestep=self._total_timestep)
 
-                # print(samples_now,start_samples,self._epoch_length,"params")
+                self._do_sampling(timestep=self._total_timestep)
                 gt.stamp('sample')
-                # print("training")
+
                 if self.ready_to_train:
                     self._do_training_repeats(timestep=self._total_timestep)
-
                 gt.stamp('train')
 
                 self._timestep_after_hook()
                 gt.stamp('timestep_after_hook')
 
-            #print("finished training paths")
-            print("evaluating")
             training_paths = self.sampler.get_last_n_paths(
                 math.ceil(self._epoch_length / self.sampler._max_path_length))
             gt.stamp('training_paths')
-
             evaluation_paths = self._evaluation_paths(
                 policy, evaluation_environment)
             gt.stamp('evaluation_paths')
@@ -216,13 +199,11 @@ class RLAlgorithm(tf.contrib.checkpoint.Checkpointable):
                 gt.stamp('evaluation_metrics')
             else:
                 evaluation_metrics = {}
-            print("evaluation done")
+
             self._epoch_after_hook(training_paths)
             gt.stamp('epoch_after_hook')
 
             sampler_diagnostics = self.sampler.get_diagnostics()
-
-            # st()
 
             diagnostics = self.get_diagnostics(
                 iteration=self._total_timestep,
@@ -271,14 +252,13 @@ class RLAlgorithm(tf.contrib.checkpoint.Checkpointable):
 
     def _evaluation_paths(self, policy, evaluation_env):
         if self._eval_n_episodes < 1: return ()
-        # st()
+
         with policy.set_deterministic(self._eval_deterministic):
             paths = rollouts(
                 self._eval_n_episodes,
                 evaluation_env,
                 policy,
                 self.sampler._max_path_length,
-                memory3D=self.memory,obs_ph=self._observations_phs,session=self._session,
                 render_mode=self._eval_render_mode)
 
         should_save_video = (
@@ -342,7 +322,6 @@ class RLAlgorithm(tf.contrib.checkpoint.Checkpointable):
         if trained_enough: return
 
         for i in range(self._n_train_repeat):
-            t = time.time()
             self._do_training(
                 iteration=timestep,
                 batch=self._training_batch())
