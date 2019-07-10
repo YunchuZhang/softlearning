@@ -56,7 +56,7 @@ class SimpleSampler(BaseSampler):
         # if preprocess:
         active_obs =[np.repeat(i,4,0)  for i in active_obs]
 
-        if len(active_obs[0].shape) == 5 and len(active_obs[4].shape) == 5:
+        if len(active_obs[0].shape) == 5 and  len(active_obs)>4 and  len(active_obs[4].shape) == 5:
             # for case when we train 3d code
             active_obs[0] = np.concatenate([active_obs[0],np.ones_like(active_obs[0][...,:1])],-1)
             active_obs[4] = np.concatenate([active_obs[4],np.ones_like(active_obs[4][...,:1])],-1)
@@ -110,7 +110,7 @@ class SimpleSampler(BaseSampler):
             self._current_path[key].append(value)
 
         if terminal or self._path_length >= self._max_path_length:
-            # st()
+            st()
             last_path = {
                 field_name: np.array(values)
                 for field_name, values in self._current_path.items()
