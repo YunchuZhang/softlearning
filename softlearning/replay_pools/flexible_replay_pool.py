@@ -33,7 +33,7 @@ class FlexibleReplayPool(ReplayPool):
 
     def add_fields(self, fields_attrs):
         self.fields_attrs.update(fields_attrs)
-
+        # st()
         for field_name, field_attrs in fields_attrs.items():
             field_shape = (self._max_size, *field_attrs['shape'])
             initializer = field_attrs.get('initializer', np.zeros)
