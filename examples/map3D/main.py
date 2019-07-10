@@ -88,41 +88,42 @@ class ExperimentRunner(tune.Trainable):
         variant = copy.deepcopy(self._variant)
 
         environment_params = variant['environment_params']
-        training_environment = self.training_environment = (
-            get_environment_from_params_custom(environment_params['training']))
-        evaluation_environment = self.evaluation_environment = (
-            get_environment_from_params_custom(environment_params['evaluation'])
-            if 'evaluation' in environment_params
-            else training_environment)
+        #training_environment = self.training_environment = (
+        #    get_environment_from_params_custom(environment_params['training']))
+        #evaluation_environment = self.evaluation_environment = (
+        #    get_environment_from_params_custom(environment_params['evaluation'])
+        #    if 'evaluation' in environment_params
+        #    else training_environment)
 
         batch_size = variant['sampler_params']['kwargs']['batch_size']
         observation_keys = environment_params['training']["kwargs"]["observation_keys"]
-        #bulledtPush = variant["map3D"]
+        ##bulledtPush = variant["map3D"]
 
-        replay_pool = self.replay_pool = (
-            get_replay_pool_from_variant(variant, training_environment))
-        sampler = self.sampler = get_sampler_from_variant(variant)
-        Qs = self.Qs = get_Q_function_from_variant(
-            variant, training_environment)
-        policy = self.policy = get_policy_from_variant(
-            variant, training_environment, Qs)
-        initial_exploration_policy = self.initial_exploration_policy = (
-            get_policy('UniformPolicy', training_environment))
+        #replay_pool = self.replay_pool = (
+        #    get_replay_pool_from_variant(variant, training_environment))
+        #sampler = self.sampler = get_sampler_from_variant(variant)
+        #Qs = self.Qs = get_Q_function_from_variant(
+        #    variant, training_environment)
+        #policy = self.policy = get_policy_from_variant(
+        #    variant, training_environment, Qs)
+        #initial_exploration_policy = self.initial_exploration_policy = (
+        #    get_policy('UniformPolicy', training_environment))
 
 
         self.algorithm = get_algorithm_from_variant(
             variant=self._variant,
-            #map3D =bulledtPush,
-            training_environment=training_environment,
-            evaluation_environment=training_environment,
-            policy=policy,
             batch_size = batch_size,
-            initial_exploration_policy=initial_exploration_policy,
-            Qs=Qs,
-            pool=replay_pool,
             observation_keys=observation_keys,
-            sampler=sampler,
-            session=self._session)
+            )
+            #map3D =bulledtPush,
+            #training_environment=training_environment,
+            #evaluation_environment=training_environment,
+            #policy=policy,
+            #initial_exploration_policy=initial_exploration_policy,
+            #Qs=Qs,
+            #pool=replay_pool,
+            #sampler=sampler,
+            #session=self._session)
         
 
         # st()

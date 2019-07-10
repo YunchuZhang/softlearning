@@ -1,5 +1,6 @@
 from numbers import Number
 
+import os
 import copy
 import math
 import numpy as np
@@ -88,6 +89,8 @@ class SACAgent():
         #super(SACAgent, self).__init__(
         #    variant,
         #    n_initial_exploration_steps=n_initial_exploration_steps)
+
+        os.environ["CUDA_VISIBLE_DEVICES"] = ",".join(map(str, ray.get_gpu_ids()))
 
         self._training_environment = get_environment_from_params_custom(variant['environment_params']['training'])
         self._evaluation_environment = get_environment_from_params_custom(variant['environment_params']['evaluation'])
