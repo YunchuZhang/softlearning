@@ -39,7 +39,7 @@ env_n = ImageEnv(env,
                flatten=False)
 
 # observation_keys_custom = ['image_observation','depth_observation','cam_angles_observation']
-observation_keys = ["image_observation","depth_observation","cam_angles_observation"]
+observation_keys = ["observation_with_orientation","image_observation","depth_observation","cam_angles_observation"]
 observation_keys_o = ["observations." + i for i in observation_keys]
 # st()
 env_n.reset()
@@ -62,7 +62,7 @@ st()
 
 # imsave("check_03.png",replay_pool.fields["observations.desired_goal_depth"][0,0])
 observation = sampler.random_batch()
-
+import pdb; pdb.set_trace()
 save_images.save_some_samples(sampler)
 # def save_replay_buffer(fields):
 #   # key_val = fields.keys()

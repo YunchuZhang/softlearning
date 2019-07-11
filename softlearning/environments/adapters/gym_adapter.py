@@ -86,6 +86,7 @@ class GymAdapter(SoftlearningEnv):
     @property
     def observation_space(self):
         observation_space = self._env.observation_space
+        #import pdb; pdb.set_trace()
         return observation_space
 
     @property
@@ -116,6 +117,7 @@ class GymAdapter(SoftlearningEnv):
         observation = [
             observation[key][None] for key in observation_keys
         ]
+        #import pdb; pdb.set_trace()
 
         return observation
 
