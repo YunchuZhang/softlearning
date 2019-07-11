@@ -80,6 +80,7 @@ class RLAgent():
                 self._eval_env,
                 self._policy,
                 self._sampler._max_path_length,
+                sampler=copy.deepcopy(self._sampler),
                 render_mode=render_mode)
 
             return paths
