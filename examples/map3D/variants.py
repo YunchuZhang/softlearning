@@ -42,7 +42,8 @@ DEFAULT_MAX_PATH_LENGTH = 50
 MAX_PATH_LENGTH_PER_DOMAIN = {
     'Point2DEnv': 50,
     'Pendulum': 200,
-    'SawyerReachXYEnv': 50
+    'SawyerReachXYEnv': 50,
+    'SawyerMulticameraReach': 50,
 }
 
 ALGORITHM_PARAMS_BASE = {
@@ -75,7 +76,7 @@ ALGORITHM_PARAMS_ADDITIONAL = {
             'store_extra_policy_info': False,
             'action_prior': 'uniform',
             'n_initial_exploration_steps': int(1e2),
-            'num_agents': 2,
+            'num_agents': 1,
         }
     },
     'SQL': {
@@ -125,6 +126,7 @@ NUM_EPOCHS_PER_DOMAIN = {
     'FetchPush': 1000,
     'FetchPickAndPlace': 1000,
     'SawyerReachXYEnv': 1000,
+    'SawyerMulticameraReach': 1000,
     'SawyerPushAndReachEnvEasy': 1000,
     'SawyerPushAndReachEnvMedium': 1000,
     'SawyerPushAndReachEnvHard': 1000,
@@ -254,9 +256,18 @@ SIMPLE_SAMPLER_PARAMS = {
     }
 }
 
+MULTIAGENT_SAMPLER_PARAMS = {
+    'type': 'MultiAgentSampler',
+    'kwargs': {
+        'batch_size': 4,
+        'num_agents': 4,
+    }
+}
+
 
 SAMPLER_PARAMS_BASE = {
     'SimpleSampler': SIMPLE_SAMPLER_PARAMS,
+    'MultiAgentSampler': MULTIAGENT_SAMPLER_PARAMS,
 }
 
 

@@ -48,7 +48,7 @@ class RemoteGymAdapter(SoftlearningEnv):
                  domain,
                  task,
                  *args,
-                 num_agents=5,
+                 num_agents=4,
                  normalize=True,
                  observation_keys=None,
                  unwrap_time_limit=True,
@@ -86,11 +86,18 @@ class RemoteGymAdapter(SoftlearningEnv):
 
     @property
     def active_observation_shape(self):
-        active_size = sum(
-            np.prod(self._observation_space.spaces[key].shape)
-            for key in self.observation_keys)
+        #active_size = sum(
+        #    np.prod(self._observation_space.spaces[key].shape)
+        #    for key in self.observation_keys)
 
-        active_observation_shape = (active_size,)
+        #active_observation_shape = (active_size,)
+
+        #return active_observation_shape
+
+        active_observation_shape = [
+            self._observation_space.spaces[key].shape
+            for key in self.observation_keys
+        ]
 
         return active_observation_shape
 
@@ -98,12 +105,12 @@ class RemoteGymAdapter(SoftlearningEnv):
     def convert_to_active_observation(self, observations):
 
         active_observation = []
-        for observation in observations:
+        for key in self.observation_keys:
             active_observation.append(np.concatenate([
-                observation[key] for key in self.observation_keys
-            ], axis=-1))
+                observation[key][None] for observation in observations
+            ], axis=0))
 
-        return np.array(active_observation)
+        return active_observation
 
 
     @property

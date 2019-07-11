@@ -1,5 +1,6 @@
 from numbers import Number
 
+import sys
 import os
 import copy
 import math
@@ -10,7 +11,7 @@ from tensorflow.core.protobuf import rewriter_config_pb2
 import ray
 from ray.experimental.tf_utils import TensorFlowVariables
 
-from softlearning.environments.utils import get_environment_from_params_custom
+from softlearning.environments.utils import get_environment_from_params
 from softlearning.algorithms.utils import get_algorithm_from_variant
 from softlearning.policies.utils import get_policy_from_variant, get_policy
 from softlearning.replay_pools.utils import get_replay_pool_from_variant
@@ -90,10 +91,15 @@ class SACAgent():
         #    variant,
         #    n_initial_exploration_steps=n_initial_exploration_steps)
 
+        print("starting sac agent initialization")
+        sys.stdout.flush()
+
+        self.variant = variant
+
         os.environ["CUDA_VISIBLE_DEVICES"] = ",".join(map(str, ray.get_gpu_ids()))
 
-        self._training_environment = get_environment_from_params_custom(variant['environment_params']['training'])
-        self._evaluation_environment = get_environment_from_params_custom(variant['environment_params']['evaluation'])
+        self._training_environment = get_environment_from_params(variant['environment_params']['training'])
+        self._evaluation_environment = get_environment_from_params(variant['environment_params']['evaluation'])
 
         self._sampler = get_sampler_from_variant(variant)
         self._pool = get_replay_pool_from_variant(variant, self._training_environment)
@@ -169,6 +175,9 @@ class SACAgent():
 
         initialize_tf_variables(self._session, only_uninitialized=True)
 
+        print("finished initialization")
+        sys.stdout.flush()
+
 
     def init_sampler(self):
         self._sampler.initialize(self._training_environment,
@@ -190,6 +199,9 @@ class SACAgent():
         return self._sampler._total_samples
 
     def initial_exploration(self):
+        print("starting initial exploration")
+        sys.stdout.flush()
+
         if self._n_initial_exploration_steps < 1: return
 
         if not self._initial_exploration_policy:
@@ -200,6 +212,10 @@ class SACAgent():
         self._sampler.initialize(self._training_environment, self._initial_exploration_policy, self._pool)
         while self._pool.size < self._n_initial_exploration_steps:
             self._sampler.sample()
+
+        print("finished initial exploration")
+        sys.stdout.flush()
+
 
     def do_sampling(self, timestep, steps):
         for _ in range(steps):
@@ -222,6 +238,7 @@ class SACAgent():
                 self._evaluation_environment,
                 self._policy,
                 self._sampler._max_path_length,
+                sampler=get_sampler_from_variant(self.variant),
                 memory3D=self.memory,
                 obs_ph=self._observations_phs,
                 session=self._session,

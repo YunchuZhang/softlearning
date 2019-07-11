@@ -1,7 +1,7 @@
 import tensorflow as tf
 import math
 
-from softlearning.environments.utils import get_environment_from_params_custom
+from softlearning.environments.utils import get_environment_from_params
 from softlearning.algorithms.utils import get_algorithm_from_variant
 from softlearning.policies.utils import get_policy_from_variant, get_policy
 from softlearning.replay_pools.utils import get_replay_pool_from_variant
@@ -20,8 +20,8 @@ class RLAgent():
             n_initial_exploration_steps=0,
     ):
 
-        self._training_environment = get_environment_from_params_custom(variant['environment_params']['training'])
-        self._evaluation_environment = get_environment_from_params_custom(variant['environment_params']['evaluation'])
+        self._training_environment = get_environment_from_params(variant['environment_params']['training'])
+        self._evaluation_environment = get_environment_from_params(variant['environment_params']['evaluation'])
 
         self._sampler = get_sampler_from_variant(variant)
         self._pool = get_replay_pool_from_variant(variant, self._training_environment)

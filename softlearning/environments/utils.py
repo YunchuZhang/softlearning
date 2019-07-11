@@ -26,9 +26,9 @@ ADAPTERS = {
 
 def get_environment(universe, domain, task, environment_params):
     # st()
-    if environment_params["env"]:
-      domain = None
-      task = None
+    if "env" in environment_params and environment_params["env"]:
+        domain = None
+        task = None
 
     return ADAPTERS[universe](domain, task, **environment_params)
 
@@ -39,6 +39,7 @@ def get_environment_from_params(environment_params):
     domain = environment_params['domain']
     environment_kwargs = environment_params.get('kwargs', {}).copy()
     return get_environment(universe, domain, task, environment_kwargs)
+
 
 def get_environment_from_params_custom(environment_params):
     universe = environment_params['universe']

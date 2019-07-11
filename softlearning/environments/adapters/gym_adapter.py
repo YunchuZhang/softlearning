@@ -105,6 +105,7 @@ class GymAdapter(SoftlearningEnv):
 
         return active_observation_shape
 
+
     def convert_to_active_observation(self, observation):
         if not isinstance(self._env.observation_space, spaces.Dict):
             return observation
@@ -118,6 +119,7 @@ class GymAdapter(SoftlearningEnv):
         ]
 
         return observation
+
 
     @property
     def action_space(self, *args, **kwargs):
