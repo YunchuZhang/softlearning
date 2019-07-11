@@ -54,13 +54,13 @@ ALGORITHM_PARAMS_BASE = {
     'type': 'SAC',
 
     'kwargs': {
-        'epoch_length': 5000,
-        'train_every_n_steps': 10,
+        'epoch_length': 10000,
+        'train_every_n_steps': 1,
         'n_train_repeat': 1,
         'eval_render_mode': None, 
         'eval_n_episodes': 10,
         'eval_deterministic': True,
-
+        'num_agents': 2,
         'discount': 0.99,
         'tau': 5e-3,
         'reward_scale': 1.0,
@@ -70,7 +70,7 @@ ALGORITHM_PARAMS_BASE = {
 
 ALGORITHM_PARAMS_ADDITIONAL = {
     'SAC': {
-        'type': 'SAC',
+        'type': 'RemoteSAC',
         'kwargs': {
             'reparameterize': REPARAMETERIZE,
             'lr': 1e-3,
@@ -335,7 +335,7 @@ SIMPLE_REPLAY_POOL_PARAMS = {
 HER_REPLAY_POOL_PARAMS = {
     'type': 'HerReplayPool',
     'kwargs': {
-        'max_size': 1e6,
+        'max_size': 5e5,
         'desired_goal_key': 'desired_goal',
         'achieved_goal_key': 'achieved_goal',
         'reward_key': 'rewards',
