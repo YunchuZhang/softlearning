@@ -4,7 +4,9 @@ from itertools import count
 import gtimer as gt
 import math
 import os
+import ipdb
 
+st = ipdb.set_trace
 import tensorflow as tf
 import numpy as np
 
@@ -142,6 +144,7 @@ class RLAlgorithm(tf.contrib.checkpoint.Checkpointable):
         evaluation_environment = self._evaluation_environment
         policy = self._policy
         pool = self._pool
+        st()
 
         if not self._training_started:
             self._init_training()

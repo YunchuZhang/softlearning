@@ -37,6 +37,8 @@ class SimpleSampler(BaseSampler):
         return processed_observation
 
     def sample(self):
+        import ipdb
+        #ipdb.set_trace()
         if self._current_observation is None:
             self._current_observation = self.env.reset()
 

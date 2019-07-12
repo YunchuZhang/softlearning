@@ -6,7 +6,7 @@ import tensorflow as tf
 from tensorflow.python.training import training_util
 
 from .rl_algorithm import RLAlgorithm
-
+import ipdb
 
 def td_target(reward, discount, next_value):
     return reward + discount * next_value

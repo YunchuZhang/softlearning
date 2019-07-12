@@ -18,7 +18,8 @@ import multiprocessing
 import os
 import uuid
 from pprint import pformat
-
+import ipdb
+st = ipdb.set_trace
 import ray
 from ray import tune
 from ray.autoscaler.commands import exec_cluster
@@ -237,7 +238,7 @@ def run_example_debug(example_module_name, example_argv):
     TODO(hartikainen): This should allocate a custom "debug_resource" instead
     of all cpus once ray local mode supports custom resources.
     """
-
+    st()
     debug_example_argv = []
     for option in example_argv:
         if '--trial-cpus' in option:

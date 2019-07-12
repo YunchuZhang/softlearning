@@ -112,7 +112,8 @@ class GymAdapter(SoftlearningEnv):
         observation_keys = (
             self.observation_keys
             or list(self._env.observation_space.spaces.keys()))
-
+        #print(observation_keys[1:])
+        #observation_keys = observation_keys[1:]
         observation = np.concatenate([
             observation[key] for key in observation_keys
         ], axis=-1)
