@@ -16,17 +16,19 @@ There are two types of functions in this file:
 import importlib
 import multiprocessing
 import os
+import os.path as path
 import uuid
 from pprint import pformat
-import ipdb
-st = ipdb.set_trace
+from xml.etree import ElementTree as et
+
 import ray
 from ray import tune
 from ray.autoscaler.commands import exec_cluster
 
 from softlearning.misc.utils import datetimestamp, PROJECT_PATH
 
-
+import ipdb 
+st = ipdb.set_trace
 AUTOSCALER_DEFAULT_CONFIG_FILE_GCE = os.path.join(
     PROJECT_PATH, 'config', 'ray-autoscaler-gce.yaml')
 AUTOSCALER_DEFAULT_CONFIG_FILE_EC2 = os.path.join(
@@ -199,11 +201,20 @@ Number of total trials (including samples/seeds): {total_number_of_trials}
 
     print(experiments_info_text)
 
+def change_env_to_use_correct_mesh(mesh):
+    current_path = os.getcwd() 
+    home_dir = path.abspath(path.join(__file__ ,"../../.."))
+    path_to_xml = os.path.join(home_dir, 'multiworld/multiworld/envs/assets/sawyer_xyz/sawyer_push_box.xml')
+    tree = et.parse(path_to_xml)
+    root = tree.getroot()
+    [x.attrib for x in root.iter('geom')][0]['mesh']=mesh
+    tree.write(path_to_xml)
+
 
 def run_example_local(example_module_name, example_argv, local_mode=False):
     """Run example locally, potentially parallelizing across cpus/gpus."""
     example_module = importlib.import_module(example_module_name)
-
+    # st()
     example_args = example_module.get_parser().parse_args(example_argv)
     variant_spec = example_module.get_variant_spec(example_args)
     trainable_class = example_module.get_trainable_class(example_args)
@@ -211,6 +222,9 @@ def run_example_local(example_module_name, example_argv, local_mode=False):
     experiment_id, experiment = generate_experiment(
         trainable_class, variant_spec, example_args)
     experiments = {experiment_id: experiment}
+
+    #change the xml file to use the desired xml mesh
+    change_env_to_use_correct_mesh(example_args.mesh)
 
     ray.init(
         num_cpus=example_args.cpus,
@@ -238,8 +252,9 @@ def run_example_debug(example_module_name, example_argv):
     TODO(hartikainen): This should allocate a custom "debug_resource" instead
     of all cpus once ray local mode supports custom resources.
     """
-    st()
+
     debug_example_argv = []
+    print("here")
     for option in example_argv:
         if '--trial-cpus' in option:
             available_cpus = multiprocessing.cpu_count()
