@@ -56,6 +56,8 @@ def rollout(env,
     t = 0
     for t in range(path_length):
         observation, reward, terminal, info = sampler.sample()
+        if terminal:
+            print("reward",reward,"successs within ",t)
         infos.append(info)
 
         if callback is not None:
@@ -71,7 +73,8 @@ def rollout(env,
         if terminal:
             policy.reset()
             if break_on_terminal: break
-
+    if (t==path_length-1):
+        print("unsuccessful")
     assert pool._size == t + 1
 
     path = pool.batch_by_indices(
