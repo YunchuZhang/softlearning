@@ -164,6 +164,8 @@ class SACAgent():
 
         train_op = tf.group(*list(self._training_ops.values()))
 
+        initialize_tf_variables(self._session, only_uninitialized=True)
+
         if self._remote:
             self.variables = TensorFlowVariables(
                 train_op,
@@ -172,8 +174,6 @@ class SACAgent():
             #self.variables.set_session(self._session)
         else:
             self.variables = None
-
-        initialize_tf_variables(self._session, only_uninitialized=True)
 
         print("finished initialization")
         sys.stdout.flush()
@@ -231,7 +231,11 @@ class SACAgent():
         return self._sampler.get_last_n_paths(
             math.ceil(epoch_length / self._sampler._max_path_length))
     
-    def evaluation_paths(self, num_episodes, eval_deterministic, render_mode):
+    def evaluation_paths(self, num_episodes, eval_deterministic, render_mode, weights=None):
+
+        if self._remote:
+            self.variables.set_weights(weights)
+
         with self._policy.set_deterministic(eval_deterministic):
             paths = rollouts(
                 num_episodes,

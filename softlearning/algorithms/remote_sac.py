@@ -25,7 +25,7 @@ class RemoteSAC(RLAlgorithm):
             reparameterize=False,
             store_extra_policy_info=False,
             save_full_state=False,
-            remote=False,
+            remote=True,
             n_initial_exploration_steps=0,
             avg_weights_every_n_steps=1,
             batch_size=None,
@@ -78,7 +78,7 @@ class RemoteSAC(RLAlgorithm):
             observation_keys=observation_keys
         ) for _ in range(num_agents)]
 
-        self._weights_id = self._agents[0].get_weights.remote()
+        self._weights = ray.get(self._agents[0].get_weights.remote())
 
         self._plotter = plotter
         self.avg_weights_every_n_steps = avg_weights_every_n_steps
@@ -112,16 +112,16 @@ class RemoteSAC(RLAlgorithm):
 
     def _do_training(self, iteration, steps=1):
         for _ in range(0, steps, self.avg_weights_every_n_steps):
-            all_weights = ray.get(
+            weights_id = ray.put(self._weights)
+            weights_list = ray.get(
                 [agent.do_training.remote(iteration,
-                                        steps=self.avg_weights_every_n_steps,
-                                        weights=self._weights_id)
-                for agent in self._agents])
-            mean_weights = {
-                    k: (sum(weights[k] for weights in all_weights) / self._num_agents)
-                    for k in all_weights[0]
+                                          steps=self.avg_weights_every_n_steps,
+                                          weights=weights_id)
+                 for agent in self._agents])
+            self._weights = {
+                    k: (sum(weights[k] for weights in weights_list) / self._num_agents)
+                    for k in weights_list[0]
             }
-            self._weights_id = ray.put(mean_weights)
 
     @property
     def ready_to_train(self):
@@ -138,9 +138,13 @@ class RemoteSAC(RLAlgorithm):
     def _evaluation_paths(self):
         if self._eval_n_episodes < 1: return ()
 
+        weight_ids = ray.put(self._weights)
+
+        # TODO split across agents
         paths = ray.get(self._agents[0].evaluation_paths.remote(self._eval_n_episodes,
-                                                               self._eval_deterministic,
-                                                               self._eval_render_mode))
+                                                                self._eval_deterministic,
+                                                                self._eval_render_mode,
+                                                                weights=weight_ids))
 
         return paths
 
