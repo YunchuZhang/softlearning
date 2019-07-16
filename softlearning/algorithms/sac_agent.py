@@ -31,7 +31,7 @@ const.set_experiment("rl_new")
 def td_target(reward, discount, next_value):
     return reward + discount * next_value
 
-@ray.remote(num_gpus=1)
+@ray.remote(num_gpus=1, num_cpus=3)
 class SACAgent():
     """Soft Actor-Critic (SAC)
 
@@ -99,7 +99,8 @@ class SACAgent():
         os.environ["CUDA_VISIBLE_DEVICES"] = ",".join(map(str, ray.get_gpu_ids()))
 
         self._training_environment = get_environment_from_params(variant['environment_params']['training'])
-        self._evaluation_environment = get_environment_from_params(variant['environment_params']['evaluation'])
+        #self._evaluation_environment = get_environment_from_params(variant['environment_params']['evaluation'])
+        self._evaluation_environment = self._training_environment
 
         self._sampler = get_sampler_from_variant(variant)
         self._pool = get_replay_pool_from_variant(variant, self._training_environment)
@@ -152,7 +153,7 @@ class SACAgent():
 
         self._build()
 
-        gpu_options = tf.GPUOptions(allow_growth=True)
+        gpu_options = tf.GPUOptions(allow_growth=False)
         config_proto = tf.ConfigProto(gpu_options=gpu_options)
         #config_proto = tf.ConfigProto(log_device_placement=False, allow_soft_placement=True, device_count={'GPU': 0})
         #off = rewriter_config_pb2.RewriterConfig.OFF
