@@ -24,6 +24,8 @@ from softlearning.misc.utils import initialize_tf_variables
 
 from softlearning.map3D import constants as const
 from softlearning.map3D.nets.BulletPush3DTensor import BulletPush3DTensor4_cotrain
+from softlearning.map3D.fig import Config
+from softlearning.map3D import utils_map as utils
 
 const.set_experiment("rl_new")
 
@@ -61,6 +63,8 @@ class SACAgent():
             n_initial_exploration_steps=0,
             batch_size=None,
             map3D=None,
+            pretrained_map3D=False,
+            stop_3D_grads=False,
             observation_keys=None
     ):
         """
@@ -137,6 +141,8 @@ class SACAgent():
         self._remote = remote
 
         self.map3D = BulletPush3DTensor4_cotrain()
+        self._stop_3D_grads = stop_3D_grads
+
         self.batch_size = batch_size
 
         self._observation_keys = (
@@ -166,6 +172,10 @@ class SACAgent():
         train_op = tf.group(*list(self._training_ops.values()))
 
         initialize_tf_variables(self._session, only_uninitialized=True)
+
+
+        if pretrained_map3D:
+            self._map3D_load(self._session, map3D=self.map3D)
 
         if self._remote:
             self.variables = TensorFlowVariables(
@@ -346,6 +356,36 @@ class SACAgent():
             )
 
 
+    def _map3D_load(self, sess, name="rl_new/1", map3D=None):
+        config = Config(name)
+        config.load()
+        parts = map3D.weights
+        for partname in config.dct:
+            partscope, partpath = config.dct[partname]
+            if partname not in parts:
+                raise Exception("cannot load, part %s not in model" % partpath)
+            partpath = "/home/adhaig/softlearning/softlearning/map3D/" + partpath
+            ckpt = tf.train.get_checkpoint_state(partpath)
+            if not ckpt:
+                raise Exception("checkpoint not found? (1)")
+            elif not ckpt.model_checkpoint_path:
+                raise Exception("checkpoint not found? (2)")
+            loadpath = ckpt.model_checkpoint_path
+
+            scope, weights = parts[partname]
+
+            if not weights: #nothing to do
+                continue
+            
+            weights = {utils.utils.exchange_scope(weight.op.name, scope, partscope): weight
+                       for weight in weights}
+
+            saver = tf.train.Saver(weights)
+            saver.restore(sess, loadpath)
+            print(f"restore model from {loadpath}")
+        return config.step
+
+
     def _init_map3D(self):
         # self.map3D.set_batchSize(1)
         
@@ -367,6 +407,11 @@ class SACAgent():
         # st()
         memory = self.map3D(obs_images, obs_camAngle, obs_zmap, is_training=None, reuse=False)
         memory_goal = self.map3D(obs_images_goal, obs_camAngle_goal ,obs_zmap_goal, is_training=None, reuse=True)
+
+        if self._stop_3D_grads:
+            memory = tf.stop_gradient(memory)
+            memory_goal = tf.stop_gradient(memory_goal)
+
         self.memory = [tf.concat([memory,memory_goal],-1)]
 
         next_obs_images, next_obs_zmap, next_obs_camAngle, next_obs_images_goal, next_obs_zmap_goal, next_obs_camAngle_goal = [tf.expand_dims(i,1) for i in self._next_observations_phs[:6]]
@@ -376,6 +421,11 @@ class SACAgent():
 
         memory_next = self.map3D(next_obs_images,next_obs_camAngle,next_obs_zmap, is_training=None,reuse=True)
         memory_next_goal = self.map3D(next_obs_images_goal,next_obs_camAngle_goal,next_obs_zmap_goal, is_training=None,reuse=True)
+
+        if self._stop_3D_grads:
+            memory_next = tf.stop_gradient(memory_next)
+            memory_next_goal = tf.stop_gradient(memory_next_goal)
+
         self.memory_next = [tf.concat([memory_next,memory_next_goal],-1)]
 
 
