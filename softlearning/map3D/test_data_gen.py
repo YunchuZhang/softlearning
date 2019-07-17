@@ -3,8 +3,9 @@ import gym
 import multiworld
 from multiworld.core.image_env import ImageEnv
 from multiworld.envs.mujoco.cameras import init_multiple_cameras
-# import ipdb
-# st = ipdb.set_trace
+import ipdb
+st = ipdb.set_trace
+# st()
 from softlearning.environments.adapters.gym_adapter import GymAdapter
 from softlearning.replay_pools.simple_replay_pool import SimpleReplayPool
 from softlearning.policies.utils import get_policy
@@ -59,7 +60,7 @@ sampler.initialize(env, policy, replay_pool)
 while replay_pool.size < exploration_steps:
     print("sampling")
     sampler.sample()
-    st()
+st()
 
 # imsave("check_03.png",replay_pool.fields["observations.desired_goal_depth"][0,0])
 # observation = sampler.random_batch()

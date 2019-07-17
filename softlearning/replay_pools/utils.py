@@ -44,5 +44,5 @@ def normalize_image(image):
 
 def unnormalize_image(image):
     assert image.dtype != np.uint8
-    image = np.concatenate([image,np.ones_like(image[...,:1])],-1)
+    # image = np.concatenate([image,np.ones_like(image[...,:1])],-1)
     return np.uint8(image * 255.0)
