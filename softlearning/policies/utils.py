@@ -40,8 +40,8 @@ def get_policy_from_variant(variant, env, Qs, *args, **kwargs):
 
     policy_type = policy_params['type']
     policy_kwargs = deepcopy(policy_params['kwargs'])
-    
-    if hasattr(policy_params,"input_shape"):
+    # st()
+    if "input_shape" in policy_params:
         policy_obs_shape = policy_params['input_shape']
     else:
         policy_obs_shape = env.active_observation_shape

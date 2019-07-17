@@ -3,8 +3,9 @@ import gym
 import multiworld
 from multiworld.core.image_env import ImageEnv
 from multiworld.envs.mujoco.cameras import init_multiple_cameras
-# import ipdb
-# st = ipdb.set_trace
+import ipdb
+st = ipdb.set_trace
+# st()
 from softlearning.environments.adapters.gym_adapter import GymAdapter
 from softlearning.replay_pools.simple_replay_pool import SimpleReplayPool
 from softlearning.policies.utils import get_policy
@@ -29,6 +30,7 @@ tf.keras.backend.set_session(session)
 session = tf.keras.backend.get_session()
 
 env = gym.make('SawyerPushAndReachEnvEasy-v0')
+
 env_n = ImageEnv(env,
                imsize=84,
                normalize=True,
@@ -38,11 +40,10 @@ env_n = ImageEnv(env,
                cam_angles=True,
                flatten=False)
 
-# observation_keys_custom = ['image_observation','depth_observation','cam_angles_observation']
-observation_keys = ["image_observation","depth_observation","cam_angles_observation"]
 
-observation_keys_o = ["observations." + i for i in observation_keys]
-# st()
+observation_keys = ["image_observation","depth_observation","cam_angles_observation","state_observation","image_desired_goal","desired_goal_depth","goal_cam_angle"]
+
+
 env_n.reset()
 env = GymAdapter(None,
                  None,
@@ -62,9 +63,9 @@ while replay_pool.size < exploration_steps:
 st()
 
 # imsave("check_03.png",replay_pool.fields["observations.desired_goal_depth"][0,0])
-observation = sampler.random_batch()
+# observation = sampler.random_batch()
 
-save_images.save_some_samples(sampler)
+# save_images.save_some_samples(sampler)
 # def save_replay_buffer(fields):
 #   # key_val = fields.keys()
 #   for i in range(400):

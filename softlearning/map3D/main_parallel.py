@@ -176,47 +176,4 @@ if __name__ == "__main__":
     for i in range(num):
         print(i)
         frozen_graph(val[i],sess,d3_2,img_ph,cam_angle_ph,depth_ph)
-    # frozen_graph(val[0])
-    # save_graph()
-    # pool = mp.Pool(1)
 
-    # val = [(1,1),(1,1),(1,1)]
-    # results = pool.map(frozen_graph, val)
-    # p = pp.ProcessPool(num)
-    # # jobs = sorted(list(enumerate(enum_obj_paths())))
-    # # jobs = list(range(10))
-    # st()
-    # print(p.starmap)
-    # # print(jobs)
-    # # job(jobs[0])
-#     import time
-#     start= time.time()
-#     # p.map(frozen_graph, val, chunksize = 1)
-#     print(time.time()-start)
-# # st()
-# b_f = {img_ph2:np.ones_like(np.repeat(img,4,0)),cam_angle_ph2:np.repeat(cam_angle,4,0),depth_ph2:np.repeat(depth,4,0)}
-# c_f = {img_ph3:img,cam_angle_ph3:cam_angle,depth_ph3:depth}
-
-# sess.run(tf.global_variables_initializer())
-# sess.run()
-# a = sess.run(m3dt,feed_dict=a_f)
-# b = sess.run(m3dt2,feed_dict=b_f)
-# c = sess.run(m3dt3,feed_dict=c_f)
-# a_f.update(b_f)
-# c = sess.run(m3dt2+m3dt,feed_dict=a_f)
-
-# print(np.sum(a+b),np.sum(c))
-
-# imsave("out.png",a[0])
-# st()
-
-# st()
-
-
-# load(sess,const.load_name)
-# # st()
-# print(len(tf.trainable_variables()))
-
-# n3dt = bulletpush(inputsO[0],inputsO[2],inputsO[1],reuse=False)
-
-# print(len(tf.trainable_variables()),len(bulletpush.weights))

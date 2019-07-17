@@ -59,7 +59,7 @@ class FlexibleReplayPool(ReplayPool):
 
         index = np.arange(
             self._pointer, self._pointer + num_samples) % self._max_size
-        # st()
+        st()
         for field_name in self.field_names:
             default_value = (
                 self.fields_attrs[field_name].get('default_value', 0.0))

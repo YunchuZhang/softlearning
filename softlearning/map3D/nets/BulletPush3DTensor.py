@@ -40,7 +40,11 @@ class BulletPush3DTensor4_cotrain(BulletPushBase):
             summ.scalar("viewpred_loss", vp_loss)
             self.loss_ = vp_loss
         else:
-            detector_loss = utils.losses.l1loss(self.predicted_position, self.position)
+            if hasattr(self,"position"):
+                detector_loss = utils.losses.l1loss(self.predicted_position, self.position)
+            else:
+                detector_loss = utils.losses.l1loss(self.predicted_position, self.predicted_position)
+
             # detector_loss = utils.tfpy.print_val(detector_loss, "detector_loss")
             summ.scalar("detector_loss", detector_loss)
             self.loss_ = detector_loss
@@ -422,7 +426,7 @@ class BulletPush3DTensor4_cotrain(BulletPushBase):
 
         # (batch_size x T) x 32 x 32 x 32 x dim
         memory_3D = self.building_3D_tensor()
-        self.memory_3D = tf.identity(memory_3D,name="3dstuff")
+        self.memory_3D = tf.stop_gradient(tf.identity(memory_3D,name="3dstuff"))
 
         inputs2Ddec = self.get_inputs2Ddec_gqn3d([memory_3D])
         outputs2Ddec = self.get_outputs2Ddec_gqn3d(inputs2Ddec)

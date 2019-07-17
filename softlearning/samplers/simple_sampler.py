@@ -1,12 +1,11 @@
 from collections import defaultdict
 import ipdb
 st = ipdb.set_trace
+import time
 import numpy as np
-import ipdb
-st = ipdb.set_trace
 # <<<<<<< Updated upstream
 #from scipy.misc import imsave
-
+import time
 # =======
 # from scipy.misc import imsave
 # import time
@@ -45,8 +44,9 @@ class SimpleSampler(BaseSampler):
         return processed_observation
 
     def forward(self,active_obs):
+        # st()
         active_obs = self.session.run(self.memory3D_sampler,feed_dict={self.obs_ph[0]:active_obs[0],self.obs_ph[1]:active_obs[1],self.obs_ph[2]:active_obs[2],\
-            self.obs_ph[3]:active_obs[3],self.obs_ph[4]:active_obs[4],self.obs_ph[5]:active_obs[5]})        
+            self.obs_ph[4]:active_obs[4],self.obs_ph[5]:active_obs[5],self.obs_ph[6]:active_obs[6]})        
         return active_obs
     
     def sample(self):
@@ -59,10 +59,17 @@ class SimpleSampler(BaseSampler):
         # if preprocess:
         active_obs =[np.repeat(i,4,0)  for i in active_obs]
 
+<<<<<<< HEAD
         if len(active_obs[0].shape) == 5 and  len(active_obs)>4 and  len(active_obs[4].shape) == 5:
             # for case when we train 3d code
             active_obs[0] = np.concatenate([active_obs[0],np.ones_like(active_obs[0][...,:1])],-1)
             active_obs[4] = np.concatenate([active_obs[4],np.ones_like(active_obs[4][...,:1])],-1)
+=======
+        # if len(active_obs[0].shape) == 5 and len(active_obs[4].shape) == 5:
+        #     # for case when we train 3d code
+        #     active_obs[0] = np.concatenate([active_obs[0],np.ones_like(active_obs[0][...,:1])],-1)
+        #     active_obs[4] = np.concatenate([active_obs[4],np.ones_like(active_obs[4][...,:1])],-1)
+>>>>>>> e9e7b688c4c2f5102217b605d5fadf91aa8c8772
         if self.initialized and self.memory3D_sampler:
             a = time.time()
             active_obs = self.forward(active_obs)
@@ -124,7 +131,7 @@ class SimpleSampler(BaseSampler):
                 field_name: np.array(values)
                 for field_name, values in self._current_path.items()
             }
-            # st()
+            st()
             self.pool.add_path(last_path)
             # st()
             self._last_n_paths.appendleft(last_path)
