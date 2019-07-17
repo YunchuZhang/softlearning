@@ -74,10 +74,10 @@ class SimpleSampler(BaseSampler):
             active_obs  = [i[:1] for i in active_obs]
             # active_obs =  np.ones([1, 32, 32, 32, 16])
             # st()
-        # st()
+        #st()
 
-        action = self.policy.actions_np(active_obs)[0]
-        
+        action = self.policy.actions_np(active_obs[-9:])[0] #select only part of the active obs
+        #action = self.policy.actions_np(active_obs)[0] #select only part of the active obs
 
         #st()
         next_observation, reward, terminal, info = self.env.step(action)

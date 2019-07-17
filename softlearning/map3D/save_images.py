@@ -41,10 +41,11 @@ def save_some_samples(sampler):
       curr_ob = obs[i_key][0]
       arr = np.vsplit(curr_ob,curr_ob.shape[0])
       for i,val in enumerate(arr):
-        print(val.shape)
+        #print(val.shape)
         # st()
         # elevation,azimuth = obs[observation_keys_o[2]][0][i]
         # st()
         # camera.azimuth = angle_range / (n - 1) * i + start_angle
         # camera.elevation = start_angle + angle_delta*angle_i
         # azimuth =  start_angle - angle_delta*i
+        imsave("env_data/batch_{}_{}_{}_angle.png".format(i_num,i_key,i),val[0])

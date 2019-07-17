@@ -46,8 +46,9 @@ env_n = ImageEnv(env,
 			   flatten=False)
 
 
-observation_keys = ["image_observation","depth_observation","cam_angles_observation","state_observation","image_desired_goal","desired_goal_depth","goal_cam_angle"]
-
+observation_keys = ["image_observation","depth_observation","cam_angles_observation","image_desired_goal","desired_goal_depth","goal_cam_angle","observation_with_orientation","state_desired_goal", 
+"state_achieved_goal" ,"state_observation", "state_desired_goal", "state_achieved_goal", "proprio_observation",  "proprio_desired_goal", "proprio_achieved_goal"]
+#observation_keys = ["image_observation","depth_observation","cam_angles_observation","state_observation", "image_desired_goal","desired_goal_depth","goal_cam_angle"]
 
 env_n.reset()
 env = GymAdapter(None,
@@ -79,7 +80,7 @@ environment_params = (
 	# "state_achieved_goal","proprio_observation","proprio_desired_goal","proprio_achieved_goal"]
 
 	# evaluation_environment =  get_environment_from_params_custom(environment_params)
-
+#import pdb; pdb.set_trace()
 evaluation_environment =  get_environment_from_params(environment_params)
 
 policy = (get_policy_from_variant(variant, evaluation_environment, Qs=[None]))
@@ -98,7 +99,7 @@ while replay_pool.size < exploration_steps:
 # imsave("check_03.png",replay_pool.fields["observations.desired_goal_depth"][0,0])
 # observation = sampler.random_batch()
 
-# save_images.save_some_samples(sampler)
+save_images.save_some_samples(sampler)
 # def save_replay_buffer(fields):
 #   # key_val = fields.keys()
 #   for i in range(400):
