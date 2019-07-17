@@ -33,6 +33,7 @@ class SAC(RLAlgorithm):
             policy,
             Qs,
             pool,
+            exp_name,
             plotter=None,
             tf_summaries=False,
             map3D = None,
@@ -88,6 +89,7 @@ class SAC(RLAlgorithm):
 
         self._policy_lr = lr
         self._Q_lr = lr
+        self.exp_name = exp_name
 
         self._reward_scale = reward_scale
         self._target_entropy = (
@@ -248,24 +250,24 @@ class SAC(RLAlgorithm):
         # self.memory_sampler = [tf.concat([memory_sampler,memory_sampler_goal],-1)]
         # # self.memory_sampler = 1
         # self.map3D.set_batchSize(4)
-
-        obs_images, obs_zmap, obs_camAngle,obs_images_goal,obs_zmap_goal,obs_camAngle_goal = [tf.expand_dims(i,1) for i in self._observations_phs[:6]]
+        # st()
+        obs_images, obs_zmap, obs_camAngle,obs_position,obs_images_goal,obs_zmap_goal,obs_camAngle_goal = [tf.expand_dims(i,1) for i in self._observations_phs[:7]]
         obs_zmap = tf.expand_dims(obs_zmap,-1)
         obs_zmap_goal = tf.expand_dims(obs_zmap_goal,-1)
 
         # st()
-        memory = self.map3D(obs_images,obs_camAngle,obs_zmap, is_training=None,reuse=False)
-        memory_goal = self.map3D(obs_images_goal, obs_camAngle_goal ,obs_zmap_goal, is_training=None,reuse=True)
+        memory = self.map3D(obs_images,obs_camAngle,obs_zmap,batch_size=self.batch_size,exp_name=self.exp_name,is_training=None,reuse=False)
+        memory_goal = self.map3D(obs_images_goal, obs_camAngle_goal ,obs_zmap_goal,batch_size=None,exp_name=None, is_training=None,reuse=True)
         self.memory = [tf.concat([memory,memory_goal],-1)]
 
 
-        next_obs_images, next_obs_zmap, next_obs_camAngle,next_obs_images_goal, next_obs_zmap_goal, next_obs_camAngle_goal = [tf.expand_dims(i,1) for i in self._next_observations_phs[:6]]
+        next_obs_images, next_obs_zmap, next_obs_camAngle,obs_position,next_obs_images_goal, next_obs_zmap_goal, next_obs_camAngle_goal = [tf.expand_dims(i,1) for i in self._next_observations_phs[:7]]
 
         next_obs_zmap = tf.expand_dims(next_obs_zmap,-1)
         next_obs_zmap_goal = tf.expand_dims(next_obs_zmap_goal,-1)
 
-        memory_next = self.map3D(next_obs_images,next_obs_camAngle,next_obs_zmap, is_training=None,reuse=True)
-        memory_next_goal = self.map3D(next_obs_images_goal,next_obs_camAngle_goal,next_obs_zmap_goal, is_training=None,reuse=True)
+        memory_next = self.map3D(next_obs_images,next_obs_camAngle,next_obs_zmap,batch_size=None,exp_name=None, is_training=None,reuse=True)
+        memory_next_goal = self.map3D(next_obs_images_goal,next_obs_camAngle_goal,next_obs_zmap_goal,batch_size=None,exp_name=None, is_training=None,reuse=True)
         self.memory_next = [tf.concat([memory_next,memory_next_goal],-1)]
 
 

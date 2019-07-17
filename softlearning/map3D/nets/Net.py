@@ -260,6 +260,7 @@ class Net:
         #self.go_up_to_loss(index)
         # st()
         # self.exp_name = exp_name
+        # st()
         if exp_name:
             const.set_experiment(exp_name)
             self.__dict__.update(const.__dict__)
@@ -270,7 +271,8 @@ class Net:
             const.DEBUG_UNPROJECT =True
 
         # self.detector = detector
-        self.position = tf.layers.flatten(position)
+        if position:
+            self.position = tf.layers.flatten(position)
         # st()
         const.fx = const.W / 2.0 * 1.0 / math.tan(const.fov * math.pi / 180 / 2)
         const.fy = const.fx

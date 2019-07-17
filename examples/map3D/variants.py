@@ -51,11 +51,10 @@ ALGORITHM_PARAMS_BASE = {
     'kwargs': {
         'epoch_length': 1000,
         'train_every_n_steps': 2,
-        'n_train_repeat': 1,
+        'n_train_repeat': 500,
         'eval_render_mode': None,
         'eval_n_episodes': 1,
         'eval_deterministic': True,
-
         'discount': 0.99,
         'tau': 5e-3,
         'reward_scale': 1.0,
@@ -74,7 +73,7 @@ ALGORITHM_PARAMS_ADDITIONAL = {
             'target_entropy': 'auto',
             'store_extra_policy_info': False,
             'action_prior': 'uniform',
-            'n_initial_exploration_steps': int(5e3),
+            'n_initial_exploration_steps': int(1e3),
         }
     },
     'SQL': {
@@ -249,7 +248,7 @@ NUM_CHECKPOINTS = 10
 SIMPLE_SAMPLER_PARAMS = {
     'type': 'SimpleSampler',
     'kwargs': {
-        'batch_size': 10,
+        'batch_size': 4,
     }
 }
 
@@ -308,7 +307,7 @@ SIMPLE_REPLAY_POOL_PARAMS_TEMP = {
 HER_REPLAY_POOL_PARAMS = {
     'type': 'HerReplayPool',
     'kwargs': {
-        'max_size': 2e5,
+        'max_size': 1e4,
         'compute_reward_keys': {'achieved': 'state_achieved_goal',
                                 'desired': 'state_desired_goal',
                                 # These are required by the multiworld ImageEnv
@@ -452,6 +451,8 @@ def get_variant_spec_3D(universe,
     # variant["Q_params"]["kwargs"]["preprocessor_params"]["kwargs"]["mapping_model"] = BulletPush3DTensor4_cotrain()
     # st()
     variant_spec["map3D"] = map3D_model
+    variant_spec["exp_name"] = "rl_new_reach_detect"
+
     environment_params = variant_spec['environment_params']
     env_train_params = environment_params['training']
     # env_train_params["kwargs"] = {}

@@ -1,11 +1,11 @@
 from collections import defaultdict
-
+import time
 import numpy as np
 import ipdb
 st = ipdb.set_trace
 # <<<<<<< Updated upstream
 #from scipy.misc import imsave
-
+import time
 # =======
 # from scipy.misc import imsave
 # import time
@@ -44,8 +44,9 @@ class SimpleSampler(BaseSampler):
         return processed_observation
 
     def forward(self,active_obs):
+        # st()
         active_obs = self.session.run(self.memory3D_sampler,feed_dict={self.obs_ph[0]:active_obs[0],self.obs_ph[1]:active_obs[1],self.obs_ph[2]:active_obs[2],\
-            self.obs_ph[3]:active_obs[3],self.obs_ph[4]:active_obs[4],self.obs_ph[5]:active_obs[5]})        
+            self.obs_ph[4]:active_obs[4],self.obs_ph[5]:active_obs[5],self.obs_ph[6]:active_obs[6]})        
         return active_obs
     
     def sample(self):

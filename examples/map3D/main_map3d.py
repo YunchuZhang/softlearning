@@ -131,7 +131,7 @@ class ExperimentRunner():
 		return config.step
 
 	def _train(self):
-		for i in range(self.step,self.step+100):
+		for i in range(self.step,self.step+1000):
 			self.algorithm.train_epoch(i)
 			# st()
 			if i % 10 ==0:

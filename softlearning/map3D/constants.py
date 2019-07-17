@@ -1339,5 +1339,3 @@ focal_length = fx / (W / 2.0) #NO SCALING
 
 x0 = W / 2.0
 y0 = H / 2.0
-        
-
