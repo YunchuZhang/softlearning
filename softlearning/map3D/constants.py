@@ -714,7 +714,8 @@ OG("rl_new",
    CONVLSTM_STEPS = 6,
    #data_dir="/projects/katefgroup/xian/data",
    #data_dir="/home/mprabhud/rl/softlearning/softlearning/map3D",
-   data_dir="/media/shared/Documents/Research/VMGE/3d_temp/",
+   #data_dir="/media/shared/Documents/Research/VMGE/3d_temp/",
+   data_dir="/home/adhaig/softlearning/softlearning/map3D",
    AGGREGATION_METHOD = 'average', USE_MESHGRID=False,
    crop_size=32,
    split_format=True,
@@ -723,10 +724,11 @@ OG("rl_new",
    IS_VIEW_PRED=True,
    radius = 0.8, boundary_to_center=0.9, fov = 110, fs_2D=8, # 0.8 0.2 20
    DEBUG_UNPROJECT=False,
-   BS=4, valp=500, is_trainval_diff_summ=True,
+   BS=8, valp=500, is_trainval_diff_summ=True,
    run_full=False,
    #ckpt_cfg_dir="/home/mprabhud/rl/softlearning/softlearning/map3D/ckpt_cfg",
-   ckpt_cfg_dir="/media/shared/Documents/Research/VMGE/3d_temp/ckpt_cfg",
+   #ckpt_cfg_dir="/media/shared/Documents/Research/VMGE/3d_temp/ckpt_cfg",
+   ckpt_cfg_dir="/home/adhaig/softlearning/softlearning/map3D/ckpt_cfg",
    load_name="rl_new/1"
    #load_name = "0517_bulletpush3D_4_multicam_bn_mask/no_bn_on_top_3d_shuffle"
    #load_name = "0517_bulletpush3D_4_multicam_bn_mask/xian_bs4"

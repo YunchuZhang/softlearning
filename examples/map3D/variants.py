@@ -50,11 +50,12 @@ ALGORITHM_PARAMS_BASE = {
     'type': 'SAC',
 
     'kwargs': {
-        'epoch_length': 5000,
+        'epoch_length': 10000,
         'train_every_n_steps': 1,
-        'n_train_repeat': 1,
+        'n_train_repeat': 2,
+        'avg_weights_every_n_steps': 2,
         'eval_render_mode': None,
-        'eval_n_episodes': 5,
+        'eval_n_episodes': 10,
         'eval_deterministic': True,
         'discount': 0.99,
         'tau': 5e-3,
@@ -258,8 +259,8 @@ SIMPLE_SAMPLER_PARAMS = {
 MULTIAGENT_SAMPLER_PARAMS = {
     'type': 'MultiAgentSampler',
     'kwargs': {
-        'batch_size': 4,
-        'num_agents': 4,
+        'batch_size': 8,
+        'num_agents': 8,
     }
 }
 

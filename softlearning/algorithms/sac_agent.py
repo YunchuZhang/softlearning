@@ -63,7 +63,7 @@ class SACAgent():
             n_initial_exploration_steps=0,
             batch_size=None,
             map3D=None,
-            pretrained_map3D=False,
+            pretrained_map3D=True,
             stop_3D_grads=False,
             observation_keys=None
     ):
@@ -365,6 +365,8 @@ class SACAgent():
             if partname not in parts:
                 raise Exception("cannot load, part %s not in model" % partpath)
             partpath = "/home/adhaig/softlearning/softlearning/map3D/" + partpath
+            print(partpath)
+            sys.stdout.flush()
             ckpt = tf.train.get_checkpoint_state(partpath)
             if not ckpt:
                 raise Exception("checkpoint not found? (1)")

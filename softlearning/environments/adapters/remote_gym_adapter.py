@@ -1,5 +1,6 @@
 """Implements a GymAdapter that converts Gym envs into SoftlearningEnv."""
 
+import time
 import numpy as np
 import gym
 from gym import spaces, wrappers
@@ -48,7 +49,7 @@ class RemoteGymAdapter(SoftlearningEnv):
                  domain,
                  task,
                  *args,
-                 num_agents=4,
+                 num_agents=8,
                  normalize=True,
                  observation_keys=None,
                  unwrap_time_limit=True,
@@ -66,10 +67,18 @@ class RemoteGymAdapter(SoftlearningEnv):
         assert (domain is not None and task is not None), (domain, task)
         env_id = f"{domain}-{task}"
 
-        self._envs = [RemoteGymEnv.remote(env_id,
+        self._envs = []
+
+        for _ in range(num_agents):
+            self._envs.append(RemoteGymEnv.remote(env_id,
                                           normalize=normalize,
-                                          env_params=kwargs)
-                      for _ in range(num_agents)]
+                                          env_params=kwargs))
+            #time.sleep(1)
+
+        #self._envs = [RemoteGymEnv.remote(env_id,
+        #                                  normalize=normalize,
+        #                                  env_params=kwargs)
+        #              for _ in range(num_agents)]
 
         self._observation_space = ray_get_and_free(self._envs[0].observation_space.remote())
         self._action_space = ray_get_and_free(self._envs[0].action_space.remote())
