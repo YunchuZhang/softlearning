@@ -1,6 +1,7 @@
 import gzip
 import pickle
-
+import ipdb
+st = ipdb.set_trace
 import numpy as np
 
 from .replay_pool import ReplayPool
@@ -9,7 +10,7 @@ from .replay_pool import ReplayPool
 class FlexibleReplayPool(ReplayPool):
     def __init__(self, max_size, fields_attrs, **kwargs):
         super(FlexibleReplayPool, self).__init__()
-
+        # st()
         max_size = int(max_size)
         self._max_size = max_size
 
@@ -52,19 +53,20 @@ class FlexibleReplayPool(ReplayPool):
         self.add_samples(samples)
 
     def add_samples(self, samples):
+        # st()
         field_names = list(samples.keys())
         num_samples = samples[field_names[0]].shape[0]
 
         index = np.arange(
             self._pointer, self._pointer + num_samples) % self._max_size
-
+        # st()
         for field_name in self.field_names:
             default_value = (
                 self.fields_attrs[field_name].get('default_value', 0.0))
             values = samples.get(field_name, default_value)
             assert values.shape[0] == num_samples
             self.fields[field_name][index] = values
-
+        # st()
         self._advance(num_samples)
 
     def random_indices(self, batch_size):

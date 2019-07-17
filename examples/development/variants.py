@@ -38,10 +38,14 @@ DEFAULT_MAX_PATH_LENGTH = 1000
 MAX_PATH_LENGTH_PER_DOMAIN = {
     'Point2DEnv': 50,
     'Pendulum': 200,
+#<<<<<<< HEAD
     'SawyerPushAndReachEnvEasy': 200,
     'SawyerPushAndReachEnvMedium': 200,
     'SawyerPushAndReachEnvHard': 200,
     'SawyerPickupEnvYZEasy': 200
+#=======
+    'SawyerReachXYEnv': 50
+#>>>>>>> 188ed0a747ca5b0ee1017cdcf2e6f360c48b7d12
 }
 
 ALGORITHM_PARAMS_BASE = {
