@@ -79,9 +79,9 @@ class SimpleSampler(BaseSampler):
         action = self.policy.actions_np(active_obs)[0]
         
 
+        #st()
         next_observation, reward, terminal, info = self.env.step(action)
 
-        # st()
         reward=reward[0]
         terminal =terminal[0]
         # st()
@@ -121,12 +121,12 @@ class SimpleSampler(BaseSampler):
             self._current_path[key].append(value)
 
         if terminal or self._path_length >= self._max_path_length:
-            # st()
+            #st()
             last_path = {
                 field_name: np.array(values)
                 for field_name, values in self._current_path.items()
             }
-            st()
+            #st()
             self.pool.add_path(last_path)
             # st()
             self._last_n_paths.appendleft(last_path)

@@ -42,7 +42,7 @@ MAX_PATH_LENGTH_PER_DOMAIN = {
     'SawyerPushAndReachEnvEasy': 200,
     'SawyerPushAndReachEnvMedium': 200,
     'SawyerPushAndReachEnvHard': 200,
-    'SawyerPickupEnvYZEasy': 200
+    'SawyerPickupEnvYZEasy': 200,
 #=======
     'SawyerReachXYEnv': 50
 #>>>>>>> 188ed0a747ca5b0ee1017cdcf2e6f360c48b7d12

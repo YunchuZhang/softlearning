@@ -3,7 +3,12 @@ import gym
 import multiworld
 from multiworld.core.image_env import ImageEnv
 from multiworld.envs.mujoco.cameras import init_multiple_cameras
+from softlearning.policies.utils import get_policy_from_variant
+from softlearning.environments.utils import get_environment_from_params,get_environment_from_params_custom
 import ipdb
+import json
+import os
+import pickle
 st = ipdb.set_trace
 # st()
 from softlearning.environments.adapters.gym_adapter import GymAdapter
@@ -32,13 +37,13 @@ session = tf.keras.backend.get_session()
 env = gym.make('SawyerPushAndReachEnvEasy-v0')
 
 env_n = ImageEnv(env,
-               imsize=84,
-               normalize=True,
-               init_camera=init_multiple_cameras,
-               num_cameras=4,
-               depth=True,
-               cam_angles=True,
-               flatten=False)
+			   imsize=84,
+			   normalize=True,
+			   init_camera=init_multiple_cameras,
+			   num_cameras=4,
+			   depth=True,
+			   cam_angles=True,
+			   flatten=False)
 
 
 observation_keys = ["image_observation","depth_observation","cam_angles_observation","state_observation","image_desired_goal","desired_goal_depth","goal_cam_angle"]
@@ -46,21 +51,49 @@ observation_keys = ["image_observation","depth_observation","cam_angles_observat
 
 env_n.reset()
 env = GymAdapter(None,
-                 None,
-                 env=env_n,
-                 observation_keys=observation_keys)
+				 None,
+				 env=env_n,
+				 observation_keys=observation_keys)
 
 
 replay_pool = SimpleReplayPool(env, concat_observations=False, max_size=1e4)
-policy = get_policy('UniformPolicy', env)
+#policy = get_policy('UniformPolicy', env)
+checkpoint_path = "/home/robertmu/bcyc/result/checkpoint_100"
+experiment_path = os.path.dirname(checkpoint_path)
+
+variant_path = os.path.join(experiment_path, 'params.json')
+with open(variant_path, 'r') as f:
+	variant = json.load(f)
+with session.as_default():
+	pickle_path = os.path.join(checkpoint_path, 'checkpoint.pkl')
+	with open(pickle_path, 'rb') as f:
+		picklable = pickle.load(f)
+
+environment_params = (
+		variant['environment_params']['evaluation']
+		if 'evaluation' in variant['environment_params']
+		else variant['environment_params']['training'])
+
+
+	# environment_params["kwargs"]["observation_keys"] = ["observation","desired_goal","achieved_goal","state_observation","state_desired_goal","state_achieved_goal"\
+	# "state_achieved_goal","proprio_observation","proprio_desired_goal","proprio_achieved_goal"]
+
+	# evaluation_environment =  get_environment_from_params_custom(environment_params)
+
+evaluation_environment =  get_environment_from_params(environment_params)
+
+policy = (get_policy_from_variant(variant, evaluation_environment, Qs=[None]))
+	
+policy.set_weights(picklable['policy_weights'])
+
 
 sampler = SimpleSampler(batch_size=40, max_path_length=40, min_pool_size=0)
 sampler.initialize(env, policy, replay_pool)
 
 while replay_pool.size < exploration_steps:
-    print("sampling")
-    sampler.sample()
-st()
+	print("sampling")
+	sampler.sample()
+#st()
 
 # imsave("check_03.png",replay_pool.fields["observations.desired_goal_depth"][0,0])
 # observation = sampler.random_batch()
