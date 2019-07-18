@@ -117,6 +117,7 @@ class SimpleSampler(BaseSampler):
         # processed_sample = processed_sample_filter
         # st()
 
+
         if terminal:
             print("reward",reward,"successs within ",self._path_length)
 
@@ -128,6 +129,10 @@ class SimpleSampler(BaseSampler):
         for key, value in processed_sample.items():
             self._current_path[key].append(value)
 
+
+
+
+
         if terminal or self._path_length >= self._max_path_length:
             #st()
             last_path = {
@@ -135,7 +140,13 @@ class SimpleSampler(BaseSampler):
                 for field_name, values in self._current_path.items()
             }
             #st()
-            self.pool.add_path(last_path)
+            #self.pool.add_path(last_path)
+
+            if terminal and reward > -1.0 and self._path_length < self._max_path_length and self._path_length >1:
+                print("save")
+                self.pool.add_path(last_path)
+
+
             # st()
             self._last_n_paths.appendleft(last_path)
 

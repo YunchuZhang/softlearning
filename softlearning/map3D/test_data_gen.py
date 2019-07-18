@@ -26,7 +26,7 @@ import os
 from softlearning.map3D import save_images
 multiworld.register_all_envs()
 
-exploration_steps = 400
+exploration_steps = 1100
 
 
 gpu_options = tf.GPUOptions(allow_growth=True)
@@ -92,9 +92,34 @@ sampler = SimpleSampler(batch_size=40, max_path_length=40, min_pool_size=0)
 sampler.initialize(env, policy, replay_pool)
 path_length = 40
 
+expert_data_path = "/projects/katefgroup/yunchu/expert_mug3"
 while replay_pool.size < exploration_steps:
 	# print("sampling")
 	sampler.sample()
+
+
+#st()
+for num in range(replay_pool.size):
+	expert_data = {'image_observation': np.array(replay_pool.fields["observations.image_observation"][num]),
+			   'depth_observation': np.array(replay_pool.fields["observations.depth_observation"][num]),
+			   'cam_angles_observation':np.array(replay_pool.fields["observations.cam_angles_observation"][num]),
+			   'actions':np.array(replay_pool.fields["actions"][num]),
+			   'rewards':np.array(replay_pool.fields["rewards"][num]),
+			   'terminals':np.array(replay_pool.fields["terminals"][num])}
+	print('saving'+'{:d}'.format(num)+'.pkl')
+	with open(os.path.join(expert_data_path, 'state' + "{:d}".format(num) + '.pkl'), 'wb') as f:
+		pickle.dump(expert_data, f, pickle.HIGHEST_PROTOCOL)
+
+filename = "/projects/katefgroup/yunchu/expert_mug3/state2.pkl"
+with open(filename, 'rb') as f:
+	data = pickle.loads(f.read())
+
+	
+actions = data["actions"]
+#print(data.keys())
+st()
+
+
 
 	#observation, reward, terminal, info = sampler.sample()
 
