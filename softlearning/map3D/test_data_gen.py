@@ -26,7 +26,7 @@ import os
 from softlearning.map3D import save_images
 multiworld.register_all_envs()
 
-exploration_steps = 4
+exploration_steps = 400
 
 
 gpu_options = tf.GPUOptions(allow_growth=True)
@@ -34,7 +34,7 @@ session = tf.Session(config=tf.ConfigProto(gpu_options=gpu_options))
 tf.keras.backend.set_session(session)
 session = tf.keras.backend.get_session()
 
-env = gym.make('SawyerPushAndReachEnvEasy-v0')
+env = gym.make('SawyerPushAndReachEnvEasy-v0',reward_type="puck_success")
 
 env_n = ImageEnv(env,
 			   imsize=84,
@@ -49,7 +49,7 @@ env_n = ImageEnv(env,
 observation_keys = ["image_observation","depth_observation","cam_angles_observation","image_desired_goal","desired_goal_depth","goal_cam_angle","observation_with_orientation","state_desired_goal", 
 "state_achieved_goal" ,"state_observation", "state_desired_goal", "state_achieved_goal", "proprio_observation",  "proprio_desired_goal", "proprio_achieved_goal"]
 #observation_keys = ["image_observation","depth_observation","cam_angles_observation","state_observation", "image_desired_goal","desired_goal_depth","goal_cam_angle"]
-
+#st()
 env_n.reset()
 env = GymAdapter(None,
 				 None,
@@ -59,7 +59,7 @@ env = GymAdapter(None,
 
 replay_pool = SimpleReplayPool(env, concat_observations=False, max_size=1e4)
 #policy = get_policy('UniformPolicy', env)
-checkpoint_path = "/home/robertmu/bcyc/result/checkpoint_100"
+checkpoint_path = "/home/robertmu/bcyc/result_mug/checkpoint_1350"
 experiment_path = os.path.dirname(checkpoint_path)
 
 variant_path = os.path.join(experiment_path, 'params.json')
@@ -90,10 +90,17 @@ policy.set_weights(picklable['policy_weights'])
 
 sampler = SimpleSampler(batch_size=40, max_path_length=40, min_pool_size=0)
 sampler.initialize(env, policy, replay_pool)
+path_length = 40
 
 while replay_pool.size < exploration_steps:
-	print("sampling")
+	# print("sampling")
 	sampler.sample()
+
+	#observation, reward, terminal, info = sampler.sample()
+
+
+	# print("terminal",terminal)
+	# print("reward",reward)
 #st()
 
 # imsave("check_03.png",replay_pool.fields["observations.desired_goal_depth"][0,0])

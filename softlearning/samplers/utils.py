@@ -49,7 +49,7 @@ def rollout(env,
         min_pool_size=None,
         batch_size=None)
     # st()
-    sampler.initialize(env, policy, pool,memory3D=memory3D,obs_ph=obs_ph,session=session)
+    sampler.initialize(env, policy, pool,memory3D=memory3D,obs_ph=6 ,session=session)
 
     images = []
     infos = []

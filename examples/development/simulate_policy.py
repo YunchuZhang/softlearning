@@ -124,6 +124,7 @@ def simulate_policy(args):
     if args.render_mode != 'human':
         from pprint import pprint; import pdb; pdb.set_trace()
         pass
+    
 
     return paths
 

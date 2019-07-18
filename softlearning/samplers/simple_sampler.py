@@ -79,7 +79,7 @@ class SimpleSampler(BaseSampler):
         action = self.policy.actions_np(active_obs[-9:])[0] #select only part of the active obs
         #action = self.policy.actions_np(active_obs)[0] #select only part of the active obs
 
-        #st()
+        # st()
         next_observation, reward, terminal, info = self.env.step(action)
 
         reward=reward[0]
@@ -116,6 +116,14 @@ class SimpleSampler(BaseSampler):
 
         # processed_sample = processed_sample_filter
         # st()
+
+        if terminal:
+            print("reward",reward,"successs within ",self._path_length)
+
+    
+        if (self._path_length >= self._max_path_length):
+            print("unsuccessful",reward,self._path_length)
+
 
         for key, value in processed_sample.items():
             self._current_path[key].append(value)
