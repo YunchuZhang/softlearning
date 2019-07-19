@@ -48,6 +48,10 @@ class SimpleSampler(BaseSampler):
         ])[0]
 
         next_observation, reward, terminal, info = self.env.step(action)
+
+        reward = reward[0]
+        terminal = terminal[0]
+
         self._path_length += 1
         self._path_return += reward
         self._total_samples += 1

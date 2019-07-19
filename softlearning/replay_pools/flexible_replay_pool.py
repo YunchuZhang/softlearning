@@ -63,6 +63,7 @@ class FlexibleReplayPool(ReplayPool):
                 self.fields_attrs[field_name].get('default_value', 0.0))
             values = samples.get(field_name, default_value)
             assert values.shape[0] == num_samples
+            #import pdb; pdb.set_trace()
             self.fields[field_name][index] = values
 
         self._advance(num_samples)
