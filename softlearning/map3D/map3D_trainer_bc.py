@@ -113,11 +113,12 @@ class MappingTrainer():
 		img_ph = tf.placeholder(tf.float32, [self.batch_size , 1, N, 84, 84, 3],"images")
 		cam_angle_ph = tf.placeholder(tf.float32, [self.batch_size , 1, N, 2],"angles")
 		depth_ph = tf.placeholder(tf.float32, [self.batch_size , 1, N, 84, 84],"zmapss")
-		position_ph = tf.placeholder(tf.float32, [self.batch_size ,2],"action")
+		position_ph = tf.placeholder(tf.float32, [self.batch_size ,2],"position")
 		self._observations_phs = [img_ph,depth_ph,cam_angle_ph,position_ph]
 		depth_ph = tf.expand_dims(depth_ph,-1)
+		st()
 		self.model(img_ph,cam_angle_ph,depth_ph,batch_size=self.batch_size,exp_name=self.exp_name,position=position_ph)
-		#self.action_predictior =  self.model.action_predictior
+		self.action_predictior =  self.model.action_predictior
 		self.detector =  self.model.detector
 		# st()
 		# self.exp_name = self.model.exp_name
@@ -148,8 +149,6 @@ class MappingTrainer():
 
 
 
-
-
 	def _get_feed_dict(self,  batch):
 		"""Construct TensorFlow feed_dict from sample batch."""
 		feed_dict = {}
@@ -161,20 +160,46 @@ class MappingTrainer():
 
 		return feed_dict
 
-	def train_epoch(self, epoch,  batches=500):
+
+	def _read_py_function(filename):
+			with open(path + '/' + str(filename,encoding ="utf-8" ), 'rb') as f:
+				data = pickle.loads(f.read())	
+			return data["image_observation"], data['depth_observation'], data['cam_angles_observation'],data["actions"]
+		
+
+
+	def train_epoch(self, epoch,  batches=200):
 		training = True
 		losses = []
 		log_probs = []
 		kles = []
 		# tempData = {}
+		filenames = os.listdir(path)
+		filenames = tf.constant(filenames)
+		#["/var/data/image1.jpg", "/var/data/image2.jpg", ...]
+		#labels = [0, 37, 29, 1, ...]
+
+		dataset = tf.data.Dataset.from_tensor_slices(filenames)
+		dataset = dataset.map(lambda filename: tuple(tf.py_func(self._read_py_function, [filename],[tf.uint8,tf.float32,tf.float32,tf.float32])))
+		batch_size = dataset//filenames.shape[0]
+
+		batched_dataset = dataset.batch(batch_size)
+		iterator = batched_dataset.make_one_shot_iterator()
+		next_element = iterator.get_next()
+
+
 		for batch_idx in range(batches):
-			observation = self.sampler.random_batch()
-			# st()
-			fd = self._get_feed_dict(observation)
+
+			#observation = self.sampler.random_batch()
 
 			# st()
+			elem = self._session.run(next_element)
 
-			if batch_idx % self.export_interval == 0 and not self.action_predictior:
+			fd = self._get_feed_dict(elem)
+
+
+
+			if batch_idx % self.export_interval == 0 and not self.detector:
 				_,summ, loss,pred_view,query_view = self._session.run([self.model.opt,self.model.summ,self.model.loss_,self.model.vis["pred_views"][0],self.model.vis["query_views"][0]],
 																feed_dict=fd)
 				# st()
@@ -202,48 +227,47 @@ class MappingTrainer():
 if __name__ == "__main__":
 
 
-	def _read_py_function(filename):
-		with open(path + '/' + str(filename,encoding ="utf-8" ), 'rb') as f:
-			data = pickle.loads(f.read())	
-		return data["image_observation"], data['depth_observation'], data['cam_angles_observation'],data["actions"]
+	# def _read_py_function(filename):
+	# 	with open(path + '/' + str(filename,encoding ="utf-8" ), 'rb') as f:
+	# 		data = pickle.loads(f.read())	
+	# 	return data["image_observation"], data['depth_observation'], data['cam_angles_observation'],data["actions"]
 		
 
 
-	path = "/projects/katefgroup/yunchu/expert_mug3"
+	# path = "/projects/katefgroup/yunchu/expert_mug3"
 
-	filenames = os.listdir(path)
-	filenames = tf.constant(filenames)
-	#["/var/data/image1.jpg", "/var/data/image2.jpg", ...]
-	#labels = [0, 37, 29, 1, ...]
+	# filenames = os.listdir(path)
+	# filenames = tf.constant(filenames)
+	# #["/var/data/image1.jpg", "/var/data/image2.jpg", ...]
+	# #labels = [0, 37, 29, 1, ...]
 
-	dataset = tf.data.Dataset.from_tensor_slices(filenames)
-	dataset = dataset.map(lambda filename: tuple(tf.py_func(_read_py_function, [filename],[tf.uint8,tf.float32,tf.float32,tf.float32])))
-
-
+	# dataset = tf.data.Dataset.from_tensor_slices(filenames)
+	# dataset = dataset.map(lambda filename: tuple(tf.py_func(_read_py_function, [filename],[tf.uint8,tf.float32,tf.float32,tf.float32])))
 
 
-	batched_dataset = dataset.batch(4)
 
-	iterator = batched_dataset.make_one_shot_iterator()
+
+	# batched_dataset = dataset.batch(4)
+
+	# iterator = batched_dataset.make_one_shot_iterator()
+	# # next_element = iterator.get_next()
+
+	# # print(sess.run(next_element)) 
+	# #iterator = dataset.make_initializable_iterator()
 	# next_element = iterator.get_next()
+	# print(batched_dataset)
 
-	# print(sess.run(next_element)) 
-	#iterator = dataset.make_initializable_iterator()
-	next_element = iterator.get_next()
-	print(batched_dataset)
+	# with tf.Session() as sess:
+	# 	while True:
 
-	with tf.Session() as sess:
-		while True:
-
-			try:
-				elem = sess.run(next_element)s
-				print('Success')
-			except tf.errors.OutOfRangeError:
-				print('End of dataset.')
-				break
+	# 		try:
+	# 			elem = sess.run(next_element)s
+	# 			print('Success')
+	# 		except tf.errors.OutOfRangeError:
+	# 			print('End of dataset.')
+	# 			break
 
 
 
-	#mapTrain = MappingTrainer()
-	#mapTrain.eager_train()
-x
+	mapTrain = MappingTrainer()
+	mapTrain.eager_train()

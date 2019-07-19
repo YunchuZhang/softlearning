@@ -264,6 +264,7 @@ class Net:
         if exp_name:
             const.set_experiment(exp_name)
             self.__dict__.update(const.__dict__)
+        st()
         if batch_size:
             const.BS = batch_size
         if eager:
