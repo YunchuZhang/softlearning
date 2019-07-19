@@ -62,9 +62,18 @@ class MappingTrainer():
 
 		self.sampler = sampler
 
-		path = "/projects/katefgroup/yunchu/expert_mug3"
+		self.path = "/projects/katefgroup/yunchu/expert_mug3"
+		filenames = os.listdir(self.path)
+		filenames = tf.constant(filenames)
+		#["/var/data/image1.jpg", "/var/data/image2.jpg", ...]
+		#labels = [0, 37, 29, 1, ...]
+
+		dataset = tf.data.Dataset.from_tensor_slices(filenames)
+		self.batches = 200 
+		#st()
+		self.batch_size = (filenames.get_shape().as_list()[0])// self.batches
 		
-		self.batch_size =batch_size
+		#self.batch_size =batch_size
 		self.observation_keys = observation_keys
 		print(self.observation_keys)
 		self.pool = pool
@@ -103,7 +112,7 @@ class MappingTrainer():
 		# st()
 		depth_ph = np.expand_dims(depth_ph,-1)
 		self.model(img_ph,cam_angle_ph,depth_ph,batch_size=self.batch_size,exp_name=self.exp_name,eager=True)
-		st()
+		#st()
 
 
 
@@ -113,10 +122,10 @@ class MappingTrainer():
 		img_ph = tf.placeholder(tf.float32, [self.batch_size , 1, N, 84, 84, 3],"images")
 		cam_angle_ph = tf.placeholder(tf.float32, [self.batch_size , 1, N, 2],"angles")
 		depth_ph = tf.placeholder(tf.float32, [self.batch_size , 1, N, 84, 84],"zmapss")
-		position_ph = tf.placeholder(tf.float32, [self.batch_size ,2],"position")
+		position_ph = tf.placeholder(tf.float32, [self.batch_size ,1,2],"position")
 		self._observations_phs = [img_ph,depth_ph,cam_angle_ph,position_ph]
 		depth_ph = tf.expand_dims(depth_ph,-1)
-		st()
+		#st()
 		self.model(img_ph,cam_angle_ph,depth_ph,batch_size=self.batch_size,exp_name=self.exp_name,position=position_ph)
 
 		self.action_predictor =  self.model.action_predictor
@@ -127,18 +136,18 @@ class MappingTrainer():
 
 
 
-	def load_data(path):
-		print("starting loading the data")
+	# def load_data(path):
+	# 	print("starting loading the data")
 
-		datas = []
+	# 	datas = []
 		
 
-		for transition in os.listdir(path):
-			with open(transition, 'rb') as f:
-				data = pickle.loads(f.read())
-				dates.append([data["image_observation"], data['depth_observation'], data['cam_angles_observation'],data["actions"]])
+	# 	for transition in os.listdir(path):
+	# 		with open(transition, 'rb') as f:
+	# 			data = pickle.loads(f.read())
+	# 			dates.append([data["image_observation"], data['depth_observation'], data['cam_angles_observation'],data["actions"]])
 
-		return dates
+	# 	return dates
 
 	def process_data(datas):
 		arr1 = datas[0]
@@ -152,43 +161,44 @@ class MappingTrainer():
 	def _get_feed_dict(self,  batch):
 		"""Construct TensorFlow feed_dict from sample batch."""
 		feed_dict = {}
-		# st()
+		#st()
 		feed_dict.update({
-			self._observations_phs[i]: np.expand_dims(batch['observations.{}'.format(key)],1)
-			for i, key in enumerate(self.observation_keys[:4])
+			self._observations_phs[i]: np.expand_dims(batch[i],1)
+			for i in range(4)
 		})
 
 		return feed_dict
 
 
-	def _read_py_function(filename):
-			with open(path + '/' + str(filename,encoding ="utf-8" ), 'rb') as f:
-				data = pickle.loads(f.read())	
-			return data["image_observation"], data['depth_observation'], data['cam_angles_observation'],data["actions"]
+	def _read_py_function(self, filename):
+		with open(self.path + '/' + str(filename,encoding ="utf-8" ), 'rb') as f:
+			data = pickle.loads(f.read())	
+		return data["image_observation"], data['depth_observation'], data['cam_angles_observation'],data["actions"]
 		
 
 
-	def train_epoch(self, epoch,  batches=200):
+	def train_epoch(self, epoch):
 		training = True
 		losses = []
 		log_probs = []
 		kles = []
 		# tempData = {}
-		filenames = os.listdir(path)
+		filenames = os.listdir(self.path)
 		filenames = tf.constant(filenames)
 		#["/var/data/image1.jpg", "/var/data/image2.jpg", ...]
 		#labels = [0, 37, 29, 1, ...]
 
 		dataset = tf.data.Dataset.from_tensor_slices(filenames)
 		dataset = dataset.map(lambda filename: tuple(tf.py_func(self._read_py_function, [filename],[tf.uint8,tf.float32,tf.float32,tf.float32])))
-		batch_size = dataset//filenames.shape[0]
+		#st()
+		self.batch_size = (filenames.get_shape().as_list()[0])// self.batches  
 
-		batched_dataset = dataset.batch(batch_size)
+		batched_dataset = dataset.batch(self.batch_size)
 		iterator = batched_dataset.make_one_shot_iterator()
 		next_element = iterator.get_next()
 
 
-		for batch_idx in range(batches):
+		for batch_idx in range(self.batches):
 
 			#observation = self.sampler.random_batch()
 
@@ -206,7 +216,7 @@ class MappingTrainer():
 			else:
 				_, loss,summ = self._session.run([self.model.opt,self.model.loss_,self.model.summ],feed_dict=fd)
 			# st()
-			step = epoch * batches + batch_idx
+			step = epoch * self.batches + batch_idx
 			self.train_writer.add_summary(summ,step)
 			# utils.img.imsave01("pred_view_{}.png".format(batch_idx), pred_view)
 			# utils.img.imsave01("gt_view_{}.png".format(batch_idx), query_view)
@@ -218,7 +228,7 @@ class MappingTrainer():
 
 			if batch_idx % self.log_interval == 0:
 				print('Train Epoch: {} {}/{}  \tLoss: {:.6f}'.format(
-									  epoch,batch_idx,batches,
+									  epoch,batch_idx,self.batches,
 									  loss ))
 
  

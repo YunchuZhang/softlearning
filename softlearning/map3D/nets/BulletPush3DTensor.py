@@ -33,16 +33,17 @@ class BulletPush3DTensor4_cotrain(BulletPushBase):
     def loss(self):
         if not self.detector:
             if self.action_predictor:
-                action_predictor_loss = utils.losses.l1loss(self.predicted_action, self.action)
+                action_predictor_loss = utils.losses.l1loss(self.predicted_action, self.position)
                 summ.scalar("detector_loss", action_predictor_loss)
-                self.loss = action_predictor_loss
-            elif const.LOSS_FN=="l1":
-                vp_loss = utils.losses.l1loss(self.predicted_view, self.inputs.state.vp_frame)            
+                self.loss_ = action_predictor_loss
             else:
-                vp_loss = utils.losses.binary_ce_loss(self.predicted_view, self.inputs.state.vp_frame)
-            # vp_loss = utils.tfpy.print_val(vp_loss, "vp_loss")
-            summ.scalar("viewpred_loss", vp_loss)
-            self.loss_ = vp_loss
+                if const.LOSS_FN=="l1":
+                    vp_loss = utils.losses.l1loss(self.predicted_view, self.inputs.state.vp_frame)            
+                else:
+                    vp_loss = utils.losses.binary_ce_loss(self.predicted_view, self.inputs.state.vp_frame)
+                    # vp_loss = utils.tfpy.print_val(vp_loss, "vp_loss")
+                summ.scalar("viewpred_loss", vp_loss)
+                self.loss_ = vp_loss
         else:
             if hasattr(self,"position"):
                 detector_loss = utils.losses.l1loss(self.predicted_position, self.position)
