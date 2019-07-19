@@ -90,7 +90,7 @@ class MappingTrainer():
 
 		#load_data(self, path)
 
-		import pdb; pdb.set_trace()
+		#import pdb; pdb.set_trace()
 
 
 
@@ -117,8 +117,8 @@ class MappingTrainer():
 		self._observations_phs = [img_ph,depth_ph,cam_angle_ph,position_ph]
 		depth_ph = tf.expand_dims(depth_ph,-1)
 		self.model(img_ph,cam_angle_ph,depth_ph,batch_size=self.batch_size,exp_name=self.exp_name,position=position_ph)
-		#self.action_predictior =  self.model.action_predictior
-		self.detector =  self.model.detector
+		self.action_predictor =  self.model.action_predictor
+		#self.detector =  self.model.detector
 		# st()
 		# self.exp_name = self.model.exp_name
 
@@ -174,7 +174,7 @@ class MappingTrainer():
 
 			# st()
 
-			if batch_idx % self.export_interval == 0 and not self.action_predictior:
+			if batch_idx % self.export_interval == 0 and not self.action_predictor:
 				_,summ, loss,pred_view,query_view = self._session.run([self.model.opt,self.model.summ,self.model.loss_,self.model.vis["pred_views"][0],self.model.vis["query_views"][0]],
 																feed_dict=fd)
 				# st()

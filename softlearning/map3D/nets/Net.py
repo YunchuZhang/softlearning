@@ -19,6 +19,7 @@ class Net:
         self.weights = {}
         self.opname = const.opname
         self.detector = False
+        self.action_predictor = False
         # self.setup_data(val)
         # self.predict()
         # self.extra_out = dict()

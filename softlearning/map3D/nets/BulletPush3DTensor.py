@@ -32,7 +32,7 @@ class BulletPush3DTensor4_cotrain(BulletPushBase):
 
     def loss(self):
         if not self.detector:
-            if self.action_predictior:
+            if self.action_predictor:
                 action_predictor_loss = utils.losses.l1loss(self.predicted_action, self.action)
                 summ.scalar("detector_loss", action_predictor_loss)
                 self.loss = action_predictor_loss
@@ -438,9 +438,9 @@ class BulletPush3DTensor4_cotrain(BulletPushBase):
         if self.detector:
             with tf.compat.v1.variable_scope("detector"):
                 self.predicted_position = utils.nets.detector(memory_3D)
-        if self.action_predictior:
-            with tf.compat.v1.variable_scope("action_predictior"):
-                self.predicted_position = utils.nets.action_predictior(memory_3D)
+        if self.action_predictor:
+            with tf.compat.v1.variable_scope("action_predictor"):
+                self.predicted_action = utils.nets.action_predictor(memory_3D)
         # st()
 
         # if const.run_full:

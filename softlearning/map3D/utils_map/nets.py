@@ -409,7 +409,7 @@ def detector(inputs):
         net = tf.layers.dense(net,3)
     return net
 
-def action_predictior(inputs):
+def action_predictor(inputs):
     bn = True
     with slim.arg_scope([slim.conv3d, slim.conv3d_transpose],
                         activation_fn=tf.nn.relu,

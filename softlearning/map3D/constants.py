@@ -739,7 +739,7 @@ OG("rl_temp","rl_new",ckpt_cfg_dir="ckpt_cfg")
 
 OG("rl_new_reach","rl_new",load_name="rl_new/1")
 OG("rl_new_reach_detect","rl_new",load_name="rl_new_detector/1",detector=True)
-OG("rl_new_reach_action_predictior","rl_new",load_name="rl_new_action_predictor/1",action_predictor=True)
+OG("rl_new_reach_action_predictor","rl_new",load_name="rl_new_action_predictor/1",action_predictor=True)
 
 
 
