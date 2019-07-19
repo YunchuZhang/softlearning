@@ -23,7 +23,7 @@ er = ExperimentRunner()
 if eager:
 	tf.enable_eager_execution()
 
-er._setup("rl_new_reach",variant_spec,eager)
+er._setup("rl_new_reach_action_predictior",variant_spec,eager)
 
 # er._setup("rl_new_reach_detect",variant_spec,eager)
 
