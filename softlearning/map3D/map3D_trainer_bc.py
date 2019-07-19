@@ -204,8 +204,7 @@ if __name__ == "__main__":
 
 	def _read_py_function(filename):
 		with open(path + '/' + str(filename,encoding ="utf-8" ), 'rb') as f:
-			data = pickle.loads(f.read())
-			
+			data = pickle.loads(f.read())	
 		return data["image_observation"], data['depth_observation'], data['cam_angles_observation'],data["actions"]
 		
 
@@ -218,7 +217,7 @@ if __name__ == "__main__":
 	#labels = [0, 37, 29, 1, ...]
 
 	dataset = tf.data.Dataset.from_tensor_slices(filenames)
-	dataset = dataset.map(lambda filename: tuple(tf.py_func(_read_py_function, [filename],[tf.uint8,tf.uint8,tf.uint8,tf.float32])))
+	dataset = dataset.map(lambda filename: tuple(tf.py_func(_read_py_function, [filename],[tf.uint8,tf.float32,tf.float32,tf.float32])))
 
 
 
@@ -237,7 +236,7 @@ if __name__ == "__main__":
 		while True:
 
 			try:
-				elem = sess.run(next_element)
+				elem = sess.run(next_element)s
 				print('Success')
 			except tf.errors.OutOfRangeError:
 				print('End of dataset.')
@@ -247,3 +246,4 @@ if __name__ == "__main__":
 
 	#mapTrain = MappingTrainer()
 	#mapTrain.eager_train()
+x
