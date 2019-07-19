@@ -59,7 +59,7 @@ env = GymAdapter(None,
 
 replay_pool = SimpleReplayPool(env, concat_observations=False, max_size=1e4)
 #policy = get_policy('UniformPolicy', env)
-checkpoint_path = "/projects/katefgroup/robert/result_car2/checkpoint_350"
+checkpoint_path = "/projects/katefgroup/robert/result_bowl2/checkpoint_1500"
 experiment_path = os.path.dirname(checkpoint_path)
 
 variant_path = os.path.join(experiment_path, 'params.json')
@@ -92,7 +92,7 @@ sampler = SimpleSampler(batch_size=40, max_path_length=100, min_pool_size=0)
 sampler.initialize(env, policy, replay_pool)
 path_length = 40
 
-expert_data_path = "/projects/katefgroup/yunchu/expert_car2"
+expert_data_path = "/projects/katefgroup/yunchu/expert_bowl2"
 while replay_pool.size < exploration_steps:
 	# print("sampling")
 	sampler.sample()

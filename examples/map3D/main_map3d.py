@@ -136,11 +136,11 @@ class ExperimentRunner():
 			# st()
 			if i % 10 ==0:
 				self.save(self._session,self.algorithm.model.load_name,i)
-				num = 0
-				print("Further Sampling")
-				while num < 1000:
-					self.sampler.sample()
-					num = num+1
+				# num = 0
+				# print("Further Sampling")
+				# while num < 1000:
+				# 	self.sampler.sample()
+				# 	num = num+1
 					# print(num,1e3)
 
 

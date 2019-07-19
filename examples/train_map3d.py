@@ -6,6 +6,7 @@ import tensorflow as tf
 import sys
 from examples.map3D.main_map3d import ExperimentRunner
 
+
 example_module_name = "examples.map3D"
 example_argv = ('--universe=gym', '--checkpoint-frequency=0', '--domain=SawyerPushAndReachEnvEasy', '--task=v0', '--trial-gpus=1', '--exp-name=test', '--replay_pool=SimpleReplayPoolTemp', '--algorithm=SAC')
 
@@ -30,6 +31,8 @@ er._setup("rl_new_reach_action_predictor",variant_spec,eager)
 er._build()
 
 er._train()
+
+
 
 
 
