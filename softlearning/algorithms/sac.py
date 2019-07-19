@@ -156,7 +156,7 @@ class SAC(RLAlgorithm):
 
         Also calls the `draw` method of the plotter, if plotter defined.
         """
-        Q_values, Q_losses, alpha, global_step = self.agent.get_diagnostics(iteration, batch)
+        Q_values, Q_losses, alpha, global_step, policy_diagnostics = self.agent.get_diagnostics(iteration, batch)
 
         diagnostics = OrderedDict({
             'Q-avg': np.mean(Q_values),
@@ -165,7 +165,7 @@ class SAC(RLAlgorithm):
             'alpha': alpha,
         })
 
-        policy_diagnostics = self.agent.policy_diagnostics(batch)
+        #policy_diagnostics = self.agent.policy_diagnostics(batch)
         diagnostics.update({
             f'policy/{key}': value
             for key, value in policy_diagnostics.items()
