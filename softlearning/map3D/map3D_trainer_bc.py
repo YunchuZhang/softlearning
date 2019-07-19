@@ -8,6 +8,8 @@ from collections import OrderedDict
 from nets.BulletPush3DTensor import BulletPush3DTensor4_cotrain
 import ipdb
 import time
+import os 
+import pickle
 
 import utils_map as utils
 
@@ -60,13 +62,17 @@ class MappingTrainer():
 
 		self.sampler = sampler
 
-		path = "/home/obstsalat/Documents/uni/cmu/masterarbeit/experts/expert_mug3_mini"
+		path = "/projects/katefgroup/yunchu/expert_mug3"
 		
 		self.batch_size =batch_size
 		self.observation_keys = observation_keys
+		print(self.observation_keys)
 		self.pool = pool
 		self.log_interval = 10
-		self.action_predictior = action_predictior
+
+		#self.action_predictior = action_predictior
+
+
 		self.export_interval = 100
 		self.model = map3D
 		self.exp_name = exp_name
@@ -82,7 +88,7 @@ class MappingTrainer():
 		self.train_writer = tf.summary.FileWriter("tb" + '/train/{}_{}'.format(self.exp_name,time.time()),session.graph)
 		self._session = session
 
-		load_data(self, path)
+		#load_data(self, path)
 
 		import pdb; pdb.set_trace()
 
@@ -101,31 +107,45 @@ class MappingTrainer():
 
 
 
+
 	def initGraph(self):
 		N =4
 		img_ph = tf.placeholder(tf.float32, [self.batch_size , 1, N, 84, 84, 3],"images")
 		cam_angle_ph = tf.placeholder(tf.float32, [self.batch_size , 1, N, 2],"angles")
 		depth_ph = tf.placeholder(tf.float32, [self.batch_size , 1, N, 84, 84],"zmapss")
-		action_ph = tf.placeholder(tf.float32, [self.batch_size ,2],"action")
+		position_ph = tf.placeholder(tf.float32, [self.batch_size ,2],"action")
 		self._observations_phs = [img_ph,depth_ph,cam_angle_ph,position_ph]
 		depth_ph = tf.expand_dims(depth_ph,-1)
 		self.model(img_ph,cam_angle_ph,depth_ph,batch_size=self.batch_size,exp_name=self.exp_name,position=position_ph)
-		self.action_predictior =  self.model.action_predictior
+		#self.action_predictior =  self.model.action_predictior
+		self.detector =  self.model.detector
 		# st()
 		# self.exp_name = self.model.exp_name
 
 
-	def load_data(self, path):
+
+
+
+	def load_data(path):
 		print("starting loading the data")
 
-		self.actions = []
-		self.data = []
+		datas = []
+		
 
 		for transition in os.listdir(path):
 			with open(transition, 'rb') as f:
-				data = pickle.loads(f.read())				
-				self.action.append(data["actions"])
-				self.data.append([data["image_observation"], data['image_observation'], data['cam_angles_observation']])
+				data = pickle.loads(f.read())
+				dates.append([data["image_observation"], data['depth_observation'], data['cam_angles_observation'],data["actions"]])
+
+		return dates
+
+	def process_data(datas):
+		arr1 = datas[0]
+		for i in range(1,len(datas)):
+			arr2 = datas[i]
+			res = np.vstack((arr1, arr2))
+
+
 
 
 
@@ -180,5 +200,50 @@ class MappingTrainer():
 
  
 if __name__ == "__main__":
-	mapTrain = MappingTrainer()
-	mapTrain.eager_train()
+
+
+	def _read_py_function(filename):
+		with open(path + '/' + str(filename,encoding ="utf-8" ), 'rb') as f:
+			data = pickle.loads(f.read())
+			
+		return data["image_observation"], data['depth_observation'], data['cam_angles_observation'],data["actions"]
+		
+
+
+	path = "/projects/katefgroup/yunchu/expert_mug3"
+
+	filenames = os.listdir(path)
+	filenames = tf.constant(filenames)
+	#["/var/data/image1.jpg", "/var/data/image2.jpg", ...]
+	#labels = [0, 37, 29, 1, ...]
+
+	dataset = tf.data.Dataset.from_tensor_slices(filenames)
+	dataset = dataset.map(lambda filename: tuple(tf.py_func(_read_py_function, [filename],[tf.uint8,tf.uint8,tf.uint8,tf.float32])))
+
+
+
+
+	batched_dataset = dataset.batch(4)
+
+	iterator = batched_dataset.make_one_shot_iterator()
+	# next_element = iterator.get_next()
+
+	# print(sess.run(next_element)) 
+	#iterator = dataset.make_initializable_iterator()
+	next_element = iterator.get_next()
+	print(batched_dataset)
+
+	with tf.Session() as sess:
+		while True:
+
+			try:
+				elem = sess.run(next_element)
+				print('Success')
+			except tf.errors.OutOfRangeError:
+				print('End of dataset.')
+				break
+
+
+
+	#mapTrain = MappingTrainer()
+	#mapTrain.eager_train()

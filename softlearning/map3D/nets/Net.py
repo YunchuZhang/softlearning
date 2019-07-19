@@ -271,7 +271,7 @@ class Net:
             const.DEBUG_UNPROJECT =True
 
         # self.detector = detector
-        if position:
+        if position is not None:
             self.position = tf.layers.flatten(position)
         # st()
         const.fx = const.W / 2.0 * 1.0 / math.tan(const.fov * math.pi / 180 / 2)
