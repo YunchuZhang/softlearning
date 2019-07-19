@@ -165,7 +165,7 @@ class ExperimentRunner():
 			get_policy('UniformPolicy', training_environment))
 
 
-		self.algorithm = bulledtPushTrainer(
+		self.algorithm = bulledtPushTrainer		(
 			variant=variant,
 			map3D =bulledtPush,
 			training_environment=training_environment,

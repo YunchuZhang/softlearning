@@ -69,9 +69,11 @@ class MappingTrainer():
 		#labels = [0, 37, 29, 1, ...]
 
 		dataset = tf.data.Dataset.from_tensor_slices(filenames)
-		self.batches = 200 
+
+		self.batch_size = 4
+		#self.batches = 200 
 		#st()
-		self.batch_size = (filenames.get_shape().as_list()[0])// self.batches
+		self.batch = (filenames.get_shape().as_list()[0])// self.batch_size
 		
 		#self.batch_size =batch_size
 		self.observation_keys = observation_keys
@@ -190,8 +192,10 @@ class MappingTrainer():
 
 		dataset = tf.data.Dataset.from_tensor_slices(filenames)
 		dataset = dataset.map(lambda filename: tuple(tf.py_func(self._read_py_function, [filename],[tf.uint8,tf.float32,tf.float32,tf.float32])))
+		dataset = dataset.shuffle(buffer_size=100)
+
 		#st()
-		self.batch_size = (filenames.get_shape().as_list()[0])// self.batches  
+		self.batches = (filenames.get_shape().as_list()[0])// self.batch_size
 
 		batched_dataset = dataset.batch(self.batch_size)
 		iterator = batched_dataset.make_one_shot_iterator()
