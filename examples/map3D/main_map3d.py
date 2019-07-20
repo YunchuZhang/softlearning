@@ -78,7 +78,10 @@ class ExperimentRunner():
 			savepath = path.join(self.algorithm.model.ckpt_dir, name.split("/")[0])
 			utils.utils.ensure(savepath)
 
-		savepath = path.join(self.algorithm.model.ckpt_base,self.algorithm.model.ckpt_dir, name)
+		#savepath = path.join(self.algorithm.model.ckpt_base,self.algorithm.model.ckpt_dir, name)
+		import pdb; pdb.set_trace()
+		savepath = path.join(self.algorithm.model.ckpt_base,bulledtPushTrainer.expert_name, name)
+		#expert_name
 		utils.utils.ensure(savepath)
 		for partname in parts:
 			partpath = path.join(savepath, partname)

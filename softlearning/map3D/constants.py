@@ -709,7 +709,7 @@ OG("rl_new",
    #USE_OUTLINE=True,
    #IS_NOT_BN_IN_2D = True,
    IS_NOT_BN_IN_3D = True,
-   lr=0.001,
+   lr=0.0002, #0.001
    max_T = 0,
    opname="bulletpush3D_4_cotrain", H =64, W=64,
    CONVLSTM_STEPS = 6,

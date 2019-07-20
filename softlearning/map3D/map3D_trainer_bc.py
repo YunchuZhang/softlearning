@@ -51,6 +51,7 @@ class MappingTrainer():
 			sampler,
 			eager_enabled,
 			exp_name,
+			expert_name,
 			session):
 		# session = tf.keras.backend.get_session()
 		# st()
@@ -62,7 +63,9 @@ class MappingTrainer():
 
 		self.sampler = sampler
 
-		self.path = "/projects/katefgroup/yunchu/expert_mug3"
+		#self.path = "/projects/katefgroup/yunchu/expert_mug3"
+		self.expert_name
+		self.path = os.path.join(("/projects/katefgroup/yunchu/", self.expert_name))
 		filenames = os.listdir(self.path)
 		filenames = tf.constant(filenames)
 		#["/var/data/image1.jpg", "/var/data/image2.jpg", ...]
@@ -70,7 +73,7 @@ class MappingTrainer():
 
 		dataset = tf.data.Dataset.from_tensor_slices(filenames)
 
-		self.batch_size = 4
+		self.batch_size = 6 #changed from 4
 		#self.batches = 200 
 		#st()
 		self.batch = (filenames.get_shape().as_list()[0])// self.batch_size

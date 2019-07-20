@@ -8,7 +8,7 @@ from examples.map3D.main_map3d import ExperimentRunner
 
 
 example_module_name = "examples.map3D"
-example_argv = ('--universe=gym', '--checkpoint-frequency=0', '--domain=SawyerPushAndReachEnvEasy', '--task=v0', '--trial-gpus=1', '--exp-name=test', '--replay_pool=SimpleReplayPoolTemp', '--algorithm=SAC')
+example_argv = ('--universe=gym', '--checkpoint-frequency=0', '--domain=SawyerPushAndReachEnvEasy', '--task=v0', '--trial-gpus=1', '--exp-name=test', '--replay_pool=SimpleReplayPoolTemp', '--algorithm=SAC', '--expert_name=expert_mug3')
 
 
 example_module = importlib.import_module(example_module_name)
