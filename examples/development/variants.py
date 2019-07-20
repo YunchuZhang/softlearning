@@ -314,8 +314,8 @@ HER_REPLAY_POOL_PARAMS = {
                                 # the reward
                                 'image_env_dummy': 'achieved_goal',
                                 'image_env_dummy2': 'desired_goal'},
-        'desired_goal_key': 'state_achieved_goal',
-        'achieved_goal_key': 'state_desired_goal',
+        'desired_goal_key': 'state_desired_goal',    
+        'achieved_goal_key': 'state_achieved_goal',
         'reward_key': 'rewards',
         'terminal_key': 'terminals'
     }
