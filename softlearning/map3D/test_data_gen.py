@@ -5,6 +5,7 @@ from multiworld.core.image_env import ImageEnv
 from multiworld.envs.mujoco.cameras import init_multiple_cameras
 from softlearning.policies.utils import get_policy_from_variant
 from softlearning.environments.utils import get_environment_from_params,get_environment_from_params_custom
+from examples.instrument import change_env_to_use_correct_mesh
 import ipdb
 import json
 import os
@@ -26,7 +27,17 @@ import os
 from softlearning.map3D import save_images
 multiworld.register_all_envs()
 
-exploration_steps = 1100
+import argparse
+parser = argparse.ArgumentParser()
+parser.add_argument("--mesh", help="input object")
+args = parser.parse_args()
+
+mesh = args.mesh
+print(mesh)
+change_env_to_use_correct_mesh(mesh)
+
+
+exploration_steps = 5000
 
 
 gpu_options = tf.GPUOptions(allow_growth=True)
@@ -59,7 +70,10 @@ env = GymAdapter(None,
 
 replay_pool = SimpleReplayPool(env, concat_observations=False, max_size=1e4)
 #policy = get_policy('UniformPolicy', env)
-checkpoint_path = "/projects/katefgroup/robert/result_bowl2/checkpoint_1500"
+checkpoint_path = "/projects/katefgroup/robert/result_" + str(mesh) + "/checkpoint_1000"
+print("--------------")
+print(checkpoint_path)
+print("--------------")
 experiment_path = os.path.dirname(checkpoint_path)
 
 variant_path = os.path.join(experiment_path, 'params.json')
@@ -92,7 +106,10 @@ sampler = SimpleSampler(batch_size=40, max_path_length=100, min_pool_size=0)
 sampler.initialize(env, policy, replay_pool)
 path_length = 40
 
-expert_data_path = "/projects/katefgroup/yunchu/expert_bowl2"
+expert_data_path = "/projects/katefgroup/yunchu/expert_" + str(mesh)
+if not os.path.exists(expert_data_path):
+    os.mkdir(expert_data_path)
+
 while replay_pool.size < exploration_steps:
 	# print("sampling")
 	sampler.sample()
@@ -109,13 +126,13 @@ for num in range(replay_pool.size):
 	print('saving'+'{:d}'.format(num)+'.pkl')
 	with open(os.path.join(expert_data_path, 'state' + "{:d}".format(num) + '.pkl'), 'wb') as f:
 		pickle.dump(expert_data, f, pickle.HIGHEST_PROTOCOL)
-
-filename = "/projects/katefgroup/yunchu/expert_mug3/state2.pkl"
-with open(filename, 'rb') as f:
-	data = pickle.loads(f.read())
+print(expert_data_path)
+# filename = "/projects/katefgroup/yunchu/expert_mug3/state2.pkl"
+# with open(filename, 'rb') as f:
+# 	data = pickle.loads(f.read())
 
 	
-actions = data["actions"]
+# actions = data["actions"]
 #print(data.keys())
 st()
 
