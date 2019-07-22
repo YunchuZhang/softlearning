@@ -70,7 +70,7 @@ env = GymAdapter(None,
 
 replay_pool = SimpleReplayPool(env, concat_observations=False, max_size=1e4)
 #policy = get_policy('UniformPolicy', env)
-checkpoint_path = "/projects/katefgroup/robert/result_" + str(mesh) + "/checkpoint_1000"
+checkpoint_path = "/projects/katefgroup/robert/result_" + str(mesh) + "/checkpoint_750"
 print("--------------")
 print(checkpoint_path)
 print("--------------")
@@ -122,16 +122,18 @@ for num in range(replay_pool.size):
 			   'cam_angles_observation':np.array(replay_pool.fields["observations.cam_angles_observation"][num]),
 			   'actions':np.array(replay_pool.fields["actions"][num]),
 			   'rewards':np.array(replay_pool.fields["rewards"][num]),
+			   'observation_with_orientation':np.array(replay_pool.fields["observations.observation_with_orientation"][num]),
+			   'state_desired_goal':np.array(replay_pool.fields["observations.state_desired_goal"][num][3:]),
 			   'terminals':np.array(replay_pool.fields["terminals"][num])}
 	print('saving'+'{:d}'.format(num)+'.pkl')
 	with open(os.path.join(expert_data_path, 'state' + "{:d}".format(num) + '.pkl'), 'wb') as f:
 		pickle.dump(expert_data, f, pickle.HIGHEST_PROTOCOL)
 print(expert_data_path)
-# filename = "/projects/katefgroup/yunchu/expert_mug3/state2.pkl"
+# filename = "/projects/katefgroup/yunchu/expert_can1/state2.pkl"
 # with open(filename, 'rb') as f:
 # 	data = pickle.loads(f.read())
 
-	
+# print(data['state_desired_goal'])
 # actions = data["actions"]
 #print(data.keys())
 st()
