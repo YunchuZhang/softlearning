@@ -94,13 +94,15 @@ class SimpleSampler(BaseSampler):
 
 
 
-
+        expert_action = self.policy.actions_np(active_obs[-9:])[0] #select only part of the active obs
         
         tf.reset_default_graph()
         with tf.Session() as sess:
             concatendated_state_ph, actions_ph, predicted_action_ph = self.build_model()
 
-            checkpoint_path = "/projects/katefgroup/yunchu/" + "mug2/model.ckpt"
+            #checkpoint_path = "/projects/katefgroup/yunchu/" + "bowl2/model.ckpt"
+            checkpoint_path = "/projects/katefgroup/yunchu/store/" + "expert_"+self.mesh + "/model.ckpt"
+            #print("checkpoint_path", checkpoint_path)
             # restore the saved model
             saver = tf.train.Saver()
 
@@ -112,11 +114,11 @@ class SimpleSampler(BaseSampler):
         
 
 
-
+        #st()
         #action = self.policy.actions_np(active_obs[-9:])[0] #select only part of the active obs
         current_state = np.concatenate((active_obs[-9][0],active_obs[-8][0][3:]), 0).reshape(1,16)
 
-        expert_action = self.policy.actions_np(active_obs[])[0] #select only part of the active obs
+       
 
         #st()
         next_observation, reward, terminal, info = self.env.step(action[0])
