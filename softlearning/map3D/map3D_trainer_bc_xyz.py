@@ -106,7 +106,7 @@ def main():
 	mse = tf.reduce_mean(0.5 * tf.square(actions_ph - predicted_action_ph))
 
 	# create optimizer
-	opt = tf.train.AdamOptimizer(learning_rate=0.000003).minimize(mse)
+	opt = tf.train.AdamOptimizer(learning_rate=0.000001).minimize(mse)
 
 	# initialize variables
 	sess.run(tf.global_variables_initializer())
@@ -124,9 +124,9 @@ def main():
 
 	dataset = dataset.map(lambda filename: tuple(tf.py_func(_read_py_function, [filename],[tf.float32,tf.float32])))
 
-	for training_step in range(10):
+	for training_step in range(1000):
 
-		dataset = dataset.shuffle(buffer_size=100)
+		#dataset = dataset.shuffle(buffer_size=100)
 		batches = (filenames.get_shape().as_list()[0])// batch_size
 
 		batched_dataset = dataset.batch(batch_size)
@@ -172,7 +172,7 @@ def main():
 
 if __name__ == '__main__':
 	base_path = "/projects/katefgroup/yunchu/"
-	expert_list = ["expert_bowl2","expert_car2","expert_hat1","expert_mug2","expert_boat","expert_can1","expert_car3","expert_hat2","expert_mug3","expert_bowl1 ","expert_car1","expert_car4","expert_mug1"]
+	expert_list = ["expert_boat","expert_can1","expert_car3","expert_hat2","expert_mug3","expert_bowl1 ","expert_car1","expert_car4","expert_mug1"]
 	for expert_name in expert_list:
 		print("expert ", expert_name)
 		path = base_path+expert_name

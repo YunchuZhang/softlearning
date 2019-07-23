@@ -37,7 +37,7 @@ print(mesh)
 change_env_to_use_correct_mesh(mesh)
 
 
-exploration_steps = 50
+exploration_steps = 100
 
 
 gpu_options = tf.GPUOptions(allow_growth=True)
@@ -73,7 +73,7 @@ replay_pool = SimpleReplayPool(env, concat_observations=False, max_size=1e4)
 policy = get_policy('UniformPolicy', env)
 
 
-checkpoint_path = "/projects/katefgroup/yunchu/" + "mug2/model.ckpt"
+checkpoint_path = "/projects/katefgroup/yunchu/" + "bowl2/model.ckpt"
 print("--------------")
 print(checkpoint_path)
 print("--------------")
@@ -81,7 +81,7 @@ print("--------------")
 
 
 
-sampler = SimpleSampler(batch_size=40, max_path_length=60, min_pool_size=0,)
+sampler = SimpleSampler(batch_size=40, max_path_length=50, min_pool_size=0,)
 sampler.initialize(env, policy, replay_pool)
 path_length = 40
 
