@@ -182,7 +182,7 @@ class MappingTrainer():
 	def _read_py_function(self, filename):
 		with open(self.path + '/' + str(filename,encoding ="utf-8" ), 'rb') as f:
 			data = pickle.loads(f.read())
-		#st()
+		st()
 		return data["image_observation"], data['depth_observation'], data['cam_angles_observation'],data["actions"]
 		
 

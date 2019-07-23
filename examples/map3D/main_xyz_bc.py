@@ -17,6 +17,8 @@ from softlearning.map3D import utils_map as utils
 import os.path as path
 from softlearning.misc.utils import set_seed, initialize_tf_variables
 from softlearning.map3D.map3D_trainer_bc import MappingTrainer as bulledtPushTrainer #import from the file for bc cloning
+from softlearning.map3D.map3D_trainer_bc_xyz import MappingTrainer as bulledtPushTrainer #import from the file for bc cloning with centroid + xyz
+
 from examples.instrument import run_example_local
 import ipdb 
 import numpy as np

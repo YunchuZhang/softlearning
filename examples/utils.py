@@ -298,12 +298,6 @@ def get_parser(allow_policy_list=False):
         default = "can1", 
         help="which mesh to use in the mujoco environment")
 
-    parser.add_argument(
-        '--expert_name', 
-        type = str,
-        default = "expert_mug3", 
-        help="storage location of the expert transition tuples")
-
     parser = add_ray_init_args(parser)
     parser = add_ray_tune_args(parser)
 
