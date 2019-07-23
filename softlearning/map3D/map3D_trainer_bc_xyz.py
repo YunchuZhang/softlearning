@@ -10,284 +10,165 @@ import ipdb
 import time
 import os 
 import pickle
-
+import argparse
+from tensorboardX import SummaryWriter
 import utils_map as utils
 
 st = ipdb.set_trace
-def create_stats_ordered_dict(
-		name,
-		data,
-		stat_prefix=None,
-		always_show_all_stats=True,
-		exclude_max_min=False,
-):
-
-	return stats
 
 
-"""
-Implementation of save_image() and make_grid() of PyTorch in numpy
 
-Original Pytorch implementation can be found here:
-https://github.com/pytorch/vision/blob/master/torchvision/utils.py
-# """
-#             map3D =bulledtPush,
-#             training_environment=training_environment,
-#             initial_exploration_policy=initial_exploration_policy,
-#             pool=replay_pool,
-#             observation_keys = observation_keys,
-#             sampler=sampler,
-#             session=self._session)
+def _read_py_function(filename):
+	with open(path + '/' + str(filename,encoding ="utf-8" ), 'rb') as f:
+		data = pickle.loads(f.read())
+	#st()
+	return np.concatenate((data["observation_with_orientation"],data['state_desired_goal']), 0), data["actions"]
 
 
-class MappingTrainer():
-	def __init__(self,variant,
-			map3D,
-			training_environment,
-			initial_exploration_policy,
-			pool,
-			batch_size,
-			observation_keys,
-			sampler,
-			eager_enabled,
-			exp_name,
-			expert_name,
-			session):
-		# session = tf.keras.backend.get_session()
-		# st()
-		self._n_initial_exploration_steps = variant['algorithm_params']['kwargs']["n_initial_exploration_steps"]
+def build_model():
 
-		self.eager_enabled = eager_enabled
+	concatendated_state_ph = tf.placeholder(tf.float32, [None, 16])
+	actions_ph = tf.placeholder(dtype=tf.float32, shape=[None, 2])
+	out = tf.placeholder(dtype=tf.float32, shape=[None, 2])
 
-		self._n_initial_exploration_steps 
-
-		self.sampler = sampler
-
-		#self.path = "/projects/katefgroup/yunchu/expert_mug3"
-		self.expert_name = expert_name
-		#st()
-		self.path = os.path.join("/projects/katefgroup/yunchu/",self.expert_name)
-		filenames = os.listdir(self.path)
-		filenames = tf.constant(filenames)
-		#["/var/data/image1.jpg", "/var/data/image2.jpg", ...]
-		#labels = [0, 37, 29, 1, ...]
-
-		dataset = tf.data.Dataset.from_tensor_slices(filenames)
-
-		self.batch_size = 15 #changed from 4
-		#self.batches = 200 
-		#st()
-		self.batch = (filenames.get_shape().as_list()[0])// self.batch_size
-		
-		#self.batch_size =batch_size
-		self.observation_keys = observation_keys
-		print(self.observation_keys)
-		self.pool = pool
-		self.log_interval = 10
-
-		#self.action_predictior = action_predictior
+	out = tf.layers.dense(concatendated_state_ph, 128, activation = tf.nn.relu)
+	out = tf.layers.dense(out, 64, activation = tf.nn.relu)
+	out = tf.layers.dense(out, 32, activation = tf.nn.relu)
+	out = tf.layers.dense(out, 2)
+	return concatendated_state_ph, actions_ph, out
 
 
-		self.export_interval = 100
-		self.model = map3D
-		self.exp_name = exp_name
-		if self.eager_enabled:
-			self.forwardPass()
-		else:
-			self.initGraph()
-		# st()
-		if eager_enabled:
-			self.debug_unproject = True
-		else:
-			self.debug_unproject = False
-		self.train_writer = tf.summary.FileWriter("tb" + '/train/{}_{}'.format(self.exp_name,time.time()),session.graph)
-		self._session = session
 
-		#load_data(self, path)
+def train_epoch(dataset,filenames,batch_size,opt,mse, sess,predicted_action_ph,concatendated_state_ph,actions_ph):
+	dataset = dataset.shuffle(buffer_size=100)
+	batches = (filenames.get_shape().as_list()[0])// batch_size
 
-		#import pdb; pdb.set_trace()
+	batched_dataset = dataset.batch(batch_size)
+	iterator = batched_dataset.make_one_shot_iterator()
+	next_element = iterator.get_next()
+
+	# assert len(data.keys()) == 2
+
+
+	
+
+	# run training
+	
+
+	for batch_idx in range(batches):
+
+	#observation = self.sampler.random_batch()
+
+	# st()
+		elem = sess.run(next_element)
+		observations = elem[0]
+		actions = elem[1]
+		#fd = _get_feed_dict(elem)
+		_,output_pred_run, mse_run = sess.run([opt,predicted_action_ph, mse], feed_dict={concatendated_state_ph: observations, actions_ph: actions})
+
+
+
+		#print(mse_run)
+		#print((output_pred_run - actions).mean())
+		#print((output_pred_run - actions).sum())
+
+	return mse_run,output_pred_run,actions
 
 
 
 
 
-	def forwardPass(self):
-		N =4
-		batch = self.sampler.random_batch()
-		img_ph,depth_ph,cam_angle_ph = [np.expand_dims(batch['observations.{}'.format(key)],1) for i, key in enumerate(self.observation_keys[:3])]
-		# st()
-		depth_ph = np.expand_dims(depth_ph,-1)
-		self.model(img_ph,cam_angle_ph,depth_ph,batch_size=self.batch_size,exp_name=self.exp_name,eager=True)
-		#st()
+
+def main():
+	#sess = tf.Session()
+
+	gpu_options = tf.GPUOptions(allow_growth=True)
+	session = tf.Session(config=tf.ConfigProto(gpu_options=gpu_options))
+	tf.keras.backend.set_session(session)
+	sess = tf.keras.backend.get_session()
+
+
+	#sess = tf.Session(config=tf.ConfigProto(allow_soft_placement=True,log_device_placement=True))
+	parser = argparse.ArgumentParser()
+	# parser.add_argument('path', type=str)
+	# parser.add_argument('envname', type=str)
+	# parser.add_argument("--max_timesteps", type=int)
+	parser.add_argument("--batch_size", type=int, default = 4096)
+	#parser.add_argument('--num_rollouts', type=int, default=200,
+	help=('Number of expert roll outs')
+	args = parser.parse_args()
+
+	print('loading expert data')
+	#filename = args.path
+	concatendated_state_ph, actions_ph, predicted_action_ph = build_model()
+
+	# create loss
+	mse = tf.reduce_mean(0.5 * tf.square(actions_ph - predicted_action_ph))
+
+	# create optimizer
+	opt = tf.train.AdamOptimizer(learning_rate=0.000003).minimize(mse)
+
+	# initialize variables
+	sess.run(tf.global_variables_initializer())
+	# create saver to save model variables
+	saver = tf.train.Saver()
+
+
+	#path = "/projects/katefgroup/yunchu/expert_mug2"
+	batch_size = args.batch_size
+	filenames = os.listdir(path)
+	filenames = tf.constant(filenames)
+	dataset = tf.data.Dataset.from_tensor_slices(filenames)
 
 
 
+	dataset = dataset.map(lambda filename: tuple(tf.py_func(_read_py_function, [filename],[tf.float32,tf.float32])))
 
-	def initGraph(self):
-		N =4
-		img_ph = tf.placeholder(tf.float32, [self.batch_size , 1, N, 84, 84, 3],"images")
-		cam_angle_ph = tf.placeholder(tf.float32, [self.batch_size , 1, N, 2],"angles")
-		depth_ph = tf.placeholder(tf.float32, [self.batch_size , 1, N, 84, 84],"zmapss")
-		goal_img_ph = tf.placeholder(tf.float32, [self.batch_size , 1, N, 84, 84, 3],"goal_images")
-		goal_cam_angle_ph = tf.placeholder(tf.float32, [self.batch_size , 1, N, 2],"goal_angles")
-		goal_depth_ph = tf.placeholder(tf.float32, [self.batch_size , 1, N, 84, 84],"goal_zmapss")
-		position_ph = tf.placeholder(tf.float32, [self.batch_size ,1,2],"position")
-		self._observations_phs = [img_ph,depth_ph,cam_angle_ph,position_ph, goal_img_ph, goal_cam_angle_ph, goal_depth_ph]
-		depth_ph = tf.expand_dims(depth_ph,-1)
-		#st()
-		self.model(img_ph,cam_angle_ph,depth_ph,batch_size=self.batch_size,exp_name=self.exp_name,position=position_ph)
+	for training_step in range(5000):
 
-		self.action_predictor =  self.model.action_predictor
-		# st()
-		# self.exp_name = self.model.exp_name
-
-
-
-
-
-	# def load_data(path):
-	# 	print("starting loading the data")
-
-	# 	datas = []
-		
-
-	# 	for transition in os.listdir(path):
-	# 		with open(transition, 'rb') as f:
-	# 			data = pickle.loads(f.read())
-	# 			dates.append([data["image_observation"], data['depth_observation'], data['cam_angles_observation'],data["actions"]])
-
-	# 	return dates
-
-	def process_data(datas):
-		arr1 = datas[0]
-		for i in range(1,len(datas)):
-			arr2 = datas[i]
-			res = np.vstack((arr1, arr2))
-
-
-
-
-	def _get_feed_dict(self,  batch):
-		"""Construct TensorFlow feed_dict from sample batch."""
-		feed_dict = {}
-		#st()
-		feed_dict.update({
-			self._observations_phs[i]: np.expand_dims(batch[i],1)
-			for i in range(4)
-		})
-
-		return feed_dict
-
-
-	def _read_py_function(self, filename):
-		with open(self.path + '/' + str(filename,encoding ="utf-8" ), 'rb') as f:
-			data = pickle.loads(f.read())
-		st()
-		return data["image_observation"], data['depth_observation'], data['cam_angles_observation'],data["actions"]
-		
-
-
-	def train_epoch(self, epoch):
-		training = True
-		losses = []
-		log_probs = []
-		kles = []
-		# tempData = {}
-		filenames = os.listdir(self.path)
-		filenames = tf.constant(filenames)
-		#["/var/data/image1.jpg", "/var/data/image2.jpg", ...]
-		#labels = [0, 37, 29, 1, ...]
-
-		dataset = tf.data.Dataset.from_tensor_slices(filenames)
-		dataset = dataset.map(lambda filename: tuple(tf.py_func(self._read_py_function, [filename],[tf.uint8,tf.float32,tf.float32,tf.float32])))
 		dataset = dataset.shuffle(buffer_size=100)
+		batches = (filenames.get_shape().as_list()[0])// batch_size
 
-		#st()
-		self.batches = (filenames.get_shape().as_list()[0])// self.batch_size
-
-		batched_dataset = dataset.batch(self.batch_size)
+		batched_dataset = dataset.batch(batch_size)
 		iterator = batched_dataset.make_one_shot_iterator()
 		next_element = iterator.get_next()
 
-
-		for batch_idx in range(self.batches):
-
-			#observation = self.sampler.random_batch()
-
-			# st()
-			elem = self._session.run(next_element)
-
-			fd = self._get_feed_dict(elem)
-
-			if batch_idx % self.export_interval == 0 and not self.action_predictor:
-				_,summ, loss,pred_view,query_view = self._session.run([self.model.opt,self.model.summ,self.model.loss_,self.model.vis["pred_views"][0],self.model.vis["query_views"][0]],
-																feed_dict=fd)
-				# st()
-				utils.img.imsave01("vis_new/{}_{}_pred.png".format(epoch,batch_idx), pred_view)
-				utils.img.imsave01("vis_new/{}_{}_gt.png".format(epoch,batch_idx), query_view)	
-			else:
-				_, loss,summ = self._session.run([self.model.opt,self.model.loss_,self.model.summ],feed_dict=fd)
-			# st()
-			step = epoch * self.batches + batch_idx
-			self.train_writer.add_summary(summ,step)
-			# utils.img.imsave01("pred_view_{}.png".format(batch_idx), pred_view)
-			# utils.img.imsave01("gt_view_{}.png".format(batch_idx), query_view)
+		# assert len(data.keys()) == 2
 
 
-			# losses.append(loss)
-			# log_probs.append(log_prob)
-			# kles.append(kle)
-
-			if batch_idx % self.log_interval == 0:
-				print('Train Epoch: {} {}/{}  \tLoss: {:.6f}'.format(
-									  epoch,batch_idx,self.batches,
-									  loss ))
-
- 
-if __name__ == "__main__":
-
-
-	# def _read_py_function(filename):
-	# 	with open(path + '/' + str(filename,encoding ="utf-8" ), 'rb') as f:
-	# 		data = pickle.loads(f.read())	
-	# 	return data["image_observation"], data['depth_observation'], data['cam_angles_observation'],data["actions"]
 		
 
+		# run training
+		
 
-	# path = "/projects/katefgroup/yunchu/expert_mug3"
+		for batch_idx in range(batches):
 
-	# filenames = os.listdir(path)
-	# filenames = tf.constant(filenames)
-	# #["/var/data/image1.jpg", "/var/data/image2.jpg", ...]
-	# #labels = [0, 37, 29, 1, ...]
+		#observation = self.sampler.random_batch()
 
-	# dataset = tf.data.Dataset.from_tensor_slices(filenames)
-	# dataset = dataset.map(lambda filename: tuple(tf.py_func(_read_py_function, [filename],[tf.uint8,tf.float32,tf.float32,tf.float32])))
-
-
-
-
-	# batched_dataset = dataset.batch(4)
-
-	# iterator = batched_dataset.make_one_shot_iterator()
-	# # next_element = iterator.get_next()
-
-	# # print(sess.run(next_element)) 
-	# #iterator = dataset.make_initializable_iterator()
-	# next_element = iterator.get_next()
-	# print(batched_dataset)
-
-	# with tf.Session() as sess:
-	# 	while True:
-
-	# 		try:
-	# 			elem = sess.run(next_element)s
-	# 			print('Success')
-	# 		except tf.errors.OutOfRangeError:
-	# 			print('End of dataset.')
-	# 			break
+		# st()
+			elem = sess.run(next_element)
+			observations = elem[0]
+			actions = elem[1]
+			#fd = _get_feed_dict(elem)
+			_,output_pred_run, mse_run = sess.run([opt,predicted_action_ph, mse], feed_dict={concatendated_state_ph: observations, actions_ph: actions})
 
 
 
-	mapTrain = MappingTrainer()
-	mapTrain.eager_train()
+
+
+		#mse_run,output_pred_run,actions = train_epoch(dataset,filenames,batch_size,opt,mse, sess,predicted_action_ph,concatendated_state_ph,actions_ph)
+		writer.add_scalars('scalar/train',{'mse_run':mse_run, 'avg_error': (output_pred_run - actions).mean()}, training_step)
+		if training_step % 10 == 0:
+			print('{0:04d} mse: {1:.3f}'.format(training_step, mse_run))
+			print((output_pred_run - actions).mean())
+			print((output_pred_run - actions).sum())
+			# print the mse every so often
+		if training_step % 50 == 0:
+			saver.save(sess, "store/model.ckpt")
+
+if __name__ == '__main__':
+	path = "/projects/katefgroup/yunchu/expert_mug2"
+	writer = SummaryWriter()
+	writer = SummaryWriter(log_dir='scalar')
+
+	main()
