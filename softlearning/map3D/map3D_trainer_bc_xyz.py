@@ -38,47 +38,6 @@ def build_model():
 	return concatendated_state_ph, actions_ph, out
 
 
-
-def train_epoch(dataset,filenames,batch_size,opt,mse, sess,predicted_action_ph,concatendated_state_ph,actions_ph):
-	dataset = dataset.shuffle(buffer_size=100)
-	batches = (filenames.get_shape().as_list()[0])// batch_size
-
-	batched_dataset = dataset.batch(batch_size)
-	iterator = batched_dataset.make_one_shot_iterator()
-	next_element = iterator.get_next()
-
-	# assert len(data.keys()) == 2
-
-
-	
-
-	# run training
-	
-
-	for batch_idx in range(batches):
-
-	#observation = self.sampler.random_batch()
-
-	# st()
-		elem = sess.run(next_element)
-		observations = elem[0]
-		actions = elem[1]
-		#fd = _get_feed_dict(elem)
-		_,output_pred_run, mse_run = sess.run([opt,predicted_action_ph, mse], feed_dict={concatendated_state_ph: observations, actions_ph: actions})
-
-
-
-		#print(mse_run)
-		#print((output_pred_run - actions).mean())
-		#print((output_pred_run - actions).sum())
-
-	return mse_run,output_pred_run,actions
-
-
-
-
-
-
 def main():
 	#sess = tf.Session()
 
@@ -132,20 +91,22 @@ def main():
 
 
 	dataset = dataset.map(lambda filename: tuple(tf.py_func(_read_py_function, [filename],[tf.float32,tf.float32])))
+	batches = (filenames.get_shape().as_list()[0])// batch_size
+
+
+
 
 	for training_step in range(1000):
 
-		#dataset = dataset.shuffle(buffer_size=100)
-		batches = (filenames.get_shape().as_list()[0])// batch_size
+		dataset = dataset.shuffle(buffer_size=100)
+		#batches = (filenames.get_shape().as_list()[0])// batch_size
 
 		batched_dataset = dataset.batch(batch_size)
-		iterator = batched_dataset.make_one_shot_iterator()
+		#iterator = batched_dataset.make_one_shot_iterator()
+		iterator = batched_dataset.make_initializable_iterator()
 		next_element = iterator.get_next()
+		sess.run(iterator.initializer)
 
-		# assert len(data.keys()) == 2
-
-
-		
 
 		# run training
 		
@@ -162,11 +123,6 @@ def main():
 			_,output_pred_run, mse_run = sess.run([opt,predicted_action_ph, mse], feed_dict={concatendated_state_ph: observations, actions_ph: actions})
 
 
-
-
-
-		#mse_run,output_pred_run,actions = train_epoch(dataset,filenames,batch_size,opt,mse, sess,predicted_action_ph,concatendated_state_ph,actions_ph)
-
 		#writer.add_scalars('scalar/train',{'mse_run':mse_run, 'avg_error': (output_pred_run - actions).mean()}, training_step)
 		writer.add_scalars(summary_dir,{'mse_run':mse_run, 'avg_error': (output_pred_run - actions).mean()}, training_step)
 		if training_step % 10 == 0:
@@ -181,7 +137,7 @@ def main():
 
 if __name__ == '__main__':
 	base_path = "/projects/katefgroup/yunchu/"
-	expert_list = ["expert_boat","expert_can1","expert_car3","expert_hat2","expert_mug3","expert_bowl1 ","expert_car1","expert_car4","expert_mug1"]
+	expert_list = ["expert_mug1"]
 	for expert_name in expert_list:
 		print("expert ", expert_name)
 		path = base_path+expert_name
