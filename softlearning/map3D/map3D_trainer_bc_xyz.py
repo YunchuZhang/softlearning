@@ -93,7 +93,7 @@ def main():
 	# parser.add_argument('path', type=str)
 	# parser.add_argument('envname', type=str)
 	# parser.add_argument("--max_timesteps", type=int)
-	parser.add_argument("--batch_size", type=int, default = 4096)
+	parser.add_argument("--batch_size", type=int, default = 2048)
 	#parser.add_argument('--num_rollouts', type=int, default=200,
 	help=('Number of expert roll outs')
 	args = parser.parse_args()
@@ -124,7 +124,7 @@ def main():
 
 	dataset = dataset.map(lambda filename: tuple(tf.py_func(_read_py_function, [filename],[tf.float32,tf.float32])))
 
-	for training_step in range(5000):
+	for training_step in range(10):
 
 		dataset = dataset.shuffle(buffer_size=100)
 		batches = (filenames.get_shape().as_list()[0])// batch_size
@@ -157,18 +157,26 @@ def main():
 
 
 		#mse_run,output_pred_run,actions = train_epoch(dataset,filenames,batch_size,opt,mse, sess,predicted_action_ph,concatendated_state_ph,actions_ph)
-		writer.add_scalars('scalar/train',{'mse_run':mse_run, 'avg_error': (output_pred_run - actions).mean()}, training_step)
+
+		#writer.add_scalars('scalar/train',{'mse_run':mse_run, 'avg_error': (output_pred_run - actions).mean()}, training_step)
+		writer.add_scalars(summary_dir,{'mse_run':mse_run, 'avg_error': (output_pred_run - actions).mean()}, training_step)
 		if training_step % 10 == 0:
 			print('{0:04d} mse: {1:.3f}'.format(training_step, mse_run))
 			print((output_pred_run - actions).mean())
 			print((output_pred_run - actions).sum())
 			# print the mse every so often
 		if training_step % 50 == 0:
-			saver.save(sess, "store/model.ckpt")
+			store_path = "store/" + expert_name + "/model.ckpt"
+			#saver.save(sess, "store/model.ckpt")
+			saver.save(sess, store_path)
 
 if __name__ == '__main__':
-	path = "/projects/katefgroup/yunchu/expert_mug2"
-	writer = SummaryWriter()
-	writer = SummaryWriter(log_dir='scalar')
-
-	main()
+	base_path = "/projects/katefgroup/yunchu/"
+	expert_list = ["expert_bowl2","expert_car2","expert_hat1","expert_mug2","expert_boat","expert_can1","expert_car3","expert_hat2","expert_mug3","expert_bowl1 ","expert_car1","expert_car4","expert_mug1"]
+	for expert_name in expert_list:
+		print("expert ", expert_name)
+		path = base_path+expert_name
+		writer = SummaryWriter()
+		summary_dir = "scalar/"+expert_name
+		writer = SummaryWriter(log_dir=summary_dir)
+		main()
