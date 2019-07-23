@@ -105,8 +105,17 @@ def main():
 	# create loss
 	mse = tf.reduce_mean(0.5 * tf.square(actions_ph - predicted_action_ph))
 
+	#set learning rate
+	global_step = tf.Variable(0, trainable=False)
+	decay_steps = 500
+	lr = tf.train.exponential_decay(0.003,
+                                    global_step,
+                                    decay_steps,
+                                    0.96,
+                                    staircase=True)
+
 	# create optimizer
-	opt = tf.train.AdamOptimizer(learning_rate=0.000001).minimize(mse)
+	opt = tf.train.AdamOptimizer(learning_rate=0.000001).minimize(mse, global_step=global_step)
 
 	# initialize variables
 	sess.run(tf.global_variables_initializer())
