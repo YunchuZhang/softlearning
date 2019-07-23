@@ -70,7 +70,7 @@ env = GymAdapter(None,
 
 replay_pool = SimpleReplayPool(env, concat_observations=False, max_size=1e4)
 #policy = get_policy('UniformPolicy', env)
-checkpoint_path = "/projects/katefgroup/robert/result_" + str(mesh) + "/checkpoint_750"
+checkpoint_path = "/projects/katefgroup/robert/result_" + str(mesh) + "/checkpoint_1000"
 print("--------------")
 print(checkpoint_path)
 print("--------------")

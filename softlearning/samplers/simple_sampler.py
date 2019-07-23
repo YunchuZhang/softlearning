@@ -11,6 +11,7 @@ import time
 # import time
 # >>>>>>> Stashed changes
 from .base_sampler import BaseSampler
+import tensorflow as tf
 
 class SimpleSampler(BaseSampler):
     def __init__(self, **kwargs):
@@ -24,6 +25,10 @@ class SimpleSampler(BaseSampler):
         self._n_episodes = 0
         self._current_observation = None
         self._total_samples = 0
+
+
+
+
 
     def _process_observations(self,
                               observation,
@@ -42,6 +47,17 @@ class SimpleSampler(BaseSampler):
         }
 
         return processed_observation
+    def build_model(self):
+
+        concatendated_state_ph = tf.placeholder(tf.float32, [None, 16])
+        actions_ph = tf.placeholder(dtype=tf.float32, shape=[None, 2])
+        out = tf.placeholder(dtype=tf.float32, shape=[None, 2])
+
+        out = tf.layers.dense(concatendated_state_ph, 128, activation = tf.nn.relu)
+        out = tf.layers.dense(out, 64, activation = tf.nn.relu)
+        out = tf.layers.dense(out, 32, activation = tf.nn.relu)
+        out = tf.layers.dense(out, 2)
+        return concatendated_state_ph, actions_ph, out
 
     def forward(self,active_obs):
         # st()
@@ -76,11 +92,33 @@ class SimpleSampler(BaseSampler):
             # st()
         #st()
 
-        action = self.policy.actions_np(active_obs[-9:])[0] #select only part of the active obs
+
+
+
+        
+        tf.reset_default_graph()
+        with tf.Session() as sess:
+            concatendated_state_ph, actions_ph, predicted_action_ph = self.build_model()
+
+            checkpoint_path = "/projects/katefgroup/yunchu/" + "mug2/model.ckpt"
+            # restore the saved model
+            saver = tf.train.Saver()
+
+            saver.restore(sess, checkpoint_path)
+            sess.run(tf.global_variables_initializer())
+
+            action = sess.run(predicted_action_ph, feed_dict={concatendated_state_ph: np.concatenate((active_obs[-9][0],active_obs[-8][0][3:]), 0).reshape(1,16)})
+        #print(action)
+        
+
+
+
+        #action = self.policy.actions_np(active_obs[-9:])[0] #select only part of the active obs
+
         #action = self.policy.actions_np(active_obs)[0] #select only part of the active obs
 
-        # st()
-        next_observation, reward, terminal, info = self.env.step(action)
+        #st()
+        next_observation, reward, terminal, info = self.env.step(action[0])
 
         reward=reward[0]
         terminal =terminal[0]
@@ -95,7 +133,7 @@ class SimpleSampler(BaseSampler):
 
         processed_sample = self._process_observations(
             observation=self._current_observation,
-            action=action,
+            action=action[0],
             reward=reward,
             terminal=terminal,
             next_observation=next_observation,
@@ -117,14 +155,17 @@ class SimpleSampler(BaseSampler):
         # processed_sample = processed_sample_filter
         # st()
 
-
+        length = 0
         if terminal:
             print("reward",reward,"successs within ",self._path_length)
+            length = 1
 
     
         if (self._path_length >= self._max_path_length):
             print("unsuccessful",reward,self._path_length)
+            length = 2
 
+        
 
         for key, value in processed_sample.items():
             self._current_path[key].append(value)
@@ -140,11 +181,11 @@ class SimpleSampler(BaseSampler):
                 for field_name, values in self._current_path.items()
             }
             #st()
-            #self.pool.add_path(last_path)
+            self.pool.add_path(last_path)
 
-            if terminal and reward > -1.0 and self._path_length < self._max_path_length and self._path_length >1:
-                print("save")
-                self.pool.add_path(last_path)
+            #if terminal and reward > -1.0 and self._path_length < self._max_path_length and self._path_length >1:
+                #print("save")
+                #self.pool.add_path(last_path)
 
 
             # st()
@@ -164,7 +205,7 @@ class SimpleSampler(BaseSampler):
         else:
             self._current_observation = next_observation
 
-        return next_observation, reward, terminal, info
+        return next_observation, reward, terminal, info ,length
 
     def random_batch(self, batch_size=None, **kwargs):
         batch_size = batch_size or self._batch_size
