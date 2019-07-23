@@ -101,8 +101,8 @@ def rollouts(n_paths,
     paths = sampler.get_last_n_paths()
 
     if render_mode == 'rgb_array':
-        for i, path in enumerate(paths):
-            path['images'] = np.stack(videos[i], axis=0)
+        for i in range(len(videos)):
+            paths[i]['images'] = np.stack(videos[i], axis=0)
 
     return paths
 

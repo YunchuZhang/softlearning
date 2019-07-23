@@ -166,8 +166,8 @@ class RemoteGymAdapter(SoftlearningEnv):
         return ray_get_and_free([env.reset.remote() for env in self._envs])
 
 
-    def render(self, *args, **kwargs):
-        raise NotImplementedError
+    def render(self, mode='rgb_array'):
+        return ray_get_and_free(self._envs[0].render.remote(mode=mode))
 
 
     def close(self, *args, **kwargs):

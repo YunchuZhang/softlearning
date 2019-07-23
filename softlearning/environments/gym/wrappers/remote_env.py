@@ -44,6 +44,13 @@ class RemoteGymEnv(object):
         return self._env.action_space
 
 
+    def render(self, mode='rgb_array'):
+        if mode == 'rgb_array':
+            return self._env.render(mode=mode).copy()
+
+        self._env.render()
+
+
     def is_multiworld_env(self):
         # TODO: fix this to work with non-multitask environments
         return hasattr(self._env.env, 'compute_rewards')

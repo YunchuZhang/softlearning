@@ -9,7 +9,6 @@ import time
 import ipdb
 st = ipdb.set_trace
 
-from softlearning.misc.utils import save_video
 
 class RLAlgorithm():
     """Abstract RLAlgorithm.
