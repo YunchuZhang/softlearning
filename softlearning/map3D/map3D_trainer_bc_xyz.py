@@ -52,7 +52,7 @@ def main():
 	# parser.add_argument('path', type=str)
 	# parser.add_argument('envname', type=str)
 	# parser.add_argument("--max_timesteps", type=int)
-	parser.add_argument("--batch_size", type=int, default = 2048)
+	parser.add_argument("--batch_size", type=int, default = 64)
 	#parser.add_argument('--num_rollouts', type=int, default=200,
 	help=('Number of expert roll outs')
 	args = parser.parse_args()

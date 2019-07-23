@@ -114,8 +114,9 @@ class SimpleSampler(BaseSampler):
 
 
         #action = self.policy.actions_np(active_obs[-9:])[0] #select only part of the active obs
+        current_state = np.concatenate((active_obs[-9][0],active_obs[-8][0][3:]), 0).reshape(1,16)
 
-        #action = self.policy.actions_np(active_obs)[0] #select only part of the active obs
+        expert_action = self.policy.actions_np(active_obs[])[0] #select only part of the active obs
 
         #st()
         next_observation, reward, terminal, info = self.env.step(action[0])
@@ -205,7 +206,7 @@ class SimpleSampler(BaseSampler):
         else:
             self._current_observation = next_observation
 
-        return next_observation, reward, terminal, info ,length
+        return current_state, next_observation, expert_action, reward, terminal, info ,length
 
     def random_batch(self, batch_size=None, **kwargs):
         batch_size = batch_size or self._batch_size
