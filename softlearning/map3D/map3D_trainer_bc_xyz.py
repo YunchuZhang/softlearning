@@ -12,6 +12,7 @@ import os
 import pickle
 import argparse
 from tensorboardX import SummaryWriter
+from test_bc import rollout_and_gather_data
 import utils_map as utils
 
 st = ipdb.set_trace
@@ -134,6 +135,17 @@ def main():
 			store_path = "store/" + expert_name + "/model.ckpt"
 			#saver.save(sess, "store/model.ckpt")
 			saver.save(sess, store_path)
+
+
+def dagger(number_iterations, mesh):
+	for iteration in range(number_iterations):
+		#sample trajectories and store the experts actions
+		max_rollouts = 50
+		rollout_and_gather_data(max_rollouts, mesh)
+		#combine old experience and the expertactions on the sample trajectories to dataset D
+
+		#train classifier on D
+
 
 if __name__ == '__main__':
 	base_path = "/projects/katefgroup/yunchu/"
