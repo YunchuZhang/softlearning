@@ -52,7 +52,7 @@ ALGORITHM_PARAMS_BASE = {
     'kwargs': {
         'epoch_length': 10000,
         'train_every_n_steps': 1,
-        'n_train_repeat': 2,
+        'n_train_repeat': 3,
         'avg_weights_every_n_steps': 2,
         'eval_render_mode': None,
         'eval_n_episodes': 10,
@@ -450,67 +450,34 @@ def get_variant_spec_3D(universe,
     variant_spec = get_variant_spec_base(
         universe, domain, task, policy, algorithm, sampler, replay_pool, *args, **kwargs)
 
-    # map3D_constants.set_experiment("0520_bulletpush3D_4_multicam_bn_mask_nview1_vp")
-    #map3D_model = BulletPush3DTensor4_cotrain()
-
-
-    # variant_spec["Q_params"]["kwargs"]["preprocessor_params"] = {}
-    variant_spec["Q_params"]['input_shape'] = [(32,32,32,16)]
-
-    variant_spec["policy_params"]["input_shape"] = [(32,32,32,16)]
-    # variant["Q_params"]["kwargs"]["preprocessor_params"]["type"] = 'map3D_preprocessor_nonkeras'
-    # variant["Q_params"]["kwargs"]["preprocessor_params"]["kwargs"] = {}
-
-    # variant["Q_params"]["kwargs"]["preprocessor_params"]["kwargs"]["mapping_model"] = BulletPush3DTensor4_cotrain()
-    # st()
-    #variant_spec["map3D"] = map3D_model
     environment_params = variant_spec['environment_params']
     env_train_params = environment_params['training']
     # env_train_params["kwargs"] = {}
     env_train_params["kwargs"]["observation_keys"] = ["image_observation","depth_observation","cam_angles_observation","image_desired_goal","desired_goal_depth","goal_cam_angle"]
     #env_train_params["kwargs"]["map3D"] = map3D_model
 
+    variant_spec["Q_params"]['input_shape'] = [(128,)]
+    variant_spec["policy_params"]["input_shape"] = [(128,)]
+
     preprocessor_params = {
         'type': 'convnet3d_preprocessor',
-        'input_shape':(32,32,32,16),
+        'input_shape':(32,32,32,8),
         'kwargs': {
-            'output_size': 128,
+            'output_size': 64,
             'conv_filters': (16,32,64),
             'conv_kernel_sizes': (5,4,3),
-            'conv_strides': (3, 2, 2)
+            'conv_strides': (3, 2, 2),
             #'pool_type': 'MaxPool3D',
             #'pool_sizes':(2,2,2,2,2),
             #'pool_strides': (2,2,2,2,2),
-            'dense_hidden_layer_sizes': (64, 64),
+            'dense_hidden_layer_sizes': (256, 128),
         },
     }
-    variant_spec['policy_params']['kwargs']['preprocessor_params'] = (
-        preprocessor_params.copy())
-    variant_spec['Q_params']['kwargs']['preprocessor_params'] = (
-        preprocessor_params.copy())
-    # env_eval_params  = environment_params['evaluation']
-    # env_train_params["kwargs"] = {}
-    # env_eval_params["kwargs"]["observation_keys"] = ["image_observation","depth_observation","cam_angles_observation","image_desired_goal","desired_goal_depth","goal_cam_angle","achieved_goal"]
-    # env_eval_params["kwargs"]["map3D"] = map3D_model
-    # if 'image' in task.lower() or 'image' in domain.lower():
-    #     preprocessor_params = {
-    #         'type': 'map3D_preprocessor',
-    #         # TODO: These are just copied and need to be changed
-    #         'kwargs': {
-    #             'mapping_model': map3D_model,
-    #             'output_size': M,
-    #             'filters': (4, 4),
-    #             'kernel_sizes': ((3, 3), (3, 3)),
-    #             'pool_type': 'MaxPool2D',
-    #             'pool_sizes': ((2, 2), (2, 2)),
-    #             'pool_strides': (2, 2),
-    #             'dense_hidden_layer_sizes': (),
-    #         },
-    #     }
-    #     variant_spec['policy_params']['kwargs']['preprocessor_params'] = (
-    #         preprocessor_params.copy())
-    #     variant_spec['Q_params']['kwargs']['preprocessor_params'] = (
-    #         preprocessor_params.copy())
+    variant_spec['preprocess_params'] = preprocessor_params.copy()
+    #variant_spec['policy_params']['kwargs']['preprocessor_params'] = (
+    #    preprocessor_params.copy())
+    #variant_spec['Q_params']['kwargs']['preprocessor_params'] = (
+    #    preprocessor_params.copy())
 
     return variant_spec
 

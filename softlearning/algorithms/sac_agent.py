@@ -19,6 +19,7 @@ from softlearning.samplers.utils import get_sampler_from_variant
 from softlearning.samplers import rollouts
 from softlearning.value_functions.utils import get_Q_function_from_variant
 from softlearning.misc.utils import initialize_tf_variables
+from softlearning.preprocessors.utils import get_preprocessor_from_params
 
 #from .rl_agent import RLAgent
 
@@ -108,6 +109,8 @@ class SACAgent():
 
         self._sampler = get_sampler_from_variant(variant)
         self._pool = get_replay_pool_from_variant(variant, self._training_environment)
+
+        self._preprocessor = get_preprocessor_from_params(self._training_environment, variant['preprocess_params'])
 
         self._Qs = get_Q_function_from_variant(variant, self._training_environment)
         self._policy = get_policy_from_variant(variant, self._training_environment, self._Qs)
@@ -407,30 +410,55 @@ class SACAgent():
         obs_zmap_goal = tf.expand_dims(obs_zmap_goal,-1)
 
         # st()
-        memory = self.map3D(obs_images, obs_camAngle, obs_zmap, is_training=None, reuse=False)
-        print("MEMORY SHAPE:", tf.shape(memory))
-        memory_goal = self.map3D(obs_images_goal, obs_camAngle_goal ,obs_zmap_goal, is_training=None, reuse=True)
+        memory = self.map3D(obs_images,
+                            obs_camAngle,
+                            obs_zmap,
+                            is_training=None,
+                            reuse=False)
+        print("MEMORY SHAPE:", memory.get_shape())
+
+        memory_goal = self.map3D(obs_images_goal,
+                                 obs_camAngle_goal,
+                                 obs_zmap_goal,
+                                 is_training=None,
+                                 reuse=True)
 
         if self._stop_3D_grads:
             memory = tf.stop_gradient(memory)
             memory_goal = tf.stop_gradient(memory_goal)
 
-        self.memory = [tf.concat([memory,memory_goal],-1)]
-        print("MEMORY + GOAL SHAPE:", tf.shape(self.memory))
+        latent_state = self._preprocessor([memory])
+        latent_goal = self._preprocessor([memory_goal])
+        print("LATENT SHAPE:", latent_state.get_shape())
+
+        self.memory = [tf.concat([latent_state, latent_goal], -1)]
+        print("MERGED MEMORY SHAPE:", self.memory[0].get_shape())
 
         next_obs_images, next_obs_zmap, next_obs_camAngle, next_obs_images_goal, next_obs_zmap_goal, next_obs_camAngle_goal = [tf.expand_dims(i,1) for i in self._next_observations_phs[:6]]
 
         next_obs_zmap = tf.expand_dims(next_obs_zmap,-1)
         next_obs_zmap_goal = tf.expand_dims(next_obs_zmap_goal,-1)
 
-        memory_next = self.map3D(next_obs_images,next_obs_camAngle,next_obs_zmap, is_training=None,reuse=True)
-        memory_next_goal = self.map3D(next_obs_images_goal,next_obs_camAngle_goal,next_obs_zmap_goal, is_training=None,reuse=True)
+        memory_next = self.map3D(next_obs_images,
+                                 next_obs_camAngle,
+                                 next_obs_zmap,
+                                 is_training=None,
+                                 reuse=True)
+
+        memory_next_goal = self.map3D(next_obs_images_goal,
+                                      next_obs_camAngle_goal,
+                                      next_obs_zmap_goal,
+                                      is_training=None,
+                                      reuse=True)
 
         if self._stop_3D_grads:
             memory_next = tf.stop_gradient(memory_next)
             memory_next_goal = tf.stop_gradient(memory_next_goal)
 
-        self.memory_next = [tf.concat([memory_next,memory_next_goal],-1)]
+        latent_state_next = self._preprocessor([memory_next])
+        latent_goal_next = self._preprocessor([memory_next_goal])
+
+        self.memory_next = [tf.concat([latent_state_next, latent_goal_next], -1)]
 
 
     def _get_Q_target(self):

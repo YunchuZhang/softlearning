@@ -115,16 +115,17 @@ def convnet3d_preprocessor(
     # images = tf.keras.layers.Reshape(image_shape)(images_flat)
 
     # conv_out = images
-    for filters, kernel_size, stride, pool_size, pool_stride in zip(
+    for filters, kernel_size, stride in zip(
             conv_filters,
             conv_kernel_sizes,
-            conv_strides,
-            pool_sizes,
-            pool_strides):
+            conv_strides):
+
+        print("FILTER SIZE:", filters)
+
         conv_out = tf.keras.layers.Conv3D(
             filters=filters,
             kernel_size=kernel_size,
-            padding="VALID",
+            padding="SAME",
             activation=tf.nn.relu,
             strides=stride,
             *args,
@@ -133,7 +134,7 @@ def convnet3d_preprocessor(
         #conv_out = getattr(tf.keras.layers, pool_type)(
         #    pool_size=pool_size, strides=pool_stride
         #)(conv_out)
-    print("CONV OUT SHAPE:", tf.shape(conv_out))
+        print("CONV OUT SHAPE:", conv_out.get_shape())
     flattened = tf.keras.layers.Flatten()(conv_out)
     # print(flattened)
     # concatenated_output = tf.keras.layers.Lambda(
