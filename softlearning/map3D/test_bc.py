@@ -29,12 +29,12 @@ multiworld.register_all_envs()
 
 import argparse
 
-def rollout_and_gather_data(max_rollouts, mesh):
-	parser = argparse.ArgumentParser()
-	parser.add_argument("--mesh", help="input object")
-	args = parser.parse_args()
+def rollout_and_gather_data(max_rollouts, mesh, iteration):
+	# parser = argparse.ArgumentParser()
+	# parser.add_argument("--mesh", help="input object")
+	# args = parser.parse_args()
 
-	mesh = args.mesh
+	# mesh = args.mesh
 	print(mesh)
 	change_env_to_use_correct_mesh(mesh)
 
@@ -108,7 +108,7 @@ def rollout_and_gather_data(max_rollouts, mesh):
 
 
 
-	sampler = SimpleSampler(batch_size=40, max_path_length=50, min_pool_size=0,mesh = mesh)
+	sampler = SimpleSampler(batch_size=40, max_path_length=50, min_pool_size=0,mesh = mesh, iteration=iteration)
 	sampler.initialize(env, policy, replay_pool)
 	length = 40
 
@@ -159,13 +159,15 @@ def rollout_and_gather_data(max_rollouts, mesh):
 					pickle.dump(expert_data, f, pickle.HIGHEST_PROTOCOL)
 				#print(expert_data_path)
 
-
 			if length == 1:
 				success = success + 1
 			print(number_rollouts)
 		if number_rollouts >max_rollouts: break
 
-	print(success/max_rollouts)
+	succes_rate = success/max_rollouts
+	print(succes_rate)
+
+	return succes_rate
 
 #st()
 #rollout

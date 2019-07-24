@@ -101,7 +101,8 @@ class SimpleSampler(BaseSampler):
             concatendated_state_ph, actions_ph, predicted_action_ph = self.build_model()
 
             #checkpoint_path = "/projects/katefgroup/yunchu/" + "bowl2/model.ckpt"
-            checkpoint_path = "/projects/katefgroup/yunchu/store/" + "expert_"+self.mesh + "/model.ckpt"
+            #checkpoint_path = "/projects/katefgroup/yunchu/store/" + "expert_"+self.mesh + "/model.ckpt"
+            checkpoint_path = "/projects/katefgroup/yunchu/store/" +  self.mesh + "_dagger"+ "/model_"+ str(self.iteration) +".ckpt"
             #print("checkpoint_path", checkpoint_path)
             # restore the saved model
             saver = tf.train.Saver()

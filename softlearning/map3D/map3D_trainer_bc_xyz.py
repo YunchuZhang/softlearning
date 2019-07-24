@@ -43,7 +43,7 @@ def build_model():
 	out = tf.layers.dense(out, 32, activation = tf.nn.relu)
 	out = tf.layers.dense(out, 2)
 	return concatendated_state_ph, actions_ph, out
-def main_dagger():
+def main_dagger(iteration):
 
 	gpu_options = tf.GPUOptions(allow_growth=True)
 	session = tf.Session(config=tf.ConfigProto(gpu_options=gpu_options))
@@ -116,7 +116,7 @@ def main_dagger():
 	batches = ((filenames_a.get_shape().as_list()[0])+(filenames.get_shape().as_list()[0]))// batch_size
 
 
-	for training_step in range(201):
+	for training_step in range(20): #201
 
 		dataset = dataset.shuffle(buffer_size=100)
 		#batches = (filenames.get_shape().as_list()[0])// batch_size
@@ -150,10 +150,11 @@ def main_dagger():
 			print((output_pred_run - actions).mean())
 			print((output_pred_run - actions).sum())
 			# print the mse every so often
-		if training_step % 50 == 0:
-			store_path = "store/" + object_name + "_dagger" + "/model.ckpt"
-			#saver.save(sess, "store/model.ckpt")
-			saver.save(sess, store_path)
+		#if training_step % 50 == 0:
+			#store_path = "store/" + object_name + "_dagger" + "/model.ckpt"
+	store_path = "/projects/katefgroup/yunchu/store/" +  object_name + "_dagger"+ "/model_"+ str(iteration) +".ckpt" #TODO store the last, change maybe to store the best 
+	#saver.save(sess, "store/model.ckpt")
+	saver.save(sess, store_path)
 
 
 
@@ -257,12 +258,16 @@ def main():
 
 def dagger(number_iterations, mesh):
 	for iteration in range(number_iterations):
-		#sample trajectories and store the experts actions
-		max_rollouts = 50
-		rollout_and_gather_data(max_rollouts, mesh)
 		#combine old experience and the expertactions on the sample trajectories to dataset D
+		# and train bc agent on D
+		main_dagger(iteration)
+		#sample trajectories and store the experts actions
+		max_rollouts = 5 #how many starting conditions to sample and to roll out
+		succes_rate = rollout_and_gather_data(max_rollouts, mesh, iteration)
 
-		#train classifier on D
+
+		print("done with iteration ", iteration," on object", mesh, "with succes rate", succes_rate)
+
 
 
 if __name__ == '__main__':
@@ -278,7 +283,9 @@ if __name__ == '__main__':
 		summary_dir = "scalar/"+object_name
 		writer = SummaryWriter(log_dir=summary_dir)
 		#main()
-		main_dagger()
+		#main_dagger()
+		number_iterations = 10 #number of dagger iterations
+		dagger(number_iterations, object_name)
 
 
 
