@@ -470,19 +470,17 @@ def get_variant_spec_3D(universe,
     env_train_params["kwargs"]["observation_keys"] = ["image_observation","depth_observation","cam_angles_observation","image_desired_goal","desired_goal_depth","goal_cam_angle"]
     #env_train_params["kwargs"]["map3D"] = map3D_model
 
-
-
-
     preprocessor_params = {
         'type': 'convnet3d_preprocessor',
         'input_shape':(32,32,32,16),
         'kwargs': {
             'output_size': 128,
-            'conv_filters': (16,32,64,128,128),
-            'conv_kernel_sizes': (4,4,4,4,3),
-            'pool_type': 'MaxPool3D',
-            'pool_sizes':(2,2,2,2,2),
-            'pool_strides': (2,2,2,2,2),
+            'conv_filters': (16,32,64),
+            'conv_kernel_sizes': (5,4,3),
+            'conv_strides': (3, 2, 2)
+            #'pool_type': 'MaxPool3D',
+            #'pool_sizes':(2,2,2,2,2),
+            #'pool_strides': (2,2,2,2,2),
             'dense_hidden_layer_sizes': (64, 64),
         },
     }

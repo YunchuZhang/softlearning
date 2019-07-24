@@ -408,6 +408,7 @@ class SACAgent():
 
         # st()
         memory = self.map3D(obs_images, obs_camAngle, obs_zmap, is_training=None, reuse=False)
+        print("MEMORY SHAPE:", tf.shape(memory))
         memory_goal = self.map3D(obs_images_goal, obs_camAngle_goal ,obs_zmap_goal, is_training=None, reuse=True)
 
         if self._stop_3D_grads:
@@ -415,6 +416,7 @@ class SACAgent():
             memory_goal = tf.stop_gradient(memory_goal)
 
         self.memory = [tf.concat([memory,memory_goal],-1)]
+        print("MEMORY + GOAL SHAPE:", tf.shape(self.memory))
 
         next_obs_images, next_obs_zmap, next_obs_camAngle, next_obs_images_goal, next_obs_zmap_goal, next_obs_camAngle_goal = [tf.expand_dims(i,1) for i in self._next_observations_phs[:6]]
 

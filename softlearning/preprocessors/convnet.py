@@ -85,6 +85,7 @@ def convnet3d_preprocessor(
         output_size,
         conv_filters=(32, 32),
         conv_kernel_sizes=((5, 5), (5, 5)),
+        conv_strides=(1, 1),
         pool_type='MaxPool3D',
         pool_sizes=((2, 2), (2, 2)),
         pool_strides=(2, 2),
@@ -114,20 +115,25 @@ def convnet3d_preprocessor(
     # images = tf.keras.layers.Reshape(image_shape)(images_flat)
 
     # conv_out = images
-    for filters, kernel_size, pool_size, strides in zip(
-            conv_filters, conv_kernel_sizes, pool_sizes, pool_strides):
+    for filters, kernel_size, stride, pool_size, pool_stride in zip(
+            conv_filters,
+            conv_kernel_sizes,
+            conv_strides,
+            pool_sizes,
+            pool_strides):
         conv_out = tf.keras.layers.Conv3D(
             filters=filters,
             kernel_size=kernel_size,
-            padding="SAME",
+            padding="VALID",
             activation=tf.nn.relu,
+            strides=stride,
             *args,
             **kwargs
         )(conv_out)
-        conv_out = getattr(tf.keras.layers, pool_type)(
-            pool_size=pool_size, strides=strides
-        )(conv_out)
-    # print(conv_out)  
+        #conv_out = getattr(tf.keras.layers, pool_type)(
+        #    pool_size=pool_size, strides=pool_stride
+        #)(conv_out)
+    print("CONV OUT SHAPE:", tf.shape(conv_out))
     flattened = tf.keras.layers.Flatten()(conv_out)
     # print(flattened)
     # concatenated_output = tf.keras.layers.Lambda(
@@ -151,83 +157,83 @@ def convnet3d_preprocessor(
 
     return model
 
-def map3D_preprocessor(
-        input_shapes,
-        output_size,
-        mapping_model=None,
-        data_pos={},
-        data_format='channels_last',
-        filters=None,
-        kernal_sizes=None,
-        conv_strides=None,
-        activation=tf.nn.relu,
-        pool_type=None,
-        pool_sizes=None,
-        pool_strides=None,
-        dense_hidden_layer_sizes=(64, 64),
-        name='map3D_preprocessor',
-        *args,
-        **kwargs):
-    inputs = [
-        tf.keras.layers.Input(shape=input_shape)
-        for input_shape in input_shapes
-    ]
-
-    #TODO: Need to change this so that the inputs are mapped to the right place
-    # also not sure if this is the best way of doing this
-    conv_out = mapping_model(inputs[data_pos['images']], inputs[data_pos['zmaps']], inputs[data_pos['cam_angles']])
-
-    for num_filters, kernal_size, conv_stride, pool_size, pool_stride in zip(
-            filters,
-            kernal_sizes,
-            conv_strides,
-            pool_sizes,
-            pool_strides):
-
-        conv_out = tf.keras.layers.Conv3D(
-            filters=num_filters,
-            kernal_size=kernal_size,
-            strides=stride,
-            activation=activation
-        )(conv_out)
-        # Get the Pool based on the pool name
-        conv_out = getattr(tf.keras.layers, pool_type)(
-            pool_size=pool_size, strides=pool_stride
-        )(conv_out)
-
-    flattened = tf.keras.layers.Flatten()(conv_out)
-
-    output = (
-        feedforward_model(
-            input_shapes=(flattened[1:].as_list(), ),
-            output_size=output_size,
-            hidden_layer_sizes=dense_hidden_layer_sizes,
-            activation='relu',
-            output_activation='linear',
-            *args,
-            **kwargs
-        )([flattened])
-        if dense_hidden_layer_sizes
-        else flattened)
-
-    model = create_picklable_keras_model(inputs, output, name=name)
-
-    return model
-
-
-def map3D_preprocessor_nonkeras(
-        name='map3D_preprocessor',
-        mapping_model=None,
-        *args,
-        **kwargs):
-
-    #TODO: Need to change this so that the inputs are mapped to the right place
-    # also not sure if this is the best way of doing this
-    # conv_out = mapping_model(inputs[data_pos['images']], inputs[data_pos['zmaps']], inputs[data_pos['cam_angles']])
-    # model = BulletPush3DTensor4_cotrain()
-    model = mapping_model
-    const.set_experiment("rl_new")
-    return model
+#def map3D_preprocessor(
+#        input_shapes,
+#        output_size,
+#        mapping_model=None,
+#        data_pos={},
+#        data_format='channels_last',
+#        filters=None,
+#        kernal_sizes=None,
+#        conv_strides=None,
+#        activation=tf.nn.relu,
+#        pool_type=None,
+#        pool_sizes=None,
+#        pool_strides=None,
+#        dense_hidden_layer_sizes=(64, 64),
+#        name='map3D_preprocessor',
+#        *args,
+#        **kwargs):
+#    inputs = [
+#        tf.keras.layers.Input(shape=input_shape)
+#        for input_shape in input_shapes
+#    ]
+#
+#    #TODO: Need to change this so that the inputs are mapped to the right place
+#    # also not sure if this is the best way of doing this
+#    conv_out = mapping_model(inputs[data_pos['images']], inputs[data_pos['zmaps']], inputs[data_pos['cam_angles']])
+#
+#    for num_filters, kernal_size, conv_stride, pool_size, pool_stride in zip(
+#            filters,
+#            kernal_sizes,
+#            conv_strides,
+#            pool_sizes,
+#            pool_strides):
+#
+#        conv_out = tf.keras.layers.Conv3D(
+#            filters=num_filters,
+#            kernal_size=kernal_size,
+#            strides=stride,
+#            activation=activation
+#        )(conv_out)
+#        # Get the Pool based on the pool name
+#        conv_out = getattr(tf.keras.layers, pool_type)(
+#            pool_size=pool_size, strides=pool_stride
+#        )(conv_out)
+#
+#    flattened = tf.keras.layers.Flatten()(conv_out)
+#
+#    output = (
+#        feedforward_model(
+#            input_shapes=(flattened[1:].as_list(), ),
+#            output_size=output_size,
+#            hidden_layer_sizes=dense_hidden_layer_sizes,
+#            activation='relu',
+#            output_activation='linear',
+#            *args,
+#            **kwargs
+#        )([flattened])
+#        if dense_hidden_layer_sizes
+#        else flattened)
+#
+#    model = create_picklable_keras_model(inputs, output, name=name)
+#
+#    return model
+#
+#
+#def map3D_preprocessor_nonkeras(
+#        name='map3D_preprocessor',
+#        mapping_model=None,
+#        *args,
+#        **kwargs):
+#
+#    #TODO: Need to change this so that the inputs are mapped to the right place
+#    # also not sure if this is the best way of doing this
+#    # conv_out = mapping_model(inputs[data_pos['images']], inputs[data_pos['zmaps']], inputs[data_pos['cam_angles']])
+#    # model = BulletPush3DTensor4_cotrain()
+#    model = mapping_model
+#    const.set_experiment("rl_new")
+#    return model
 
 
 
