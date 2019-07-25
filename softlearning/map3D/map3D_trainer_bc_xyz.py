@@ -114,9 +114,9 @@ def main_dagger(iteration):
 
 
 	batches = ((filenames_a.get_shape().as_list()[0])+(filenames.get_shape().as_list()[0]))// batch_size
+	print("Total Data",((filenames_a.get_shape().as_list()[0])+(filenames.get_shape().as_list()[0])))
 
-
-	for training_step in range(20): #201
+	for training_step in range(101): #201
 
 		dataset = dataset.shuffle(buffer_size=100)
 		#batches = (filenames.get_shape().as_list()[0])// batch_size
@@ -150,7 +150,7 @@ def main_dagger(iteration):
 			print((output_pred_run - actions).mean())
 			print((output_pred_run - actions).sum())
 			# print the mse every so often
-		#if training_step % 50 == 0:
+		#if training_s tep % 50 == 0:
 			#store_path = "store/" + object_name + "_dagger" + "/model.ckpt"
 	store_path = "/projects/katefgroup/yunchu/store/" +  object_name + "_dagger"+ "/model_"+ str(iteration) +".ckpt" #TODO store the last, change maybe to store the best 
 	#saver.save(sess, "store/model.ckpt")
@@ -262,7 +262,7 @@ def dagger(number_iterations, mesh):
 		# and train bc agent on D
 		main_dagger(iteration)
 		#sample trajectories and store the experts actions
-		max_rollouts = 5 #how many starting conditions to sample and to roll out
+		max_rollouts = 500 #how many starting conditions to sample and to roll out
 		succes_rate = rollout_and_gather_data(max_rollouts, mesh, iteration)
 
 
@@ -274,7 +274,9 @@ if __name__ == '__main__':
 	base_path = "/projects/katefgroup/yunchu/"
 	#expert_list = ["expert_mug1"]
 	#object_list = ["bowl2","car2","hat1","mug2","boat","can1","car3","hat2","mug3","bowl1 ","car1","car4","mug1"]
-	object_list = ["bowl2","car2","hat1","mug2","boat","can1","car3"]
+	#object_list = ["bowl2","car2","hat1","mug2","boat","can1","car3"]
+	object_list = ["hat2","mug3","bowl1 ","car1","car4","mug1"]
+
 	for object_name in object_list:
 		print("expert ", object_name)
 		path = base_path+"expert_"+object_name

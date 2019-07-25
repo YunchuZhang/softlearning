@@ -116,6 +116,7 @@ def rollout_and_gather_data(max_rollouts, mesh, iteration):
 
 	number_rollouts = 0
 	success = 0
+	totalnum = 0
 
 
 	expert_data_path = "/projects/katefgroup/yunchu/dagger_" + str(mesh)
@@ -141,31 +142,49 @@ def rollout_and_gather_data(max_rollouts, mesh, iteration):
 
 		if length !=0:
 			number_rollouts += 1
-			for counter in range(len(expert_actions)):
-				#save the dagger expert trajectories 
-				expert_data = {'image_observation': np.array(replay_pool.fields["observations.image_observation"][counter]),
-				   'depth_observation': np.array(replay_pool.fields["observations.depth_observation"][counter]),
-				   'cam_angles_observation':np.array(replay_pool.fields["observations.cam_angles_observation"][counter]),
-				   'actions':expert_actions[counter],
-				   'rewards':np.array(replay_pool.fields["rewards"][counter]),
-				   'observation_with_orientation':np.array(replay_pool.fields["observations.observation_with_orientation"][counter]),
-				   'state_desired_goal':np.array(replay_pool.fields["observations.state_desired_goal"][counter][3:]),
-				   'terminals':np.array(replay_pool.fields["terminals"][counter])}
-				#print(expert_data)
 
-				#st()
-				#print('saving'+'{:d}'.format(counter)+'.pkl')
-				with open(os.path.join(expert_data_path, 'state' + "{:d}".format(counter) + '.pkl'), 'wb') as f:
-					pickle.dump(expert_data, f, pickle.HIGHEST_PROTOCOL)
+			
+
 				#print(expert_data_path)
-
+			#expert_actions = []
 			if length == 1:
 				success = success + 1
 			print(number_rollouts)
+
 		if number_rollouts >max_rollouts: break
+
+
+	onlyfiles = next(os.walk(expert_data_path))[2]
+	totalnum = len(onlyfiles)
+	print('---------')
+	print("before",totalnum)
+
+	for counter in range(len(expert_actions)):
+		#save the dagger expert trajectories 
+		expert_data = {'image_observation': np.array(replay_pool.fields["observations.image_observation"][counter]),
+		   'depth_observation': np.array(replay_pool.fields["observations.depth_observation"][counter]),
+		   'cam_angles_observation':np.array(replay_pool.fields["observations.cam_angles_observation"][counter]),
+		   'actions':expert_actions[counter],
+		   'rewards':np.array(replay_pool.fields["rewards"][counter]),
+		   'observation_with_orientation':np.array(replay_pool.fields["observations.observation_with_orientation"][counter]),
+		   'state_desired_goal':np.array(replay_pool.fields["observations.state_desired_goal"][counter][3:]),
+		   'terminals':np.array(replay_pool.fields["terminals"][counter])}
+		#print(expert_data)
+
+		#print('saving'+'{:d}'.format(counter)+'.pkl')
+		with open(os.path.join(expert_data_path, 'state' + "{:d}".format(totalnum+counter) + '.pkl'), 'wb') as f:
+			pickle.dump(expert_data, f, pickle.HIGHEST_PROTOCOL)
+	#st()
+	onlyfiles = next(os.walk(expert_data_path))[2]
+	totalnum = len(onlyfiles)
+	print('---------')
+	print("after",totalnum)
+
 
 	succes_rate = success/max_rollouts
 	print(succes_rate)
+	onlyfiles = next(os.walk(expert_data_path))[2] 
+	print("Total_Sample_data",len(onlyfiles))
 
 	return succes_rate
 
