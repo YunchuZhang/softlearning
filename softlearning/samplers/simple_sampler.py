@@ -75,7 +75,8 @@ class SimpleSampler(BaseSampler):
         
 
         next_observation, reward, terminal, info = self.env.step(action)
-
+        reward = reward[0]
+        terminal = terminal[0]
         #imsave("check_02.png",next_observation["desired_goal_depth"][0])
 
         self._path_length += 1
@@ -110,7 +111,7 @@ class SimpleSampler(BaseSampler):
             self._current_path[key].append(value)
 
         if terminal or self._path_length >= self._max_path_length:
-            st()
+            #st()
             last_path = {
                 field_name: np.array(values)
                 for field_name, values in self._current_path.items()
