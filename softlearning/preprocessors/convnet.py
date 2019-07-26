@@ -120,8 +120,6 @@ def convnet3d_preprocessor(
             conv_kernel_sizes,
             conv_strides):
 
-        print("FILTER SIZE:", filters)
-
         conv_out = tf.keras.layers.Conv3D(
             filters=filters,
             kernel_size=kernel_size,

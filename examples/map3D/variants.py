@@ -332,8 +332,8 @@ HER_REPLAY_POOL_PARAMS = {
                                 # the reward
                                 'image_env_dummy': 'achieved_goal',
                                 'image_env_dummy2': 'desired_goal'},
-        'desired_goal_key': 'image_desired_goal',
-        'achieved_goal_key': 'image_achieved_goal',
+        'desired_goal_key': 'state_desired_goal',
+        'achieved_goal_key': 'state_achieved_goal',
         'reward_key': 'rewards',
         'terminal_key': 'terminals'
     }
@@ -457,11 +457,17 @@ def get_variant_spec_3D(universe,
     environment_params = variant_spec['environment_params']
     env_train_params = environment_params['training']
     # env_train_params["kwargs"] = {}
-    env_train_params["kwargs"]["observation_keys"] = ["image_observation","depth_observation","cam_angles_observation","image_desired_goal","desired_goal_depth","goal_cam_angle"]
+    env_train_params["kwargs"]["observation_keys"] = ["image_observation",
+                                                      "depth_observation",
+                                                      "cam_angles_observation",
+                                                      "state_desired_goal"]
+                                                      #"image_desired_goal",
+                                                      #"desired_goal_depth",
+                                                      #"goal_cam_angle"]
     #env_train_params["kwargs"]["map3D"] = map3D_model
 
-    variant_spec["Q_params"]['input_shape'] = [(128,)]
-    variant_spec["policy_params"]["input_shape"] = [(128,)]
+    variant_spec["Q_params"]['input_shape'] = [(67,)]
+    variant_spec["policy_params"]["input_shape"] = [(67,)]
 
     preprocessor_params = {
         'type': 'convnet3d_preprocessor',

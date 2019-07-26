@@ -72,7 +72,7 @@ class MultiAgentSampler(BaseSampler):
 
         if self.initialized and self.memory3D_sampler:
             active_obs = self.session.run(self.memory3D_sampler,feed_dict={self.obs_ph[0]:active_obs[0],self.obs_ph[1]:active_obs[1],self.obs_ph[2]:active_obs[2],\
-                self.obs_ph[3]:active_obs[3],self.obs_ph[4]:active_obs[4],self.obs_ph[5]:active_obs[5]})
+                self.obs_ph[3]:active_obs[3]})
 
         actions = self.policy.actions_np(active_obs)
 

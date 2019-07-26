@@ -398,22 +398,10 @@ class SACAgent():
 
 
     def _init_map3D(self):
-        # self.map3D.set_batchSize(1)
-        
-        # sampler_obs_images, sampler_obs_zmap, sampler_obs_camAngle,sampler_obs_images_goal, sampler_obs_zmap_goal, sampler_obs_camAngle_goal = [tf.expand_dims(i,1) for i in self._sampler_observations_phs[:6]]
 
-        # sampler_obs_zmap = tf.expand_dims(sampler_obs_zmap,-1)
-        # sampler_obs_zmap_goal = tf.expand_dims(sampler_obs_zmap_goal,-1)
-
-        # memory_sampler = self.map3D(sampler_obs_images,sampler_obs_camAngle,sampler_obs_zmap, is_training=None,reuse=False)
-        # memory_sampler_goal = self.map3D(sampler_obs_images_goal,sampler_obs_camAngle_goal,sampler_obs_zmap_goal, is_training=None,reuse=True)
-        # self.memory_sampler = [tf.concat([memory_sampler,memory_sampler_goal],-1)]
-        # # self.memory_sampler = 1
-        # self.map3D.set_batchSize(4)
-
-        obs_images, obs_zmap, obs_camAngle, obs_images_goal, obs_zmap_goal, obs_camAngle_goal = [tf.expand_dims(i,1) for i in self._observations_phs[:6]]
+        obs_images, obs_zmap, obs_camAngle = [tf.expand_dims(i,1) for i in self._observations_phs[:3]]
         obs_zmap = tf.expand_dims(obs_zmap,-1)
-        obs_zmap_goal = tf.expand_dims(obs_zmap_goal,-1)
+        #obs_zmap_goal = tf.expand_dims(obs_zmap_goal,-1)
 
         # st()
         memory = self.map3D(obs_images,
@@ -423,27 +411,28 @@ class SACAgent():
                             reuse=False)
         print("MEMORY SHAPE:", memory.get_shape())
 
-        memory_goal = self.map3D(obs_images_goal,
-                                 obs_camAngle_goal,
-                                 obs_zmap_goal,
-                                 is_training=None,
-                                 reuse=True)
+        #memory_goal = self.map3D(obs_images_goal,
+        #                         obs_camAngle_goal,
+        #                         obs_zmap_goal,
+        #                         is_training=None,
+        #                         reuse=True)
 
         if self._stop_3D_grads:
             memory = tf.stop_gradient(memory)
-            memory_goal = tf.stop_gradient(memory_goal)
+            #memory_goal = tf.stop_gradient(memory_goal)
 
         latent_state = self._preprocessor([memory])
-        latent_goal = self._preprocessor([memory_goal])
+        #latent_goal = self._preprocessor([memory_goal])
+        latent_goal = self._observations_phs[3]
         print("LATENT SHAPE:", latent_state.get_shape())
 
         self.memory = [tf.concat([latent_state, latent_goal], -1)]
         print("MERGED MEMORY SHAPE:", self.memory[0].get_shape())
 
-        next_obs_images, next_obs_zmap, next_obs_camAngle, next_obs_images_goal, next_obs_zmap_goal, next_obs_camAngle_goal = [tf.expand_dims(i,1) for i in self._next_observations_phs[:6]]
+        next_obs_images, next_obs_zmap, next_obs_camAngle = [tf.expand_dims(i,1) for i in self._next_observations_phs[:3]]
 
         next_obs_zmap = tf.expand_dims(next_obs_zmap,-1)
-        next_obs_zmap_goal = tf.expand_dims(next_obs_zmap_goal,-1)
+        #next_obs_zmap_goal = tf.expand_dims(next_obs_zmap_goal,-1)
 
         memory_next = self.map3D(next_obs_images,
                                  next_obs_camAngle,
@@ -451,18 +440,19 @@ class SACAgent():
                                  is_training=None,
                                  reuse=True)
 
-        memory_next_goal = self.map3D(next_obs_images_goal,
-                                      next_obs_camAngle_goal,
-                                      next_obs_zmap_goal,
-                                      is_training=None,
-                                      reuse=True)
+        #memory_next_goal = self.map3D(next_obs_images_goal,
+        #                              next_obs_camAngle_goal,
+        #                              next_obs_zmap_goal,
+        #                              is_training=None,
+        #                              reuse=True)
 
         if self._stop_3D_grads:
             memory_next = tf.stop_gradient(memory_next)
-            memory_next_goal = tf.stop_gradient(memory_next_goal)
+            #memory_next_goal = tf.stop_gradient(memory_next_goal)
 
         latent_state_next = self._preprocessor([memory_next])
-        latent_goal_next = self._preprocessor([memory_next_goal])
+        #latent_goal_next = self._preprocessor([memory_next_goal])
+        latent_goal_next = self._next_observations_phs[3]
 
         self.memory_next = [tf.concat([latent_state_next, latent_goal_next], -1)]
 
