@@ -242,7 +242,12 @@ class SACAgent():
         return self._sampler.get_last_n_paths(
             math.ceil(epoch_length / self._sampler._max_path_length))
     
-    def evaluation_paths(self, num_episodes, eval_deterministic, render_mode, weights=None):
+    def evaluation_paths(self,
+                         num_episodes,
+                         eval_deterministic,
+                         render_mode,
+                         render_goals=False,
+                         weights=None):
 
         if self._remote:
             self.variables.set_weights(weights)
@@ -257,7 +262,8 @@ class SACAgent():
                 memory3D=self.memory,
                 obs_ph=self._observations_phs,
                 session=self._session,
-                render_mode=render_mode)
+                render_mode=render_mode,
+                render_goals=render_goals)
 
             return paths
 
@@ -408,7 +414,7 @@ class SACAgent():
 
         # st()
         memory = self.map3D(obs_images, obs_camAngle, obs_zmap, is_training=None, reuse=False)
-        print("MEMORY SHAPE:", tf.shape(memory))
+        print("MEMORY SHAPE:", memory.get_shape())
         memory_goal = self.map3D(obs_images_goal, obs_camAngle_goal ,obs_zmap_goal, is_training=None, reuse=True)
 
         if self._stop_3D_grads:
@@ -416,15 +422,15 @@ class SACAgent():
             memory_goal = tf.stop_gradient(memory_goal)
 
         self.memory = [tf.concat([memory,memory_goal],-1)]
-        print("MEMORY + GOAL SHAPE:", tf.shape(self.memory))
+        print("MEMORY + GOAL SHAPE:", self.memory[0].get_shape())
 
         next_obs_images, next_obs_zmap, next_obs_camAngle, next_obs_images_goal, next_obs_zmap_goal, next_obs_camAngle_goal = [tf.expand_dims(i,1) for i in self._next_observations_phs[:6]]
 
         next_obs_zmap = tf.expand_dims(next_obs_zmap,-1)
         next_obs_zmap_goal = tf.expand_dims(next_obs_zmap_goal,-1)
 
-        memory_next = self.map3D(next_obs_images,next_obs_camAngle,next_obs_zmap, is_training=None,reuse=True)
-        memory_next_goal = self.map3D(next_obs_images_goal,next_obs_camAngle_goal,next_obs_zmap_goal, is_training=None,reuse=True)
+        memory_next = self.map3D(next_obs_images, next_obs_camAngle, next_obs_zmap, is_training=None, reuse=True)
+        memory_next_goal = self.map3D(next_obs_images_goal, next_obs_camAngle_goal, next_obs_zmap_goal, is_training=None, reuse=True)
 
         if self._stop_3D_grads:
             memory_next = tf.stop_gradient(memory_next)

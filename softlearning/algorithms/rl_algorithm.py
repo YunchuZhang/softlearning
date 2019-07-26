@@ -27,6 +27,7 @@ class RLAlgorithm():
             eval_n_episodes=10,
             eval_deterministic=True,
             eval_render_mode=None,
+            eval_render_goals=False,
             video_save_frequency=0,
             **kwargs
     ):
@@ -61,6 +62,11 @@ class RLAlgorithm():
             self._eval_render_mode = 'rgb_array'
         else:
             self._eval_render_mode = eval_render_mode
+
+        self._eval_render_goals = eval_render_goals
+
+        if self._eval_render_goals:
+            assert self._eval_render_mode == 'rgb_array'
 
         self._epoch = 0
         self._timestep = 0

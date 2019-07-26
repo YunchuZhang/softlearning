@@ -2,6 +2,7 @@ from collections import OrderedDict
 
 import os
 import numpy as np
+import matplotlib.pyplot as plt
 
 import ray
 
@@ -32,6 +33,8 @@ class RemoteSAC(RLAlgorithm):
             avg_weights_every_n_steps=1,
             batch_size=None,
             observation_keys=None,
+            pretrained_map3D=True,
+            stop_3D_grads=False,
             **kwargs):
         """
         Args:
@@ -77,7 +80,9 @@ class RemoteSAC(RLAlgorithm):
             remote=remote,
             n_initial_exploration_steps=n_initial_exploration_steps,
             batch_size=batch_size,
-            observation_keys=observation_keys
+            observation_keys=observation_keys,
+            pretrained_map3D=pretrained_map3D,
+            stop_3D_grads=stop_3D_grads
         ) for _ in range(num_agents)]
 
         self._weights = ray.get(self._agents[0].get_weights.remote())
@@ -146,6 +151,7 @@ class RemoteSAC(RLAlgorithm):
         paths = ray.get(self._agents[0].evaluation_paths.remote(self._eval_n_episodes,
                                                                 self._eval_deterministic,
                                                                 self._eval_render_mode,
+                                                                self._eval_render_goals,
                                                                 weights=weight_ids))
         should_save_video = (
             self._video_save_frequency > 0
@@ -159,6 +165,12 @@ class RemoteSAC(RLAlgorithm):
                     video_file_path = os.path.join(
                         os.getcwd(), 'videos', video_file_name)
                     save_video(video_frames, video_file_path)
+                if 'goal_image' in path:
+                    goal_file_name = f'goal_image_{self._epoch}_{i}.png'
+                    goal_file_path = os.path.join(
+                        os.getcwd(), 'videos', goal_file_name)
+                    plt.imsave(goal_file_path, path['goal_image'], format='png')
+                    
 
         return paths
 
