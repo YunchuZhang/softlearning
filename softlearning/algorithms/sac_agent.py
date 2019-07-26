@@ -245,7 +245,12 @@ class SACAgent():
         return self._sampler.get_last_n_paths(
             math.ceil(epoch_length / self._sampler._max_path_length))
     
-    def evaluation_paths(self, num_episodes, eval_deterministic, render_mode, weights=None):
+    def evaluation_paths(self,
+                         num_episodes,
+                         eval_deterministic,
+                         render_mode,
+                         render_goals=False,
+                         weights=None):
 
         if self._remote:
             self.variables.set_weights(weights)
@@ -260,7 +265,8 @@ class SACAgent():
                 memory3D=self.memory,
                 obs_ph=self._observations_phs,
                 session=self._session,
-                render_mode=render_mode)
+                render_mode=render_mode,
+                render_goals=render_goals)
 
             return paths
 

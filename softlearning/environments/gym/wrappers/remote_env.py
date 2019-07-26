@@ -44,9 +44,13 @@ class RemoteGymEnv(object):
         return self._env.action_space
 
 
-    def render(self, mode='rgb_array'):
+    def render(self, mode='rgb_array', render_goal=False):
         if mode == 'rgb_array':
-            return self._env.render(mode=mode).copy()
+            if render_goal:
+                img, goal = self._env.render(mode=mode, render_goal=True)
+                return img.copy(), goal.copy()
+            else:
+                return self._env.render(mode=mode, render_goal=False).copy()
 
         self._env.render()
 

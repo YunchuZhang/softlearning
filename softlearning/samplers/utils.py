@@ -47,6 +47,7 @@ def rollouts(n_paths,
              session=None,
              callback=None,
              render_mode=None,
+             render_goals=False,
              break_on_terminal=True):
 
     pool = replay_pools.SimpleReplayPool(env, max_size=path_length)
@@ -70,12 +71,15 @@ def rollouts(n_paths,
     sampler.store_last_n_paths = n_paths
 
     videos = []
+    if render_goals:
+        goals = []
 
     while len(sampler.get_last_n_paths()) < n_paths:
 
         sampler.reset()
         images = []
         t = 0
+        goal = None
 
         for t in range(path_length):
             observation, reward, terminal, info = sampler.sample()
@@ -85,7 +89,10 @@ def rollouts(n_paths,
 
             if render_mode is not None:
                 if render_mode == 'rgb_array':
-                    image = env.render(mode=render_mode)
+                    if render_goals and goal is None:
+                        image, goal = env.render(mode=render_mode, render_goal=True)
+                    else:
+                        image = env.render(mode=render_mode)
                     images.append(image)
                 else:
                     env.render()
@@ -95,6 +102,8 @@ def rollouts(n_paths,
                 if break_on_terminal: break
 
         videos.append(images)
+        if render_goals:
+            goals.append(goal)
 
         #assert pool._size == t + 1
 
@@ -103,6 +112,8 @@ def rollouts(n_paths,
     if render_mode == 'rgb_array':
         for i in range(len(videos)):
             paths[i]['images'] = np.stack(videos[i], axis=0)
+            if render_goals:
+                paths[i]['goal_image'] = goals[i]
 
     return paths
 
