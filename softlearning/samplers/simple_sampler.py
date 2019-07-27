@@ -74,6 +74,7 @@ class SimpleSampler(BaseSampler):
                 for field_name, values in self._current_path.items()
             }
             self.pool.add_path(last_path)
+            self.trajectory = last_path['observations.state_observation']
             self._last_n_paths.appendleft(last_path)
 
             self._max_path_return = max(self._max_path_return,
@@ -85,6 +86,7 @@ class SimpleSampler(BaseSampler):
             self._path_length = 0
             self._path_return = 0
             self._current_path = defaultdict(list)
+            #import pdb; pdb.set_trace()
 
             self._n_episodes += 1
         else:
@@ -106,6 +108,7 @@ class SimpleSampler(BaseSampler):
             'last-path-return': self._last_path_return,
             'episodes': self._n_episodes,
             'total-samples': self._total_samples,
+            'current_trajectory': self.trajectory
         })
 
         return diagnostics
