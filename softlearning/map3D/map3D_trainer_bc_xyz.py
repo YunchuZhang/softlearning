@@ -5,7 +5,7 @@ import math
 import time
 from numbers import Number
 from collections import OrderedDict
-from nets.BulletPush3DTensor import BulletPush3DTensor4_cotrain
+#from nets.BulletPush3DTensor import BulletPush3DTensor4_cotrain
 import ipdb
 import time
 import os 
@@ -14,7 +14,7 @@ import argparse
 from tensorboardX import SummaryWriter
 from test_bc import rollout_and_gather_data
 import utils_map as utils
-
+import itertools    
 st = ipdb.set_trace
 
 
@@ -38,13 +38,13 @@ def build_model():
 	actions_ph = tf.placeholder(dtype=tf.float32, shape=[None, 2])
 	out = tf.placeholder(dtype=tf.float32, shape=[None, 2])
 
-	out = tf.layers.dense(concatendated_state_ph, 128, activation = tf.nn.relu)
-	out = tf.layers.dense(out, 64, activation = tf.nn.relu)
-	out = tf.layers.dense(out, 32, activation = tf.nn.relu)
+	out = tf.layers.dense(concatendated_state_ph, 128, activation = tf.nn.relu, kernel_initializer = tf.glorot_normal_initializer)
+	out = tf.layers.dense(out, 64, activation = tf.nn.relu, kernel_initializer = tf.glorot_normal_initializer)
+	out = tf.layers.dense(out, 32, activation = tf.nn.relu, kernel_initializer = tf.glorot_normal_initializer)
 	out = tf.layers.dense(out, 2)
 	return concatendated_state_ph, actions_ph, out
-def main_dagger(iteration):
-
+def main_dagger(iteration, mesh):
+	tf.reset_default_graph()
 	gpu_options = tf.GPUOptions(allow_growth=True)
 	session = tf.Session(config=tf.ConfigProto(gpu_options=gpu_options))
 	tf.keras.backend.set_session(session)
@@ -60,6 +60,7 @@ def main_dagger(iteration):
 	#parser.add_argument('--num_rollouts', type=int, default=200,
 	help=('Number of expert roll outs')
 	args = parser.parse_args()
+	#st()
 
 	print('loading dagger data')
 	#filename = args.path
@@ -72,21 +73,78 @@ def main_dagger(iteration):
 	global_step = tf.Variable(0, trainable=False)
 	decay_steps = 500
 	lr = tf.train.exponential_decay(0.003,
-                                    global_step,
-                                    decay_steps,
-                                    0.96,
-                                    staircase=True)
+									global_step,
+									decay_steps,
+									0.96,
+									staircase=True)
 
 	# create optimizer
-	opt = tf.train.AdamOptimizer(learning_rate=lr).minimize(mse, global_step=global_step)
+	optimizer = tf.train.AdamOptimizer(learning_rate=lr)
+	#opt  = optimizer.minimize(mse, global_step=global_step)
+	#gradients = optimizer.compute_gradients(loss=mse)
 
-	# initialize variables
-	sess.run(tf.global_variables_initializer())
-	# create saver to save model variables
 	saver = tf.train.Saver()
+	#checkpoint_path = "/projects/katefgroup/yunchu/store/" +  mesh + "_dagger"+"/model_"+ str(iteration-1)
+	# create saver to save model variables
+	if iteration != 0:
+		#st()
+		saver.restore(sess,"/projects/katefgroup/yunchu/store/" +  mesh + "_dagger"+"/model_"+ str(iteration-1)+"-"+str(iteration-1))
+													 
+
+
+	gradients = tf.gradients(mse, tf.trainable_variables())
+	gradients = list(zip(gradients, tf.trainable_variables()))
+	# Op to update all variables according to their gradient
+	apply_grads = optimizer.apply_gradients(grads_and_vars=gradients, global_step=global_step)
+
+	l2_norm = lambda t: tf.sqrt(tf.reduce_sum(tf.pow(t, 2)))
+	#setup tensorboard
+	
+
+
+
+
+	tf.summary.scalar("mse", mse)
+
+	for var in tf.trainable_variables():
+		tf.summary.histogram(var.name, var)
+
+
+		#check the gradients
+	for gradient, variable in gradients:
+	   tf.summary.histogram("gradient_norm/" + variable.name, l2_norm(gradient))
+	   tf.summary.histogram("gradient/" + variable.name, gradient)
+	   tf.summary.histogram("variable_norm/" + variable.name, l2_norm(variable))
+	   tf.summary.histogram("variable/" + variable.name, variable)
+	#   tf.summary.histogram("variables/" + variable.name, l2_norm(variable))
+
+	#summary_writer.add_scalars(summary_dir,{'mse_run':mse_run, 'avg_error': (output_pred_run - actions).mean()}, training_step)
+
+	merged_summary_op = tf.summary.merge_all()
+	#train_op = optimizer.apply_gradients(gradients)
+	 
+	# with tf.Session() as sess:
+	#   summaries_op = tf.summary.merge_all()
+	#   #summary_writer = tf.summary.FileWriter("scalar/"+mesh, sess.graph)
+	#   for step in itertools.count():
+	#     _, summary = sess.run([train_op, summaries_op], feed_dict={concatendated_state_ph: observations, actions_ph: actions})
+	#     summary_writer.add_summary(summary, step)
+
+
+
+
+
+
+		
+
 	#st()
 	batch_size = args.batch_size
+	sess.run(tf.global_variables_initializer())
 	#path = "/projects/katefgroup/yunchu/expert_mug2"
+	# initialize variables
+	
+	summary_dir = "scalar/"+mesh+"/dagger_iteration_"+str(iteration)
+	summary_writer = tf.summary.FileWriter(summary_dir)
 
 	filenames_a = os.listdir(path)
 	filenames_a = tf.constant(filenames_a)
@@ -114,9 +172,9 @@ def main_dagger(iteration):
 
 
 	batches = ((filenames_a.get_shape().as_list()[0])+(filenames.get_shape().as_list()[0]))// batch_size
-	print("Total Data",((filenames_a.get_shape().as_list()[0])+(filenames.get_shape().as_list()[0])))
 
-	for training_step in range(101): #201
+
+	for training_step in range(50): #201
 
 		dataset = dataset.shuffle(buffer_size=100)
 		#batches = (filenames.get_shape().as_list()[0])// batch_size
@@ -140,21 +198,95 @@ def main_dagger(iteration):
 			observations = elem[0]
 			actions = elem[1]
 			#fd = _get_feed_dict(elem)
-			_,output_pred_run, mse_run = sess.run([opt,predicted_action_ph, mse], feed_dict={concatendated_state_ph: observations, actions_ph: actions})
+			#st()
+			_,output_pred_run, mse_run, merged_summary_op_run = sess.run([apply_grads,predicted_action_ph, mse, merged_summary_op], feed_dict={concatendated_state_ph: observations, actions_ph: actions})
+			summary_writer.add_summary(merged_summary_op_run, training_step*batches+1)
 
-
+		
 		#writer.add_scalars('scalar/train',{'mse_run':mse_run, 'avg_error': (output_pred_run - actions).mean()}, training_step)
-		writer.add_scalars(summary_dir,{'mse_run':mse_run, 'avg_error': (output_pred_run - actions).mean()}, training_step)
+		#st()
+		#summary_writer.add_scalars(summary_dir,{'mse_run':mse_run, 'avg_error': (output_pred_run - actions).mean()}, training_step)
+		
 		if training_step % 10 == 0:
 			print('{0:04d} mse: {1:.3f}'.format(training_step, mse_run))
 			print((output_pred_run - actions).mean())
 			print((output_pred_run - actions).sum())
 			# print the mse every so often
-		#if training_s tep % 50 == 0:
+		#if training_step % 50 == 0:
 			#store_path = "store/" + object_name + "_dagger" + "/model.ckpt"
-	store_path = "/projects/katefgroup/yunchu/store/" +  object_name + "_dagger"+ "/model_"+ str(iteration) +".ckpt" #TODO store the last, change maybe to store the best 
+	#st()
+	store_path = "/projects/katefgroup/yunchu/store/" +  object_name + "_dagger"+ "/model_"+ str(iteration)  #TODO store the last, change maybe to store the best 
 	#saver.save(sess, "store/model.ckpt")
-	saver.save(sess, store_path)
+	saver.save(sess, store_path, global_step = iteration)
+#tf.reset_default_graph()
+	#rollout the current agent
+
+def test():
+	tf.reset_default_graph()
+	gpu_options = tf.GPUOptions(allow_growth=True)
+	session = tf.Session(config=tf.ConfigProto(gpu_options=gpu_options))
+	tf.keras.backend.set_session(session)
+	sess = tf.keras.backend.get_session()
+
+	print('loading dagger data')
+
+	concatendated_state_ph, actions_ph, predicted_action_ph = build_model()
+
+	# create loss
+	mse = tf.reduce_mean(0.5 * tf.square(actions_ph - predicted_action_ph))
+
+	#set learning rate
+	global_step = tf.Variable(0, trainable=False)
+	decay_steps = 20000
+	lr = tf.train.exponential_decay(0.004,
+	global_step,
+	decay_steps,
+	0.5,
+	staircase=True)
+
+	# create optimizer
+	opt = tf.train.AdamOptimizer(learning_rate=lr).minimize(mse, global_step=global_step)
+	# initialize variables
+	#sess.run(tf.global_variables_initializer())
+	# create saver to save model variables
+	checkpoint_path = "/projects/katefgroup/yunchu/store/" +  "can1" + "_dagger"+ "/model_test-200"
+	saver = tf.train.import_meta_graph(checkpoint_path+".meta")
+
+	saver.restore(sess,tf.train.latest_checkpoint("/projects/katefgroup/yunchu/store/" +  "can1" + "_dagger"))
+
+	sess.run(tf.global_variables_initializer())
+	batch_size = 64
+	#path = "/projects/katefgroup/yunchu/expert_mug2"
+
+	filenames_a = os.listdir(path)
+	filenames_a = tf.constant(filenames_a)
+	dataset = tf.data.Dataset.from_tensor_slices(filenames_a)
+
+
+
+	dataset_a = dataset.map(lambda filename: tuple(tf.py_func(_read_py_function, [filename],[tf.float32,tf.float32])))
+
+
+
+
+	#path = "/projects/katefgroup/yunchu/expert_mug2"
+
+	filenames = os.listdir(path_dagger)
+	filenames = tf.constant(filenames)
+	dataset = tf.data.Dataset.from_tensor_slices(filenames)
+
+
+
+	dataset_b = dataset.map(lambda filename: tuple(tf.py_func(_read_py_function_dg, [filename],[tf.float32,tf.float32])))
+
+	dataset=dataset_a.concatenate(dataset_b)
+	DATASET_SIZE = (filenames_a.get_shape().as_list()[0])+(filenames.get_shape().as_list()[0])
+
+	# test_dataset = dataset.take(5000) 
+	# train_dataset = dataset.skip(5000)
+	#train_dataset = dataset
+	train_size = int(0.8 * DATASET_SIZE)
+	test_size  = DATASET_SIZE - train_size
 
 
 
@@ -188,10 +320,10 @@ def main():
 	global_step = tf.Variable(0, trainable=False)
 	decay_steps = 500
 	lr = tf.train.exponential_decay(0.003,
-                                    global_step,
-                                    decay_steps,
-                                    0.96,
-                                    staircase=True)
+									global_step,
+									decay_steps,
+									0.96,
+									staircase=True)
 
 	# create optimizer
 	opt = tf.train.AdamOptimizer(learning_rate=lr).minimize(mse, global_step=global_step)
@@ -244,7 +376,7 @@ def main():
 
 
 		#writer.add_scalars('scalar/train',{'mse_run':mse_run, 'avg_error': (output_pred_run - actions).mean()}, training_step)
-		writer.add_scalars(summary_dir,{'mse_run':mse_run, 'avg_error': (output_pred_run - actions).mean()}, training_step)
+		summary_writer.add_scalars(summary_dir,{'mse_run':mse_run, 'avg_error': (output_pred_run - actions).mean()}, training_step)
 		if training_step % 10 == 0:
 			print('{0:04d} mse: {1:.3f}'.format(training_step, mse_run))
 			print((output_pred_run - actions).mean())
@@ -260,9 +392,9 @@ def dagger(number_iterations, mesh):
 	for iteration in range(number_iterations):
 		#combine old experience and the expertactions on the sample trajectories to dataset D
 		# and train bc agent on D
-		main_dagger(iteration)
+		main_dagger(iteration, mesh)
 		#sample trajectories and store the experts actions
-		max_rollouts = 500 #how many starting conditions to sample and to roll out
+		max_rollouts = 25 #how many starting conditions to sample and to roll out
 		succes_rate = rollout_and_gather_data(max_rollouts, mesh, iteration)
 
 
@@ -274,19 +406,15 @@ if __name__ == '__main__':
 	base_path = "/projects/katefgroup/yunchu/"
 	#expert_list = ["expert_mug1"]
 	#object_list = ["bowl2","car2","hat1","mug2","boat","can1","car3","hat2","mug3","bowl1 ","car1","car4","mug1"]
-	#object_list = ["bowl2","car2","hat1","mug2","boat","can1","car3"]
-	object_list = ["hat2","mug3","bowl1 ","car1","car4","mug1"]
-
+	object_list = ["hat1", "car2","mug2","boat","can1","car3", "bowl2"]
 	for object_name in object_list:
 		print("expert ", object_name)
 		path = base_path+"expert_"+object_name
 		path_dagger = base_path+"dagger_"+object_name
-		writer = SummaryWriter()
-		summary_dir = "scalar/"+object_name
-		writer = SummaryWriter(log_dir=summary_dir)
+		#summary_writer = SummaryWriter()
 		#main()
 		#main_dagger()
-		number_iterations = 10 #number of dagger iterations
+		number_iterations = 30 #number of dagger iterations
 		dagger(number_iterations, object_name)
 
 
