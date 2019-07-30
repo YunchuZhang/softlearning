@@ -406,7 +406,7 @@ if __name__ == '__main__':
 	base_path = "/projects/katefgroup/yunchu/"
 	#expert_list = ["expert_mug1"]
 	#object_list = ["bowl2","car2","hat1","mug2","boat","can1","car3","hat2","mug3","bowl1 ","car1","car4","mug1"]
-	object_list = ["hat1", "car2","mug2","boat","can1","car3", "bowl2"]
+	object_list = ["mug2"]#, "car2","hat1","boat","can1","car3", "bowl2"]
 	for object_name in object_list:
 		print("expert ", object_name)
 		path = base_path+"expert_"+object_name
