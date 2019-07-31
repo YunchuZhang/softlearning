@@ -108,15 +108,16 @@ class GymAdapter(SoftlearningEnv):
     def convert_to_active_observation(self, observation):
         if not isinstance(self._env.observation_space, spaces.Dict):
             return observation
-
-        observation_keys = (
-            self.observation_keys
-            or list(self._env.observation_space.spaces.keys()))
+        # observation_keys = (
+        #     self.observation_keys
+        #     or list(self._env.observation_space.spaces.keys()))
+        #we use only centroid + orientation + state desired goal, in the latter only the desired x,y postion of the puck
+        #observation_keys = ["observation_with_orientation","state_desired_goal" ]
         #print(observation_keys[1:])
-        #observation_keys = observation_keys[1:]
-        observation = np.concatenate([
-            observation[key] for key in observation_keys
-        ], axis=-1)
+        # observation = np.concatenate([
+        #     observation[key] for key in observation_keys
+        # ], axis=-1)
+        observation = np.concatenate((observation["observation_with_orientation"], observation["state_desired_goal"][3:]), axis = -1)
 
         return observation
 

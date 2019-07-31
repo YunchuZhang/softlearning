@@ -13,6 +13,8 @@ def feedforward_model(input_shapes,
                       name='feedforward_model',
                       *args,
                       **kwargs):
+    input_shapes = ((16,),)
+    #import pdb; pdb.set_trace()
     inputs = [
         tf.keras.layers.Input(shape=input_shape)
         for input_shape in input_shapes

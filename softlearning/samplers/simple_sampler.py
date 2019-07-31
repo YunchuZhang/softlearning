@@ -38,7 +38,7 @@ class SimpleSampler(BaseSampler):
 
     def sample(self):
         import ipdb
-        #ipdb.set_trace()
+        #i#pdb.set_trace()        
         if self._current_observation is None:
             self._current_observation = self.env.reset()
 
@@ -86,8 +86,7 @@ class SimpleSampler(BaseSampler):
             self._path_length = 0
             self._path_return = 0
             self._current_path = defaultdict(list)
-            #import pdb; pdb.set_trace()
-
+            #import pdb; #pdb.set_trace()
             self._n_episodes += 1
         else:
             self._current_observation = next_observation

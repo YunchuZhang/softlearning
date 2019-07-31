@@ -67,8 +67,7 @@ def simulate_policy(args):
                          render_mode=args.render_mode)
 
     if args.render_mode != 'human':
-        from pprint import pprint; import pdb; pdb.set_trace()
-        pass
+        from pprint import pprint; import pdb; #pdb.set_trace()        pass
 
     return paths
 

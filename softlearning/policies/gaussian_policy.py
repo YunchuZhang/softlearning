@@ -24,7 +24,7 @@ class GaussianPolicy(LatentSpacePolicy):
                  *args,
                  **kwargs):
         self._Serializable__initialize(locals())
-
+        input_shapes = ((16,),)
         self._input_shapes = input_shapes
         self._output_shape = output_shape
         self._squash = squash
@@ -38,6 +38,7 @@ class GaussianPolicy(LatentSpacePolicy):
             for input_shape in input_shapes
         ]
 
+        import pdb; #pdb.set_trace()
         conditions = tf.keras.layers.Lambda(
             lambda x: tf.concat(x, axis=-1)
         )(self.condition_inputs)
@@ -74,6 +75,7 @@ class GaussianPolicy(LatentSpacePolicy):
         )(batch_size)
 
         self.latents_model = tf.keras.Model(self.condition_inputs, latents)
+        import pdb; #pdb.set_trace()        
         self.latents_input = tf.keras.layers.Input(shape=output_shape)
 
         def raw_actions_fn(inputs):
@@ -101,7 +103,7 @@ class GaussianPolicy(LatentSpacePolicy):
             lambda raw_actions: squash_bijector.forward(raw_actions)
         )(raw_actions)
         self.actions_model = tf.keras.Model(self.condition_inputs, actions)
-
+        #pdb.set_trace()
         actions_for_fixed_latents = tf.keras.layers.Lambda(
             lambda raw_actions: squash_bijector.forward(raw_actions)
         )(raw_actions_for_fixed_latents)
@@ -115,7 +117,7 @@ class GaussianPolicy(LatentSpacePolicy):
 
         self.deterministic_actions_model = tf.keras.Model(
             self.condition_inputs, deterministic_actions)
-
+        #pdb.set_trace()
         def log_pis_fn(inputs):
             shift, log_scale_diag, actions = inputs
             base_distribution = tfp.distributions.MultivariateNormalDiag(
@@ -150,7 +152,7 @@ class GaussianPolicy(LatentSpacePolicy):
         self.diagnostics_model = tf.keras.Model(
             self.condition_inputs,
             (shift, log_scale_diag, log_pis, raw_actions, actions))
-
+        #pdb.set_trace()
     def _shift_and_log_scale_diag_net(self, input_shapes, output_size):
         raise NotImplementedError
 
@@ -229,7 +231,10 @@ class FeedforwardGaussianPolicy(GaussianPolicy):
         self._Serializable__initialize(locals())
         super(FeedforwardGaussianPolicy, self).__init__(*args, **kwargs)
 
+        input_shapes = ((16,),)
+
     def _shift_and_log_scale_diag_net(self, input_shapes, output_size):
+        input_shapes = ((16,),)
         shift_and_log_scale_diag_net = feedforward_model(
             input_shapes=input_shapes,
             hidden_layer_sizes=self._hidden_layer_sizes,
