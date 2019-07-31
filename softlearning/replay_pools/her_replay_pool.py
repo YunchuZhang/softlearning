@@ -50,6 +50,7 @@ class HerReplayPool(SimpleReplayPool):
 
 
     def batch_by_indices(self, indices, field_name_filter=None, observation_keys=None):
+        from .utils import normalize_image
 
         batch_size = len(indices)
         num_resamples = int(batch_size * self._fraction_future_goals)
@@ -103,6 +104,11 @@ class HerReplayPool(SimpleReplayPool):
 
             batch[self._reward_key] = rewards
             batch[self._terminal_key] = terminals
+
+        for key, value in batch.items():
+            if self.normalize_images and 'image' in key and value is not None:
+                value = normalize_image(value)
+                batch[key] = value
 
         # observations = np.concatenate([
         #     batch['observations.{}'.format(key)]

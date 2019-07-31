@@ -41,13 +41,16 @@ class SimpleReplayPool(FlexibleReplayPool):
                  env,
                  concat_observations=True,
                  filter_key=None,
+                 unnormalize_images=False,
+                 normalize_images=True,
                  *args,
                  **kwargs):
 
         self.concat_observations=concat_observations
         self._observation_space = env.observation_space
         self._action_space = env.action_space
-        # st()
+        self.unnormalize_images=unnormalize_images
+        self.normalize_images=normalize_images
 
         observation_fields = normalize_observation_fields(self._observation_space)
         # It's a bit memory inefficient to save the observations twice,
@@ -93,14 +96,14 @@ class SimpleReplayPool(FlexibleReplayPool):
         dict_observations = defaultdict(list)
         for observation in samples['observations']:
             for key, value in observation.items():
-                if 'image' in key and value is not None:
+                if self.unnormalize_images and 'image' in key and value is not None:
                     value = unnormalize_image(value)
                 dict_observations[key].append(value)
 
         dict_next_observations = defaultdict(list)
         for next_observation in samples['next_observations']:
             for key, value in next_observation.items():
-                if 'image' in key and value is not None:
+                if self.unnormalize_images and 'image' in key and value is not None:
                     value = unnormalize_image(value)
                 dict_next_observations[key].append(value)
 
@@ -140,7 +143,7 @@ class SimpleReplayPool(FlexibleReplayPool):
             observation_keys = tuple(self._observation_space.spaces.keys())
 
         for key, value in batch.items():
-            if 'image' in key and value is not None:
+            if self.normalize_images and 'image' in key and value is not None:
                 value = normalize_image(value)
                 batch[key] = value
 
