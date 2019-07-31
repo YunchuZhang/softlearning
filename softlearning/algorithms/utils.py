@@ -29,7 +29,7 @@ def get_algorithm_from_variant(variant,
     algorithm_params = variant['algorithm_params']
     algorithm_type = algorithm_params['type']
     algorithm_kwargs = deepcopy(algorithm_params['kwargs'])
-    import pdb; pdb.set_trace()    
+    #import pdb; pdb.set_trace()    
     algorithm = ALGORITHM_CLASSES[algorithm_type](
         variant, *args, **algorithm_kwargs, **kwargs)
 

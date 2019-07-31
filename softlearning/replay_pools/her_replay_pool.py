@@ -39,9 +39,11 @@ class HerReplayPool(SimpleReplayPool):
 
         batch_size = len(indices)
         num_resamples = int(batch_size * self._fraction_future_goals)
+        #not sure!!
 
         if observation_keys is None:
-            observation_keys = tuple(self._observation_space.spaces.keys())
+            #observation_keys = tuple(self._observation_space.spaces.keys())
+            observation_keys = tuple(['observation_with_orientation','state_desired_goal','state_achieved_goal'])
 
         batch = {
             field_name: self.fields[field_name][indices]

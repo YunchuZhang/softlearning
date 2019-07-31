@@ -7,7 +7,7 @@ from tensorflow.python.training import training_util
 
 from .rl_algorithm import RLAlgorithm
 import ipdb
-
+st = ipdb.set_trace
 def td_target(reward, discount, next_value):
     return reward + discount * next_value
 
@@ -105,6 +105,8 @@ class SAC(RLAlgorithm):
 
         assert len(observation_shape) == 1, observation_shape
         self._observation_shape = observation_shape
+        #st()
+        self._observation_shape = (24,)
         assert len(action_shape) == 1, action_shape
         self._action_shape = action_shape
 
@@ -257,6 +259,8 @@ class SAC(RLAlgorithm):
         and Section 5 in [1] for further information of the entropy update.
         """
 
+        st()
+
         actions = self._policy.actions([self._observations_ph])
         log_pis = self._policy.log_pis([self._observations_ph], actions)
 
@@ -342,7 +346,7 @@ class SAC(RLAlgorithm):
         """Runs the operations for updating training and target ops."""
 
         feed_dict = self._get_feed_dict(iteration, batch)
-
+        #st()
         self._session.run(self._training_ops, feed_dict)
 
         if iteration % self._target_update_interval == 0:

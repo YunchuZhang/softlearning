@@ -3,7 +3,8 @@ from collections import defaultdict
 import numpy as np
 
 from .base_sampler import BaseSampler
-
+import ipdb
+st = ipdb.set_trace
 
 class SimpleSampler(BaseSampler):
     def __init__(self, **kwargs):
@@ -95,6 +96,7 @@ class SimpleSampler(BaseSampler):
 
     def random_batch(self, batch_size=None, **kwargs):
         batch_size = batch_size or self._batch_size
+        #st()
         observation_keys = getattr(self.env, 'observation_keys', None)
 
         return self.pool.random_batch(

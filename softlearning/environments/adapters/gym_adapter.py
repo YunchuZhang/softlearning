@@ -117,7 +117,8 @@ class GymAdapter(SoftlearningEnv):
         # observation = np.concatenate([
         #     observation[key] for key in observation_keys
         # ], axis=-1)
-        observation = np.concatenate((observation["observation_with_orientation"], observation["state_desired_goal"][3:]), axis = -1)
+        #!!!!24
+        observation = np.concatenate((observation["observation_with_orientation"], observation["state_desired_goal"],observation["state_achieved_goal"]), axis = -1)
 
         return observation
 

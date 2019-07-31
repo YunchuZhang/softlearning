@@ -10,7 +10,7 @@ NUM_COUPLING_LAYERS = 2
 
 GAUSSIAN_POLICY_PARAMS_BASE = {
     'type': 'GaussianPolicy',
-    'input_shape':((16,),),
+    'input_shape':((24,),),
     'kwargs': {
         'hidden_layer_sizes': (M, M),
         'squash': True

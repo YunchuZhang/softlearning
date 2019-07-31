@@ -9,8 +9,9 @@ class UniformPolicy(BasePolicy):
     def __init__(self, input_shapes, output_shape, action_range=(-1.0, 1.0)):
         super(UniformPolicy, self).__init__()
         self._Serializable__initialize(locals())
-        input_shapes = ((16,),)
+        input_shapes = ((24,),)
         #we use xyz + orientation + goal (only xy puck coordinates)as input which is 16 dim
+        #14 +5 +5 24
         import pdb; #pdb.set_trace()        
         self.inputs = [
             tf.keras.layers.Input(shape=input_shape)

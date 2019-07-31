@@ -24,7 +24,7 @@ class GaussianPolicy(LatentSpacePolicy):
                  *args,
                  **kwargs):
         self._Serializable__initialize(locals())
-        input_shapes = ((16,),)
+        input_shapes = ((24,),)
         self._input_shapes = input_shapes
         self._output_shape = output_shape
         self._squash = squash
@@ -231,10 +231,10 @@ class FeedforwardGaussianPolicy(GaussianPolicy):
         self._Serializable__initialize(locals())
         super(FeedforwardGaussianPolicy, self).__init__(*args, **kwargs)
 
-        input_shapes = ((16,),)
+        input_shapes = ((24,),)
 
     def _shift_and_log_scale_diag_net(self, input_shapes, output_size):
-        input_shapes = ((16,),)
+        input_shapes = ((24,),)
         shift_and_log_scale_diag_net = feedforward_model(
             input_shapes=input_shapes,
             hidden_layer_sizes=self._hidden_layer_sizes,
