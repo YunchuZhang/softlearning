@@ -130,14 +130,7 @@ def main_dagger(iteration, mesh):
 	optimizer = tf.train.AdamOptimizer(learning_rate=lr)
 	#opt  = optimizer.minimize(mse, global_step=global_step)
 	#gradients = optimizer.compute_gradients(loss=mse)
-
-	saver = tf.train.Saver()
-	#checkpoint_path = "/projects/katefgroup/yunchu/store/" +  mesh + "_dagger"+"/model_"+ str(iteration-1)
-	# create saver to save model variables
-	if iteration != 0:
-		#st()
-		saver.restore(sess,"/projects/katefgroup/yunchu/store/" +  mesh + "_dagger"+"/model_"+ str(iteration-1)+"-"+str(iteration-1))
-													 
+														 
 
 
 	gradients = tf.gradients(mse, tf.trainable_variables())
@@ -178,16 +171,18 @@ def main_dagger(iteration, mesh):
 	#     _, summary = sess.run([train_op, summaries_op], feed_dict={concatendated_state_ph: observations, actions_ph: actions})
 	#     summary_writer.add_summary(summary, step)
 
-
-
-
-
-
-		
-
 	#st()
-	batch_size = args.batch_size
 	sess.run(tf.global_variables_initializer())
+
+	saver = tf.train.Saver()
+	#checkpoint_path = "/projects/katefgroup/yunchu/store/" +  mesh + "_dagger"+"/model_"+ str(iteration-1)
+	# create saver to save model variables
+	if iteration != 0:
+		#st()
+		saver.restore(sess,"/projects/katefgroup/yunchu/store/" +  mesh + "_dagger"+"/model_"+ str(iteration-1)+"-"+str(iteration-1))
+
+	batch_size = args.batch_size
+	
 	#path = "/projects/katefgroup/yunchu/expert_mug2"
 	# initialize variables
 	
@@ -221,12 +216,12 @@ def main_dagger(iteration, mesh):
 
 	# test_dataset = dataset.take(5000) 
 	# train_dataset = dataset.skip(5000)
-	#train_dataset = dataset
-	train_size = int(0.8 * DATASET_SIZE)
-	test_size  = DATASET_SIZE - train_size
+	train_dataset = dataset
+	train_size = int(1 * DATASET_SIZE)
+	# test_size  = DATASET_SIZE - train_size
 
-	train_dataset = dataset.take(train_size)
-	test_dataset = dataset.skip(train_size)
+	# train_dataset = dataset.take(train_size)
+	# test_dataset = dataset.skip(train_size)
 
 
 
@@ -248,7 +243,6 @@ def main_dagger(iteration, mesh):
 
 		# run training
 		mse_total = 0.0
-
 		for batch_idx in range(batches):
 
 		#observation = self.sampler.random_batch()
@@ -273,23 +267,23 @@ def main_dagger(iteration, mesh):
 			print((output_pred_run - actions).mean())
 			print((output_pred_run - actions).sum())
 
-			test_dataset = test_dataset.batch(test_size)
-			#iterator = batched_dataset.make_one_shot_iterator()
-			iterator1 = test_dataset.make_initializable_iterator()
-			next_element = iterator1.get_next()
-			sess.run(iterator1.initializer)
+			# test_dataset = test_dataset.batch(test_size)
+			# #iterator = batched_dataset.make_one_shot_iterator()
+			# iterator1 = test_dataset.make_initializable_iterator()
+			# next_element = iterator1.get_next()
+			# sess.run(iterator1.initializer)
 
-			elem = sess.run(next_element)
-			observations = np.reshape(elem[0],[-1,48])
-			actions = np.reshape(elem[1],[-1,2])
-			#fd = _get_feed_dict(elem)
-			output_pred_run, mse_run = sess.run([predicted_action_ph, mse], feed_dict={concatendated_state_ph: observations, actions_ph: actions})
+			# elem = sess.run(next_element)
+			# observations = np.reshape(elem[0],[-1,48])
+			# actions = np.reshape(elem[1],[-1,2])
+			# #fd = _get_feed_dict(elem)
+			# output_pred_run, mse_run = sess.run([predicted_action_ph, mse], feed_dict={concatendated_state_ph: observations, actions_ph: actions})
 
 
 
-			print('{0:04d} Eva_mse: {1:.6f}'.format(training_step, mse_run))
-			print((output_pred_run - actions).mean())
-			print((output_pred_run - actions).sum())
+			# print('{0:04d} Eva_mse: {1:.6f}'.format(training_step, mse_run))
+			# print((output_pred_run - actions).mean())
+			# print((output_pred_run - actions).sum())
 
 
 
@@ -301,6 +295,7 @@ def main_dagger(iteration, mesh):
 	#saver.save(sess, "store/model.ckpt")
 	print(store_path)
 	saver.save(sess, store_path, global_step = iteration)
+	sess.close()
 #tf.reset_default_graph()
 	#rollout the current agent
 
@@ -320,41 +315,20 @@ def test():
 	# create loss
 	mse = tf.reduce_mean(0.5 * tf.square(actions_ph - predicted_action_ph))
 
-	#set learning rate
-	global_step = tf.Variable(0, trainable=False)
-	decay_steps = 20000
-	lr = tf.train.exponential_decay(0.004,
-	global_step,
-	decay_steps,
-	0.5,
-	staircase=True)
 
-	# create optimizer
-	opt = tf.train.AdamOptimizer(learning_rate=lr).minimize(mse, global_step=global_step)
-	# initialize variables
 	#sess.run(tf.global_variables_initializer())
 	# create saver to save model variables
-	checkpoint_path = "/projects/katefgroup/yunchu/store/" +  "mug2" + "_dagger"+ "/model_0-0"
-	saver = tf.train.import_meta_graph(checkpoint_path+".meta")
+	# checkpoint_path = "/projects/katefgroup/yunchu/store/" +  "mug2" + "_dagger"+ "/model_0-0"
+	# saver = tf.train.import_meta_graph(checkpoint_path+".meta")
 
-	saver.restore(sess,tf.train.latest_checkpoint("/projects/katefgroup/yunchu/store/" +  "mug2" + "_dagger"))
-
-	sess.run(tf.global_variables_initializer())
-	batch_size = 64
-	#path = "/projects/katefgroup/yunchu/expert_mug2"
-
-	filenames_a = os.listdir(path)
-	filenames_a = tf.constant(filenames_a)
-	dataset = tf.data.Dataset.from_tensor_slices(filenames_a)
-
-
-
-	dataset_a = dataset.map(lambda filename: tuple(tf.py_func(_read_py_function, [filename],[tf.float32,tf.float32])))
-
-
-
+	# saver.restore(sess,tf.train.latest_checkpoint("/projects/katefgroup/yunchu/store/" +  "mug2" + "_dagger"))
+	saver = tf.train.Saver()
+	saver.restore(sess,"/projects/katefgroup/yunchu/store/" +  "mug2" + "_dagger"+"/model_0"+ "-0")
+	#sess.run(tf.global_variables_initializer())
 
 	#path = "/projects/katefgroup/yunchu/expert_mug2"
+
+	
 
 	filenames = os.listdir(path_dagger)
 	filenames = tf.constant(filenames)
@@ -362,28 +336,20 @@ def test():
 
 
 
-	dataset_b = dataset.map(lambda filename: tuple(tf.py_func(_read_py_function_dg, [filename],[tf.float32,tf.float32])))
+	dataset = dataset.map(lambda filename: tuple(tf.py_func(_read_py_function_dg, [filename],[tf.float32,tf.float32])))
+	DATASET_SIZE = (filenames.get_shape().as_list()[0])
+	print(DATASET_SIZE)
 
-	dataset=dataset_a.concatenate(dataset_b)
-	DATASET_SIZE = (filenames_a.get_shape().as_list()[0])+(filenames.get_shape().as_list()[0])
 
-	# test_dataset = dataset.take(5000) 
-	# train_dataset = dataset.skip(5000)
-	#train_dataset = dataset
-	train_size = int(0.8 * DATASET_SIZE)
-	test_size  = DATASET_SIZE - train_size
 
-	train_dataset = dataset.take(train_size)
-	test_dataset = dataset.skip(train_size)
-
-	test_dataset = test_dataset.batch(test_size)
+	test_dataset = dataset.batch(DATASET_SIZE)
 	#iterator = batched_dataset.make_one_shot_iterator()
 	iterator1 = test_dataset.make_initializable_iterator()
 	next_element = iterator1.get_next()
 	sess.run(iterator1.initializer)
 
 	elem = sess.run(next_element)
-	observations = np.reshape(elem[0],[-1,16])
+	observations = np.reshape(elem[0],[-1,48])
 	actions = np.reshape(elem[1],[-1,2])
 	#fd = _get_feed_dict(elem)
 	output_pred_run, mse_run = sess.run([predicted_action_ph, mse], feed_dict={concatendated_state_ph: observations, actions_ph: actions})
@@ -498,10 +464,10 @@ def dagger(number_iterations, mesh):
 		#combine old experience and the expertactions on the sample trajectories to dataset D
 		# and train bc agent on D
 		#main_dagger(iteration, mesh)
-		main_dagger(iteration, mesh)
+		#main_dagger(iteration, mesh)
 		#test()
 		#sample trajectories and store the experts actions
-		max_rollouts = 25 #300 #how many starting conditions to sample and to roll out
+		max_rollouts = 20 #300 #how many starting conditions to sample and to roll out
 		succes_rate = rollout_and_gather_data(max_rollouts, mesh, iteration)
 		#main_dagger_without(iteration, mesh)
 
@@ -514,7 +480,8 @@ if __name__ == '__main__':
 	base_path = "/projects/katefgroup/yunchu/"
 	#expert_list = ["expert_mug1"]
 	#object_list = ["bowl2","car2","hat1","mug2","boat","can1","car3","hat2","mug3","bowl1 ","car1","car4","mug1"]
-	object_list = ["mug2"]#, "car2","hat1","boat","can1","car3", "bowl2"]
+	object_list = ["hat1"]#, "car2","hat1","boat","can1","car3", "bowl2"]
+
 	for object_name in object_list:
 		print("expert ", object_name)
 		path = base_path+"expert_"+object_name
@@ -522,7 +489,7 @@ if __name__ == '__main__':
 		#summary_writer = SummaryWriter()
 		#main()
 		#main_dagger()
-		number_iterations = 10 #number of dagger iterations
+		number_iterations = 5 #number of dagger iterations
 		dagger(number_iterations, object_name)
 
 
