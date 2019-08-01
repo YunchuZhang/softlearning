@@ -71,7 +71,7 @@ class SimpleSampler(BaseSampler):
 	
 	def sample(self, iteration):
 
-		print(self.iteration, iteration)
+		# print(self.iteration, iteration)
 		self.iteration = iteration
 		#ipdb.set_trace()
 		if self._current_observation is None:
@@ -117,7 +117,7 @@ class SimpleSampler(BaseSampler):
 			else:
 				saver.restore(sess, checkpoint_path)
 				sess.run(tf.global_variables_initializer())
-				print("hi yunchu, we use the bc policy")
+				#print("hi yunchu, we use the bc policy")
 
 				#action = sess.run(predicted_action_ph, feed_dict={concatendated_state_ph: np.concatenate((active_obs[-9][0],active_obs[-8][0][3:]), 0).reshape(1,16)})
 				action = sess.run(predicted_action_ph, feed_dict={concatendated_state_ph: np.hstack(active_obs[-9:]).reshape(1,-1)})[0]
@@ -177,11 +177,15 @@ class SimpleSampler(BaseSampler):
 		if terminal:
 			print("reward",reward,"successs within ",self._path_length)
 			#st()
+			print(self.iteration, iteration)
+			print("we use the bc policy")
 			length = 1
 
 	
 		if (self._path_length >= self._max_path_length):
 			print("unsuccessful",reward,self._path_length)
+			print(self.iteration, iteration)
+			print("we use the bc policy")
 			length = 2
 
 		

@@ -70,7 +70,7 @@ def rollout_and_gather_data(max_rollouts, mesh, iteration):
 	replay_pool = SimpleReplayPool(env, concat_observations=False, max_size=3e4)
 
 	#policy = get_policy('UniformPolicy', env)
-	checkpoint_path = "/projects/katefgroup/robert/fixresult_" + str(mesh) + "/checkpoint_200"
+	checkpoint_path = "/projects/katefgroup/robert/fixresult_" + str(mesh) + "/checkpoint_150"
 	print("--------------")
 	print(checkpoint_path)
 	print("--------------")
