@@ -39,9 +39,6 @@ def rollout_and_gather_data(max_rollouts, mesh, iteration):
 	change_env_to_use_correct_mesh(mesh)
 
 
-	exploration_steps = 100
-
-
 	gpu_options = tf.GPUOptions(allow_growth=True)
 	session = tf.Session(config=tf.ConfigProto(gpu_options=gpu_options))
 	tf.keras.backend.set_session(session)
@@ -104,87 +101,91 @@ def rollout_and_gather_data(max_rollouts, mesh, iteration):
 		
 	policy.set_weights(picklable['policy_weights'])
 
+	with policy.set_deterministic(True):
+
+
+		sampler = SimpleSampler(batch_size=40, max_path_length=50, min_pool_size=0,mesh = mesh, iteration=iteration)
+		sampler.initialize(env, policy, replay_pool)
+		length = 40
 
 
 
-
-	sampler = SimpleSampler(batch_size=40, max_path_length=50, min_pool_size=0,mesh = mesh, iteration=iteration)
-	sampler.initialize(env, policy, replay_pool)
-	length = 40
-
+		number_rollouts = 0
+		success = 0
+		totalnum = 0
 
 
-	number_rollouts = 0
-	success = 0
-	totalnum = 0
+		expert_data_path = "/projects/katefgroup/yunchu/dagger_" + str(mesh)
+		if not os.path.exists(expert_data_path):
+			os.mkdir(expert_data_path)
+		expert_actions = []
+		while True:
+			#print("sampling")
+			current_obs, next_observation, expert_action, reward, terminal, info ,length= sampler.sample(iteration)
+			expert_actions.append(expert_action)
+			#print("obs", current_obs, "expert_action" , expert_action  )
+			#st()
+			#print(terminal)
+			#print(length)
 
-
-	expert_data_path = "/projects/katefgroup/yunchu/dagger_" + str(mesh)
-	if not os.path.exists(expert_data_path):
-		os.mkdir(expert_data_path)
-	expert_actions = []
-	while True:
-		#print("sampling")
-		current_obs, next_observation, expert_action, reward, terminal, info ,length= sampler.sample()
-		expert_actions.append(expert_action)
-		print("obs", current_obs[:,0:5], "expert_action" , expert_action  )
-		#st()
-		#print(terminal)
-		#print(length)
-
-		#save observation
-		
-
-		# expert_data = {'actions':expert_action,
-		# 		   'observation_with_orientation':current_obs[:-2], 
-		# 		   'state_desired_goal':current_obs[-2:]}
-
-
-
-		if length !=0:
-			number_rollouts += 1
-
+			#save observation
 			
 
-				#print(expert_data_path)
-			#expert_actions = []
-			if length == 1:
-				success = success + 1
-			print(number_rollouts)
-
-		if number_rollouts >=max_rollouts: break
-
-	onlyfiles = next(os.walk(expert_data_path))[2]
-	totalnum = len(onlyfiles)
-	print('---------')
-	print("before",totalnum)
-
-	for counter in range(len(expert_actions)):
-		#save the dagger expert trajectories 
-		expert_data = {'image_observation': np.array(replay_pool.fields["observations.image_observation"][counter]),
-		   'depth_observation': np.array(replay_pool.fields["observations.depth_observation"][counter]),
-		   'cam_angles_observation':np.array(replay_pool.fields["observations.cam_angles_observation"][counter]),
-		   'actions':expert_actions[counter],
-		   'rewards':np.array(replay_pool.fields["rewards"][counter]),
-		   'observation_with_orientation':np.array(replay_pool.fields["observations.observation_with_orientation"][counter]),
-		   'state_desired_goal':np.array(replay_pool.fields["observations.state_desired_goal"][counter][3:]),
-		   'terminals':np.array(replay_pool.fields["terminals"][counter])}
-		#print(expert_data)
-
-		#print('saving'+'{:d}'.format(counter)+'.pkl')
-		with open(os.path.join(expert_data_path, 'state' + "{:d}".format(totalnum+counter) + '.pkl'), 'wb') as f:
-			pickle.dump(expert_data, f, pickle.HIGHEST_PROTOCOL)
-	#st()
-	onlyfiles = next(os.walk(expert_data_path))[2]
-	totalnum = len(onlyfiles)
-	print('---------')
-	print("after",totalnum)
+			# expert_data = {'actions':expert_action,
+			# 		   'observation_with_orientation':current_obs[:-2], 
+			# 		   'state_desired_goal':current_obs[-2:]}
 
 
-	succes_rate = success/max_rollouts
-	print(succes_rate)
-	onlyfiles = next(os.walk(expert_data_path))[2] 
-	print("Total_Sample_data",len(onlyfiles))
+
+			if length !=0:
+				number_rollouts += 1
+
+				
+
+					#print(expert_data_path)
+				#expert_actions = []
+				if length == 1:
+					success = success + 1
+				print(number_rollouts)
+
+			if number_rollouts >=max_rollouts: break
+
+		onlyfiles = next(os.walk(expert_data_path))[2]
+		totalnum = len(onlyfiles)
+		print('---------')
+		print("before",totalnum)
+
+		for counter in range(len(expert_actions)):
+			#save the dagger expert trajectories 
+			expert_data = {'image_observation': np.array(replay_pool.fields["observations.image_observation"][counter]),
+				'depth_observation': np.array(replay_pool.fields["observations.depth_observation"][counter]),
+				'cam_angles_observation':np.array(replay_pool.fields["observations.cam_angles_observation"][counter]),
+				'actions':expert_actions[counter],
+				'rewards':np.array(replay_pool.fields["rewards"][counter]),
+				'observation_with_orientation':np.array(replay_pool.fields["observations.observation_with_orientation"][counter]),
+				'state_desired_goal':np.array(replay_pool.fields["observations.state_desired_goal"][counter]),
+				'terminals':np.array(replay_pool.fields["terminals"][counter]),
+				'desired_goal': np.array(replay_pool.fields["observations.desired_goal"][counter]),
+				'achieved_goal': np.array(replay_pool.fields["observations.achieved_goal"][counter]),
+				'state_observation': np.array(replay_pool.fields["observations.state_observation"][counter]),
+				'state_achieved_goal': np.array(replay_pool.fields["observations.state_achieved_goal"][counter]),
+				'proprio_observation': np.array(replay_pool.fields["observations.proprio_observation"][counter]),
+				'proprio_desired_goal': np.array(replay_pool.fields["observations.proprio_desired_goal"][counter]),
+				'proprio_achieved_goal':np.array(replay_pool.fields["observations.proprio_achieved_goal"][counter])}
+			#print('saving'+'{:d}'.format(counter)+'.pkl')
+			with open(os.path.join(expert_data_path, 'state' + "{:d}".format(totalnum+counter) + '.pkl'), 'wb') as f:
+				pickle.dump(expert_data, f, pickle.HIGHEST_PROTOCOL)
+		#st()
+		onlyfiles = next(os.walk(expert_data_path))[2]
+		totalnum = len(onlyfiles)
+		print('---------')
+		print("after",totalnum)
+
+
+		succes_rate = success/max_rollouts
+		print(succes_rate)
+		onlyfiles = next(os.walk(expert_data_path))[2] 
+		print("Total_Sample_data",len(onlyfiles))
 
 	return succes_rate
 

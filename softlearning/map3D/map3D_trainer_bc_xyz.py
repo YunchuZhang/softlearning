@@ -60,18 +60,25 @@ def _read_py_function(filename):
 	with open(path + '/' + str(filename,encoding ="utf-8" ), 'rb') as f:
 		data = pickle.loads(f.read())
 	#st()
-	return np.concatenate((data["observation_with_orientation"],data['state_desired_goal']), 0), data["actions"]
+	return np.concatenate((data["observation_with_orientation"],data['state_desired_goal'], data['state_achieved_goal'],\
+		data['state_observation'],data['state_desired_goal'],data['state_achieved_goal'],data['proprio_observation'],\
+		data['proprio_desired_goal'],data['proprio_achieved_goal']), 0), data["actions"]
+
+
+
 
 def _read_py_function_dg(filename):
 	with open(path_dagger + '/' + str(filename,encoding ="utf-8" ), 'rb') as f:
 		data = pickle.loads(f.read())
-	#st()
-	return np.concatenate((data["observation_with_orientation"],data['state_desired_goal']), 0), data["actions"]
+
+	return np.hstack((data["observation_with_orientation"],data['state_desired_goal'], data['state_achieved_goal'],\
+		data['state_observation'],data['state_desired_goal'],data['state_achieved_goal'],data['proprio_observation'],\
+		data['proprio_desired_goal'],data['proprio_achieved_goal'])), data["actions"]
 
 
 def build_model():
 
-	concatendated_state_ph = tf.placeholder(tf.float32, [None, 16])
+	concatendated_state_ph = tf.placeholder(tf.float32, [None, 48])
 	actions_ph = tf.placeholder(dtype=tf.float32, shape=[None, 2])
 	out = tf.placeholder(dtype=tf.float32, shape=[None, 2])
 
@@ -187,13 +194,13 @@ def main_dagger(iteration, mesh):
 	summary_dir = "scalar/"+mesh+"/dagger_iteration_"+str(iteration)
 	summary_writer = tf.summary.FileWriter(summary_dir)
 
-	filenames_a = os.listdir(path)
-	filenames_a = tf.constant(filenames_a)
-	dataset = tf.data.Dataset.from_tensor_slices(filenames_a)
+	# filenames_a = os.listdir(path)
+	# filenames_a = tf.constant(filenames_a)
+	# dataset = tf.data.Dataset.from_tensor_slices(filenames_a)
 
 
 
-	dataset_a = dataset.map(lambda filename: tuple(tf.py_func(_read_py_function, [filename],[tf.float32,tf.float32])))
+	# dataset_a = dataset.map(lambda filename: tuple(tf.py_func(_read_py_function, [filename],[tf.float32,tf.float32])))
 	
 
 
@@ -208,9 +215,9 @@ def main_dagger(iteration, mesh):
 
 	dataset_b = dataset.map(lambda filename: tuple(tf.py_func(_read_py_function_dg, [filename],[tf.float32,tf.float32])))
 
-	dataset=dataset_a.concatenate(dataset_b)
+	dataset=dataset_b
 
-	DATASET_SIZE = (filenames_a.get_shape().as_list()[0])+(filenames.get_shape().as_list()[0])
+	DATASET_SIZE = (filenames.get_shape().as_list()[0])
 
 	# test_dataset = dataset.take(5000) 
 	# train_dataset = dataset.skip(5000)
@@ -224,10 +231,10 @@ def main_dagger(iteration, mesh):
 
 
 	batches = train_size// batch_size
-	print("Total Data",((filenames_a.get_shape().as_list()[0])+(filenames.get_shape().as_list()[0])))
+	# print("Total Data",((filenames_a.get_shape().as_list()[0])+(filenames.get_shape().as_list()[0])))
 
 
-	for training_step in range(201): #201
+	for training_step in range(101): #201
 
 		dataset = dataset.shuffle(buffer_size=100)
 		#batches = (filenames.get_shape().as_list()[0])// batch_size
@@ -273,7 +280,7 @@ def main_dagger(iteration, mesh):
 			sess.run(iterator1.initializer)
 
 			elem = sess.run(next_element)
-			observations = np.reshape(elem[0],[-1,16])
+			observations = np.reshape(elem[0],[-1,48])
 			actions = np.reshape(elem[1],[-1,2])
 			#fd = _get_feed_dict(elem)
 			output_pred_run, mse_run = sess.run([predicted_action_ph, mse], feed_dict={concatendated_state_ph: observations, actions_ph: actions})
@@ -412,7 +419,7 @@ def main_dagger_without(iteration, mesh):
 
 
 	#path = "/projects/katefgroup/yunchu/expert_mug2"
-	
+	st()
 	filenames = os.listdir(path_dagger)
 	filenames = tf.constant(filenames)
 	dataset = tf.data.Dataset.from_tensor_slices(filenames)
@@ -453,7 +460,7 @@ def main_dagger_without(iteration, mesh):
 			observations = elem[0]
 			actions = elem[1]
 			#fd = _get_feed_dict(elem)
-			#st()
+			st()
 			_,output_pred_run, mse_run, merged_summary_op_run = sess.run([apply_grads,predicted_action_ph, mse, merged_summary_op], feed_dict={concatendated_state_ph: observations, actions_ph: actions})
 			summary_writer.add_summary(merged_summary_op_run, training_step*batches+1)
 
@@ -625,7 +632,7 @@ def main():
 
 
 
-	for training_step in range(201):
+	for training_step in range(101):
 
 		dataset = dataset.shuffle(buffer_size=100)
 		#batches = (filenames.get_shape().as_list()[0])// batch_size
@@ -670,12 +677,12 @@ def dagger(number_iterations, mesh):
 		#combine old experience and the expertactions on the sample trajectories to dataset D
 		# and train bc agent on D
 		#main_dagger(iteration, mesh)
-		#main_dagger(iteration, mesh)
+		main_dagger(iteration, mesh)
 		#test()
 		#sample trajectories and store the experts actions
-		max_rollouts = 300 #how many starting conditions to sample and to roll out
+		max_rollouts = 25 #300 #how many starting conditions to sample and to roll out
 		succes_rate = rollout_and_gather_data(max_rollouts, mesh, iteration)
-		main_dagger_without(iteration, mesh)
+		#main_dagger_without(iteration, mesh)
 
 
 		print("done with iteration ", iteration," on object", mesh, "with succes rate", succes_rate)

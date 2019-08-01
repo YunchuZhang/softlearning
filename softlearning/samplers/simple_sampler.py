@@ -49,7 +49,7 @@ class SimpleSampler(BaseSampler):
 		return processed_observation
 	def build_model(self):
 
-		concatendated_state_ph = tf.placeholder(tf.float32, [None, 16])
+		concatendated_state_ph = tf.placeholder(tf.float32, [None, 48])
 		actions_ph = tf.placeholder(dtype=tf.float32, shape=[None, 2])
 		out = tf.placeholder(dtype=tf.float32, shape=[None, 2])
 
@@ -69,8 +69,10 @@ class SimpleSampler(BaseSampler):
 			self.obs_ph[4]:active_obs[4],self.obs_ph[5]:active_obs[5],self.obs_ph[6]:active_obs[6]})        
 		return active_obs
 	
-	def sample(self):
-		import ipdb
+	def sample(self, iteration):
+
+		print(self.iteration, iteration)
+		self.iteration = iteration
 		#ipdb.set_trace()
 		if self._current_observation is None:
 			self._current_observation = self.env.reset()
@@ -110,24 +112,31 @@ class SimpleSampler(BaseSampler):
 			#print("checkpoint_path", checkpoint_path)
 			# restore the saved model
 			saver = tf.train.Saver()
+			if self.iteration == 0:
+				action = expert_action
+			else:
+				saver.restore(sess, checkpoint_path)
+				sess.run(tf.global_variables_initializer())
+				print("hi yunchu, we use the bc policy")
 
-			saver.restore(sess, checkpoint_path)
-			sess.run(tf.global_variables_initializer())
-
-			action = sess.run(predicted_action_ph, feed_dict={concatendated_state_ph: np.concatenate((active_obs[-9][0],active_obs[-8][0][3:]), 0).reshape(1,16)})
-		#print(action)
+				#action = sess.run(predicted_action_ph, feed_dict={concatendated_state_ph: np.concatenate((active_obs[-9][0],active_obs[-8][0][3:]), 0).reshape(1,16)})
+				action = sess.run(predicted_action_ph, feed_dict={concatendated_state_ph: np.hstack(active_obs[-9:]).reshape(1,-1)})[0]
+			#print(action)
 		
+ #in the 0 th iteration we execute the expert actions
 
 
-		#st()
+
 		#action = self.policy.actions_np(active_obs[-9:])[0] #select only part of the active obs
-		current_state = np.concatenate((active_obs[-9][0],active_obs[-8][0][3:]), 0).reshape(1,16)
+		#current_state = np.concatenate((active_obs[-9][0],active_obs[-8][0][3:]), 0).reshape(1,16)
+		current_state = np.hstack(active_obs[-9:])
+		#st()
 
 	   
 
 		#st()
 		#next_observation, reward, terminal, info = self.env.step(action[0])
-		next_observation, reward, terminal, info = self.env.step(expert_action)
+		next_observation, reward, terminal, info = self.env.step(action)
 
 		reward=reward[0]
 		terminal =terminal[0]
@@ -142,7 +151,7 @@ class SimpleSampler(BaseSampler):
 
 		processed_sample = self._process_observations(
 			observation=self._current_observation,
-			action=action[0],
+			action=action,
 			reward=reward,
 			terminal=terminal,
 			next_observation=next_observation,
@@ -167,7 +176,7 @@ class SimpleSampler(BaseSampler):
 		length = 0
 		if terminal:
 			print("reward",reward,"successs within ",self._path_length)
-			st()
+			#st()
 			length = 1
 
 	
