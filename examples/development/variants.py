@@ -41,7 +41,8 @@ MAX_PATH_LENGTH_PER_DOMAIN = {
     'SawyerPushAndReachEnvEasy': 200,
     'SawyerPushAndReachEnvMedium': 200,
     'SawyerPushAndReachEnvHard': 200,
-    'SawyerPickupEnvYZEasy': 200
+    'SawyerPickupEnvYZEasy': 200,
+    'SawyerReachXYEnv': 50
 }
 
 ALGORITHM_PARAMS_BASE = {
@@ -210,7 +211,10 @@ ENVIRONMENT_PARAMS = {
     },
     'SawyerReachXYEnv': {
         'v1': {
-            'reward_type': 'hand_success'
+            'reward_type': 'hand_success',
+            #'fix_goal': True,
+            #'fixed_goal': (0.15, 0.65),
+            #'observation_keys': ('state_desired_goal',)
         }
     },
     'SawyerPushAndReachEnvEasy': {

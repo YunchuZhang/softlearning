@@ -224,7 +224,8 @@ def run_example_local(example_module_name, example_argv, local_mode=False):
     experiments = {experiment_id: experiment}
 
     #change the xml file to use the desired xml mesh
-    change_env_to_use_correct_mesh(example_args.mesh)
+    if example_args.mesh:
+        change_env_to_use_correct_mesh(example_args.mesh)
 
     ray.init(
         num_cpus=example_args.cpus,
