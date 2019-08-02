@@ -42,10 +42,3 @@ for expert in list_of_experts:
 	er._train()
 
 	print("done with expert", expert)
-
-
-
-
-
-
-# print(variant_spec)

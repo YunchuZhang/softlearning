@@ -467,7 +467,7 @@ def dagger(number_iterations, mesh):
 		#main_dagger(iteration, mesh)
 		#test()
 		#sample trajectories and store the experts actions
-		max_rollouts = 20 #300 #how many starting conditions to sample and to roll out
+		max_rollouts = 50 #300 #how many starting conditions to sample and to roll out
 		succes_rate = rollout_and_gather_data(max_rollouts, mesh, iteration)
 		#main_dagger_without(iteration, mesh)
 

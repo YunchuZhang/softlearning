@@ -164,7 +164,7 @@ class ExperimentRunner():
 		replay_pool = self.replay_pool = (
 			get_replay_pool_from_variant(variant, training_environment))
 
-		sampler = self.sampler = get_sampler_from_variant(variant)
+		#sampler = self.sampler = get_sampler_from_variant(variant)
 
 		initial_exploration_policy = self.initial_exploration_policy = (
 			get_policy('UniformPolicy', training_environment))
