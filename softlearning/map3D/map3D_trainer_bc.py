@@ -109,7 +109,21 @@ class MappingTrainer():
 
 
 
-
+			# expert_data = {'image_observation': np.array(replay_pool.fields["observations.image_observation"][counter]),
+			# 	'depth_observation': np.array(replay_pool.fields["observations.depth_observation"][counter]),
+			# 	'cam_angles_observation':np.array(replay_pool.fields["observations.cam_angles_observation"][counter]),
+			# 	'actions':expert_actions[counter],
+			# 	'rewards':np.array(replay_pool.fields["rewards"][counter]),
+			# 	'observation_with_orientation':np.array(replay_pool.fields["observations.observation_with_orientation"][counter]),
+			# 	'state_desired_goal':np.array(replay_pool.fields["observations.state_desired_goal"][counter]),
+			# 	'terminals':np.array(replay_pool.fields["terminals"][counter]),
+			# 	'desired_goal': np.array(replay_pool.fields["observations.desired_goal"][counter]),
+			# 	'achieved_goal': np.array(replay_pool.fields["observations.achieved_goal"][counter]),
+			# 	'state_observation': np.array(replay_pool.fields["observations.state_observation"][counter]),
+			# 	'state_achieved_goal': np.array(replay_pool.fields["observations.state_achieved_goal"][counter]),
+			# 	'proprio_observation': np.array(replay_pool.fields["observations.proprio_observation"][counter]),
+			# 	'proprio_desired_goal': np.array(replay_pool.fields["observations.proprio_desired_goal"][counter]),
+			# 	'proprio_achieved_goal':np.array(replay_pool.fields["observations.proprio_achieved_goal"][counter])}
 
 	def forwardPass(self):
 		N =4

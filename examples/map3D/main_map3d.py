@@ -178,7 +178,7 @@ class ExperimentRunner():
 			pool=replay_pool,
 			batch_size = batch_size,
 			observation_keys = observation_keys,
-			sampler=sampler,
+			#sampler=sampler,
 			eager_enabled = self.eager,
 			# detector = self.detector,
 			exp_name=self.exp_name,

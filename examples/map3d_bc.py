@@ -39,6 +39,26 @@ for expert in list_of_experts:
 
 	er._build()
 
-	er._train()
+	#er._train()
+	number_iterations = 5 #number of dagger iterations
+
+	for iteration in range(number_iterations):
+		#combine old experience and the expertactions on the sample trajectories to dataset D
+		# and train bc agent on D
+		#main_dagger(iteration, mesh)
+		#main_dagger(iteration, mesh)
+		#test()
+		er.algorithm.train_epoch(epoch = 200)
+		#sample trajectories and store the experts actions
+		max_rollouts = 50 #300 #how many starting conditions to sample and to roll out
+		succes_rate = rollout_and_gather_data(max_rollouts, mesh, iteration)
+		#main_dagger_without(iteration, mesh)
+
+
+		print("done with iteration ", iteration," on object", mesh, "with succes rate", succes_rate)
+
+
+
 
 	print("done with expert", expert)
+
