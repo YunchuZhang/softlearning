@@ -87,7 +87,7 @@ class Net:
 
         # images = images
         #tf.compat.as_text(raw_seq_filename, encoding='utf-8')
-
+        #st()
         names = ['images', 'angles', 'zmaps']
         stuff = [images, angles, zmaps]
         if const.mode == "test":
@@ -140,13 +140,15 @@ class Net:
 
         return dictVal
 
-    def data(self,images,zmaps,angles):
+    def data(self,images,zmaps,angles,goal):
         #data = self.child.data_for_selector(self.q_ph)
-        # st()
+        
         # self.images_val = images
         data = self.init_Inputs(images,zmaps,angles)
+        #goal_ph = tf.placeholder(tf.float32, [const.BS, 5], "goal_centroid")
         # st()
-
+        data.update({'goal':goal})
+        data.goal = goal
         # data = self.init_placeholders()
         input_T = data.images.get_shape()[1].value
         start_t = tf.cast(tf.random.uniform([1], minval=0, maxval=input_T-0.000001 - self.max_T, dtype=tf.float32)[0], tf.int32)
@@ -184,6 +186,7 @@ class Net:
         return tf.concat([delta_pos, delta_quat, delta_vel], 3)[:,:15, :, :]
     
     def make_inputs(self, data):
+        
         if const.run_full:
             return Munch(state = self.make_state(data),
                          action = self.make_action(data))
@@ -223,7 +226,7 @@ class Net:
                          voxels=data.voxels, resize_factor=data.resize_factor)
         else:
             return Munch(frames=frames[:, :, :const.NUM_VIEWS], depth_ori = data.zmaps, cameras=data.angles[:, :, :const.NUM_VIEWS], phis = phis[:, :, :const.NUM_VIEWS], thetas=thetas[:, :, :const.NUM_VIEWS],
-                        vp_frame = frames[:, 0, -1, :, :, -3:], vp_phi = phis[:, 0, -1], vp_theta = thetas[:, 0, -1])
+                        vp_frame = frames[:, 0, -1, :, :, -3:], vp_phi = phis[:, 0, -1], vp_theta = thetas[:, 0, -1], goal = data.goal)
 
 
     def make_action(self, data):
@@ -256,7 +259,7 @@ class Net:
         self.optimizer = tf.train.AdamOptimizer(const.lr, const.mom)
         self.opt = utils.tfutil.make_opt_op(self.optimizer, fn)
 
-    def __call__(self,images,angles,zmaps,batch_size=None,exp_name=None,is_training=None,reuse=False,eager=False,position=None):
+    def __call__(self,images,angles,zmaps,goal,batch_size=None,exp_name=None,is_training=None,reuse=False,eager=False,position=None):
         #index is passed to the data_selector, to control which data is used
         #self.go_up_to_loss(index)
         # st()
@@ -265,7 +268,7 @@ class Net:
         if exp_name:
             const.set_experiment(exp_name)
             self.__dict__.update(const.__dict__)
-        st()
+        
         if batch_size:
             const.BS = batch_size
         if eager:
@@ -283,7 +286,7 @@ class Net:
         const.x0 = const.W / 2.0
         const.y0 = const.H / 2.0
         with tf.compat.v1.variable_scope("Variables",reuse=reuse):
-            val = self.data(images,zmaps,angles)
+            val = self.data(images,zmaps,angles,goal)
             self.optimize(lambda: self.go_up_to_loss(val,is_training))
             self.assemble()
         return self.memory_3D

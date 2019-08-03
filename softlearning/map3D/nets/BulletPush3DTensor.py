@@ -210,6 +210,7 @@ class BulletPush3DTensor4_cotrain(BulletPushBase):
         self.T = const.max_T +1
         # self.crop_size=const.crop_size
         self.bs = const.BS
+        self.goal = data.inputs.state.goal
         # calculate the rois
         # batch_size x nrois x 3, from [-1.5, 1.5] -> [0,1]
         # self.input_images = self.inputs.state.frames[:, 0, :, :, :, :]
@@ -423,25 +424,58 @@ class BulletPush3DTensor4_cotrain(BulletPushBase):
         return out
 
 
-
-     
     def predict(self):
-        # st()
-        self.prepare_inputs()
+       # st()
+       self.prepare_inputs()
 
-        # (batch_size x T) x 32 x 32 x 32 x dim
-        memory_3D = self.building_3D_tensor()
-        self.memory_3D = tf.stop_gradient(tf.identity(memory_3D,name="3dstuff"))
+       # (batch_size x T) x 32 x 32 x 32 x dim
+       memory_3D = self.building_3D_tensor()
+       #st()
 
-        inputs2Ddec = self.get_inputs2Ddec_gqn3d([memory_3D])
-        outputs2Ddec = self.get_outputs2Ddec_gqn3d(inputs2Ddec)
-        self.predicted_view = outputs2Ddec
-        if self.detector:
-            with tf.compat.v1.variable_scope("detector"):
-                self.predicted_position = utils.nets.detector(memory_3D)
-        if self.action_predictor:
-            with tf.compat.v1.variable_scope("action_predictor"):
-                self.predicted_action = utils.nets.action_predictor(memory_3D)
+       inputs2Ddec = self.get_inputs2Ddec_gqn3d([memory_3D])
+       outputs2Ddec = self.get_outputs2Ddec_gqn3d(inputs2Ddec)
+       self.predicted_view = outputs2Ddec
+
+       self.memory_3D = tf.stop_gradient(tf.identity(memory_3D,name="3dstuff"))
+       goal = self.goal #goal is x,y coordinate of the puck
+       goal = (goal - (tf.constant([-0.25,0.3,0.02,-0.2, 0.4])))/ (tf.constant([0.5,0.575,0.01,0.4, 0.4])) #feature scaling for the goal coordinates
+       goal_1 = tf.multiply(tf.ones(memory_3D.shape[:4]),tf.reshape(goal[:,:,0],[memory_3D.shape[0],1,1,1]))
+       goal_2 = tf.multiply(tf.ones(memory_3D.shape[:4]),tf.reshape(goal[:,:,1],[memory_3D.shape[0],1,1,1]))
+       goal_3 = tf.multiply(tf.ones(memory_3D.shape[:4]),tf.reshape(goal[:,:,2],[memory_3D.shape[0],1,1,1]))
+       goal_4 = tf.multiply(tf.ones(memory_3D.shape[:4]),tf.reshape(goal[:,:,3],[memory_3D.shape[0],1,1,1]))
+       goal_5 = tf.multiply(tf.ones(memory_3D.shape[:4]),tf.reshape(goal[:,:,4],[memory_3D.shape[0],1,1,1]))
+       goal_1 = tf.reshape(goal_1,[goal_1.shape[0],goal_1.shape[1],goal_1.shape[2],goal_1.shape[3],1])
+       goal_2 = tf.reshape(goal_2,[goal_2.shape[0],goal_2.shape[1],goal_2.shape[2],goal_2.shape[3],1])
+       goal_3 = tf.reshape(goal_3,[goal_3.shape[0],goal_3.shape[1],goal_3.shape[2],goal_3.shape[3],1])
+       goal_4 = tf.reshape(goal_4,[goal_4.shape[0],goal_4.shape[1],goal_4.shape[2],goal_4.shape[3],1])
+       goal_5 = tf.reshape(goal_1,[goal_5.shape[0],goal_5.shape[1],goal_5.shape[2],goal_5.shape[3],1])
+
+       memory_3D = tf.concat((memory_3D, goal_1 , goal_2 , goal_3 , goal_4 ,goal_5), axis = 4)
+
+       if self.detector:
+           with tf.compat.v1.variable_scope("detector"):
+               self.predicted_position = utils.nets.detector(memory_3D)
+       if self.action_predictor:
+           with tf.compat.v1.variable_scope("action_predictor"):
+               self.predicted_action = utils.nets.action_predictor(memory_3D)
+     
+    # def predict(self):
+    #     # st()
+    #     self.prepare_inputs()
+
+    #     # (batch_size x T) x 32 x 32 x 32 x dim
+    #     memory_3D = self.building_3D_tensor()
+    #     self.memory_3D = tf.stop_gradient(tf.identity(memory_3D,name="3dstuff"))
+
+    #     inputs2Ddec = self.get_inputs2Ddec_gqn3d([memory_3D])
+    #     outputs2Ddec = self.get_outputs2Ddec_gqn3d(inputs2Ddec)
+    #     self.predicted_view = outputs2Ddec
+    #     if self.detector:
+    #         with tf.compat.v1.variable_scope("detector"):
+    #             self.predicted_position = utils.nets.detector(memory_3D)
+    #     if self.action_predictor:
+    #         with tf.compat.v1.variable_scope("action_predictor"):
+    #             self.predicted_action = utils.nets.action_predictor(memory_3D)
         # st()
 
         # if const.run_full:

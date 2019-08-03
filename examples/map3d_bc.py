@@ -18,7 +18,7 @@ for expert in list_of_experts:
 	example_argv = list(example_argv)
 	example_argv[8] = expert_name
 	example_argv = tuple(example_argv)
-	st()
+
 
 	example_module = importlib.import_module(example_module_name)
 
@@ -33,12 +33,12 @@ for expert in list_of_experts:
 	if eager:
 		tf.enable_eager_execution()
 
-	er._setup("rl_new_reach_action_predictor",variant_spec,example_args.mesh ,eager)
+	er._setup("rl_new_reach",variant_spec,example_args.mesh ,eager)
 
 	# er._setup("rl_new_reach_detect",variant_spec,eager)
 
 	er._build()
-
+	#st()
 	#er._train()
 	number_iterations = 5 #number of dagger iterations
 
@@ -48,7 +48,7 @@ for expert in list_of_experts:
 		#main_dagger(iteration, mesh)
 		#main_dagger(iteration, mesh)
 		#test()
-		er.algorithm.train_epoch(epoch = 200)
+		er.algorithm.train_epoch(epoch = 1)
 		#sample trajectories and store the experts actions
 		max_rollouts = 50 #300 #how many starting conditions to sample and to roll out
 		succes_rate = rollout_and_gather_data(max_rollouts, mesh, iteration)

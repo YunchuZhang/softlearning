@@ -3,7 +3,9 @@ import constants as const
 import utils_map as utils
 import pickle
 import types
-
+import ipdb 
+import numpy as np
+st = ipdb.set_trace
 class Config(object):
     def __init__(self, name, step=0):
         utils.utils.ensure(path.join(const.ckpt_base,const.ckpt_cfg_dir))
@@ -14,6 +16,7 @@ class Config(object):
         self.step = step
 
     def snapshot_const(self, file_name):
+        #st()
         with open(file_name, 'wb') as f:
             dump_dict = {key:value for key, value in const.__dict__.items()\
                          if isinstance(value, (int, float, str, bool))}

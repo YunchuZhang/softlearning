@@ -5,7 +5,7 @@ import pickle
 import sys
 import tensorflow as tf
 from ray import tune
-
+from softlearning.samplers.simple_sampler import SimpleSampler
 from softlearning.environments.utils import get_environment_from_params,get_environment_from_params_custom
 from softlearning.algorithms.utils import get_algorithm_from_variant
 from softlearning.policies.utils import get_policy_from_variant, get_policy
@@ -103,7 +103,6 @@ class ExperimentRunner():
 
 
 	def map_load(self,sess, name,map3D=None):
-		# st()
 		if not path.exists(path.join(self.algorithm.model.ckpt_base,self.algorithm.model.ckpt_cfg_dir, name)):
 			return 0
 		config = Config(name)
@@ -121,6 +120,7 @@ class ExperimentRunner():
 			elif not ckpt.model_checkpoint_path:
 				raise Exception("checkpoint not found? (2)")
 			loadpath = ckpt.model_checkpoint_path
+			loadpath = '/projects/katefgroup/mprabhud/rl/ckpt/rl_new/1/main_weights/X-220'
 
 			scope, weights = parts[partname]
 
@@ -129,7 +129,7 @@ class ExperimentRunner():
 			
 			weights = {utils.utils.exchange_scope(weight.op.name, scope, partscope): weight
 					   for weight in weights}
-
+			
 			saver = tf.train.Saver(weights)
 			saver.restore(sess, loadpath)
 			print(f"restore model from {loadpath}")
@@ -165,11 +165,11 @@ class ExperimentRunner():
 			get_replay_pool_from_variant(variant, training_environment))
 
 		#sampler = self.sampler = get_sampler_from_variant(variant)
-
+		sampler = SimpleSampler(batch_size=40, max_path_length=50, min_pool_size=0,mesh = self.expert_name, iteration=0)
 		initial_exploration_policy = self.initial_exploration_policy = (
 			get_policy('UniformPolicy', training_environment))
 
-
+		#st()
 		self.algorithm = bulledtPushTrainer		(
 			variant=variant,
 			map3D =bulledtPush,
@@ -178,7 +178,7 @@ class ExperimentRunner():
 			pool=replay_pool,
 			batch_size = batch_size,
 			observation_keys = observation_keys,
-			#sampler=sampler,
+			sampler=sampler,
 			eager_enabled = self.eager,
 			# detector = self.detector,
 			exp_name=self.exp_name,

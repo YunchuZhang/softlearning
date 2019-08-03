@@ -731,7 +731,7 @@ OG("rl_new",
 #    load_name="rl_new/1"
    ckpt_cfg_dir="ckpt_cfg",
    load_name="rl_new/1",
-   ckpt_base = "/projects/katefgroup/yunchu/"
+   ckpt_base = "/home/robertmu/bc_train/softlearning/"
    #load_name = "0517_bulletpush3D_4_multicam_bn_mask/no_bn_on_top_3d_shuffle"
    #load_name = "0517_bulletpush3D_4_multicam_bn_mask/xian_bs4"
    )
@@ -739,7 +739,7 @@ OG("rl_temp","rl_new",ckpt_cfg_dir="ckpt_cfg")
 
 OG("rl_new_reach","rl_new",load_name="rl_new/1")
 OG("rl_new_reach_detect","rl_new",load_name="rl_new_detector/1",detector=True)
-OG("rl_new_reach_action_predictor","rl_new",load_name="rl_new_action_mug3/1",action_predictor=True)
+OG("rl_new_reach_action_predictor","rl_new",load_name="rl_new/1",action_predictor=True)
 
 
 

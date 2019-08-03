@@ -76,7 +76,7 @@ class MappingTrainer():
 
 		self.batch_size = 15 #changed from 4
 		#self.batches = 200 
-		#st()
+
 		self.batch = (filenames.get_shape().as_list()[0])// self.batch_size
 		
 		#self.batch_size =batch_size
@@ -142,15 +142,13 @@ class MappingTrainer():
 		img_ph = tf.placeholder(tf.float32, [self.batch_size , 1, N, 84, 84, 3],"images")
 		cam_angle_ph = tf.placeholder(tf.float32, [self.batch_size , 1, N, 2],"angles")
 		depth_ph = tf.placeholder(tf.float32, [self.batch_size , 1, N, 84, 84],"zmapss")
-		goal_img_ph = tf.placeholder(tf.float32, [self.batch_size , 1, N, 84, 84, 3],"goal_images")
-		goal_cam_angle_ph = tf.placeholder(tf.float32, [self.batch_size , 1, N, 2],"goal_angles")
-		goal_depth_ph = tf.placeholder(tf.float32, [self.batch_size , 1, N, 84, 84],"goal_zmapss")
-		position_ph = tf.placeholder(tf.float32, [self.batch_size ,1,2],"position")
-		self._observations_phs = [img_ph,depth_ph,cam_angle_ph,position_ph, goal_img_ph, goal_cam_angle_ph, goal_depth_ph]
+		goal_ph =  tf.placeholder(tf.float32, [self.batch_size, 1,5], "goal_centroid")
+		action_ph = tf.placeholder(tf.float32, [self.batch_size ,1,2],"position")
+		self._observations_phs = [img_ph,depth_ph,cam_angle_ph,goal_ph,action_ph]
 		depth_ph = tf.expand_dims(depth_ph,-1)
+		
+		self.model(img_ph,cam_angle_ph,depth_ph, goal_ph,batch_size=self.batch_size,exp_name=self.exp_name,position=action_ph)
 		#st()
-		self.model(img_ph,cam_angle_ph,depth_ph,batch_size=self.batch_size,exp_name=self.exp_name,position=position_ph)
-
 		self.action_predictor =  self.model.action_predictor
 		# st()
 		# self.exp_name = self.model.exp_name
@@ -172,14 +170,6 @@ class MappingTrainer():
 
 	# 	return dates
 
-	def process_data(datas):
-		arr1 = datas[0]
-		for i in range(1,len(datas)):
-			arr2 = datas[i]
-			res = np.vstack((arr1, arr2))
-
-
-
 
 	def _get_feed_dict(self,  batch):
 		"""Construct TensorFlow feed_dict from sample batch."""
@@ -187,17 +177,18 @@ class MappingTrainer():
 		#st()
 		feed_dict.update({
 			self._observations_phs[i]: np.expand_dims(batch[i],1)
-			for i in range(4)
+			for i in range(5)
 		})
 
 		return feed_dict
 
 
 	def _read_py_function(self, filename):
+		#st()
 		with open(self.path + '/' + str(filename,encoding ="utf-8" ), 'rb') as f:
 			data = pickle.loads(f.read())
-		#st()
-		return data["image_observation"], data['depth_observation'], data['cam_angles_observation'],data["actions"]
+			
+		return data["image_observation"], data['depth_observation'], data['cam_angles_observation'],data['state_desired_goal'],data["actions"]
 		
 
 
@@ -211,17 +202,27 @@ class MappingTrainer():
 		filenames = tf.constant(filenames)
 		#["/var/data/image1.jpg", "/var/data/image2.jpg", ...]
 		#labels = [0, 37, 29, 1, ...]
-
+		#st()
 		dataset = tf.data.Dataset.from_tensor_slices(filenames)
-		dataset = dataset.map(lambda filename: tuple(tf.py_func(self._read_py_function, [filename],[tf.uint8,tf.float32,tf.float32,tf.float32])))
+		dataset = dataset.map(lambda filename: tuple(tf.py_func(self._read_py_function, [filename],[tf.uint8,tf.float32,tf.float32,tf.float32,tf.float32])))
 		dataset = dataset.shuffle(buffer_size=100)
+
+
+		# saver = tf.train.Saver()
+		# #checkpoint_path = "/projects/katefgroup/yunchu/store/" +  mesh + "_dagger"+"/model_"+ str(iteration-1)
+		# # create saver to save model variables
+		# if iteration != 0:
+		# 	#st()
+		# 	saver.restore(sess,"/projects/katefgroup/yunchu/store/" +  mesh + "_dagger"+"/model_"+ str(iteration-1)+"-"+str(iteration-1))
+
 
 		#st()
 		self.batches = (filenames.get_shape().as_list()[0])// self.batch_size
 
 		batched_dataset = dataset.batch(self.batch_size)
-		iterator = batched_dataset.make_one_shot_iterator()
+		iterator = batched_dataset.make_initializable_iterator()
 		next_element = iterator.get_next()
+		self._session.run(iterator.initializer)
 
 
 		for batch_idx in range(self.batches):
@@ -233,17 +234,24 @@ class MappingTrainer():
 
 			fd = self._get_feed_dict(elem)
 
+			#??no use for image?
+
+			
 			if batch_idx % self.export_interval == 0 and not self.action_predictor:
 				_,summ, loss,pred_view,query_view = self._session.run([self.model.opt,self.model.summ,self.model.loss_,self.model.vis["pred_views"][0],self.model.vis["query_views"][0]],
 																feed_dict=fd)
 				# st()
-				utils.img.imsave01("vis_new/{}_{}_pred.png".format(epoch,batch_idx), pred_view)
-				utils.img.imsave01("vis_new/{}_{}_gt.png".format(epoch,batch_idx), query_view)	
+				#utils.img.imsave01("vis_new/{}_{}_pred.png".format(epoch,batch_idx), pred_view)
+				#utils.img.imsave01("vis_new/{}_{}_gt.png".format(epoch,batch_idx), query_view)	
 			else:
 				_, loss,summ = self._session.run([self.model.opt,self.model.loss_,self.model.summ],feed_dict=fd)
 			# st()
+
+
 			step = epoch * self.batches + batch_idx
 			self.train_writer.add_summary(summ,step)
+
+
 			# utils.img.imsave01("pred_view_{}.png".format(batch_idx), pred_view)
 			# utils.img.imsave01("gt_view_{}.png".format(batch_idx), query_view)
 
@@ -256,6 +264,12 @@ class MappingTrainer():
 				print('Train Epoch: {} {}/{}  \tLoss: {:.6f}'.format(
 									  epoch,batch_idx,self.batches,
 									  loss ))
+
+
+		# store_path = "/projects/katefgroup/yunchu/store/" +  object_name + "_dagger"+ "/model_"+ str(iteration)  #TODO store the last, change maybe to store the best 
+		# #saver.save(sess, "store/model.ckpt")
+		# print(store_path)
+		# saver.save(sess, store_path, global_step = iteration)
 
  
 if __name__ == "__main__":
