@@ -192,7 +192,7 @@ class MappingTrainer():
 		
 
 
-	def train_epoch(self, expert,epoch):
+	def train_epoch(self, expert,epoch,iteration):
 		training = True
 		losses = []
 		log_probs = []
@@ -205,7 +205,7 @@ class MappingTrainer():
 		#st()
 		dataset = tf.data.Dataset.from_tensor_slices(filenames)
 		dataset = dataset.map(lambda filename: tuple(tf.py_func(self._read_py_function, [filename],[tf.uint8,tf.float32,tf.float32,tf.float32,tf.float32])))
-		dataset = dataset.shuffle(buffer_size=100)
+		
 
 
 		saver = tf.train.Saver()
@@ -219,57 +219,60 @@ class MappingTrainer():
 		#st()
 		self.batches = (filenames.get_shape().as_list()[0])// self.batch_size
 
-		batched_dataset = dataset.batch(self.batch_size)
-		iterator = batched_dataset.make_initializable_iterator()
-		next_element = iterator.get_next()
-		self._session.run(iterator.initializer)
+		for training_step in range(epoch):
+
+			dataset = dataset.shuffle(buffer_size=100)
+			batched_dataset = dataset.batch(self.batch_size)
+			iterator = batched_dataset.make_initializable_iterator()
+			next_element = iterator.get_next()
+			self._session.run(iterator.initializer)
 
 
-		for batch_idx in range(self.batches):
+			for batch_idx in range(self.batches):
 
-			#observation = self.sampler.random_batch()
+				#observation = self.sampler.random_batch()
 
-			# st()
-			elem = self._session.run(next_element)
-
-			fd = self._get_feed_dict(elem)
-
-			#??no use for image?
-
-			
-			if batch_idx % self.export_interval == 0 and not self.action_predictor:
-				_,summ, loss,pred_view,query_view = self._session.run([self.model.opt,self.model.summ,self.model.loss_,self.model.vis["pred_views"][0],self.model.vis["query_views"][0]],
-																feed_dict=fd)
 				# st()
-				#utils.img.imsave01("vis_new/{}_{}_pred.png".format(epoch,batch_idx), pred_view)
-				#utils.img.imsave01("vis_new/{}_{}_gt.png".format(epoch,batch_idx), query_view)	
-			else:
+				elem = self._session.run(next_element)
+
+				fd = self._get_feed_dict(elem)
+
+				#??no use for image?
+
+				
+				# if batch_idx % self.export_interval == 0 and not self.action_predictor:
+				# 	_,summ, loss,pred_view,query_view = self._session.run([self.model.opt,self.model.summ,self.model.loss_,self.model.vis["pred_views"][0],self.model.vis["query_views"][0]],
+				# 													feed_dict=fd)
+				# 	# st()
+				# 	#utils.img.imsave01("vis_new/{}_{}_pred.png".format(epoch,batch_idx), pred_view)
+				# 	#utils.img.imsave01("vis_new/{}_{}_gt.png".format(epoch,batch_idx), query_view)	
+				# else:
 				_, loss,summ = self._session.run([self.model.opt,self.model.loss_,self.model.summ],feed_dict=fd)
-			# st()
+				# st()
 
 
-			step = epoch * self.batches + batch_idx
-			self.train_writer.add_summary(summ,step)
+				#step = epoch * self.batches + batch_idx
+				#self.train_writer.add_summary(summ,step)
 
 
-			# utils.img.imsave01("pred_view_{}.png".format(batch_idx), pred_view)
-			# utils.img.imsave01("gt_view_{}.png".format(batch_idx), query_view)
+				# utils.img.imsave01("pred_view_{}.png".format(batch_idx), pred_view)
+				# utils.img.imsave01("gt_view_{}.png".format(batch_idx), query_view)
 
 
-			# losses.append(loss)
-			# log_probs.append(log_prob)
-			# kles.append(kle)
+				# losses.append(loss)
+				# log_probs.append(log_prob)
+				# kles.append(kle)
 
-			if batch_idx % self.log_interval == 0:
-				print('Train Epoch: {} {}/{}  \tLoss: {:.6f}'.format(
-									  epoch,batch_idx,self.batches,
-									  loss ))
+				if batch_idx % self.log_interval == 0:
+					print('Train Epoch: {} {}/{}  \tLoss: {:.6f}'.format(
+										  training_step,batch_idx,self.batches,
+										  loss ))
 
 
-		# store_path = "/projects/katefgroup/yunchu/store/" +  object_name + "_dagger"+ "/model_"+ str(iteration)  #TODO store the last, change maybe to store the best 
-		# #saver.save(sess, "store/model.ckpt")
-		# print(store_path)
-		# saver.save(sess, store_path, global_step = iteration)
+		store_path = "/projects/katefgroup/yunchu/store/" +  expert + "_dagger"+ "/model_"+ str(iteration)  #TODO store the last, change maybe to store the best 
+		#saver.save(sess, "store/model.ckpt")
+		print(store_path)
+		saver.save(sess, store_path, global_step = iteration)
 
  
 if __name__ == "__main__":
