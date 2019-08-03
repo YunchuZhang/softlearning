@@ -48,7 +48,7 @@ for expert in list_of_experts:
 		#main_dagger(iteration, mesh)
 		#main_dagger(iteration, mesh)
 		#test()
-		er.algorithm.train_epoch(expert,epoch = 200)
+		er.algorithm.train_epoch(expert,epoch = 20,iteration)
 		#sample trajectories and store the experts actions
 		max_rollouts = 50 #300 #how many starting conditions to sample and to roll out
 		succes_rate = rollout_and_gather_data(max_rollouts, expert, iteration)
