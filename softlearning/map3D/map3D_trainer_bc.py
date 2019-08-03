@@ -192,7 +192,7 @@ class MappingTrainer():
 		
 
 
-	def train_epoch(self, epoch):
+	def train_epoch(self, expert,epoch):
 		training = True
 		losses = []
 		log_probs = []
@@ -213,7 +213,7 @@ class MappingTrainer():
 		# create saver to save model variables
 		if iteration != 0:
 			#st()
-			saver.restore(sess,"/projects/katefgroup/yunchu/store/" +  mesh + "_dagger"+"/model_"+ str(iteration-1)+"-"+str(iteration-1))
+			saver.restore(sess,"/projects/katefgroup/yunchu/store/" +  expert + "_dagger"+"/model_"+ str(iteration-1)+"-"+str(iteration-1))
 
 
 		#st()
