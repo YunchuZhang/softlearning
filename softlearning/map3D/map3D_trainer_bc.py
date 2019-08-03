@@ -208,12 +208,12 @@ class MappingTrainer():
 		dataset = dataset.shuffle(buffer_size=100)
 
 
-		# saver = tf.train.Saver()
-		# #checkpoint_path = "/projects/katefgroup/yunchu/store/" +  mesh + "_dagger"+"/model_"+ str(iteration-1)
-		# # create saver to save model variables
-		# if iteration != 0:
-		# 	#st()
-		# 	saver.restore(sess,"/projects/katefgroup/yunchu/store/" +  mesh + "_dagger"+"/model_"+ str(iteration-1)+"-"+str(iteration-1))
+		saver = tf.train.Saver()
+		#checkpoint_path = "/projects/katefgroup/yunchu/store/" +  mesh + "_dagger"+"/model_"+ str(iteration-1)
+		# create saver to save model variables
+		if iteration != 0:
+			#st()
+			saver.restore(sess,"/projects/katefgroup/yunchu/store/" +  mesh + "_dagger"+"/model_"+ str(iteration-1)+"-"+str(iteration-1))
 
 
 		#st()

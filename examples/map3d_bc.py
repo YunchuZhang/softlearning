@@ -6,15 +6,15 @@ import tensorflow as tf
 import sys
 from examples.map3D.main_map3d import ExperimentRunner
 from examples.instrument import change_env_to_use_correct_mesh
-
+from softlearning.map3D.test_bc import rollout_and_gather_data
 example_module_name = "examples.map3D"
 
 #list_of_experts = ["expert_boat","expert_bowl1","expert_can1","expert_car1","expert_car2","expert_mug3"]
-list_of_experts = ["dagger_hat1"]
+list_of_experts = ["hat1"]
 
 example_argv = ('--universe=gym', '--checkpoint-frequency=0', '--domain=SawyerPushAndReachEnvEasy', '--task=v0', '--trial-gpus=1', '--exp-name=test', '--replay_pool=SimpleReplayPoolTemp', '--algorithm=SAC', '--mesh=expert_mug3')
 for expert in list_of_experts:
-	expert_name = "--mesh=" + expert
+	expert_name = "--mesh=dagger_" + expert
 	example_argv = list(example_argv)
 	example_argv[8] = expert_name
 	example_argv = tuple(example_argv)
@@ -48,10 +48,10 @@ for expert in list_of_experts:
 		#main_dagger(iteration, mesh)
 		#main_dagger(iteration, mesh)
 		#test()
-		er.algorithm.train_epoch(epoch = 1)
+		er.algorithm.train_epoch(epoch = 200)
 		#sample trajectories and store the experts actions
 		max_rollouts = 50 #300 #how many starting conditions to sample and to roll out
-		succes_rate = rollout_and_gather_data(max_rollouts, mesh, iteration)
+		succes_rate = rollout_and_gather_data(max_rollouts, expert, iteration)
 		#main_dagger_without(iteration, mesh)
 
 
