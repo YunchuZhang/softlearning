@@ -27,7 +27,7 @@ Hdata = 128
 Wdata = 128
 
 inject_summaries = False
-summ_grads = False
+summ_grads = True
 
 HV = 18
 VV = 3

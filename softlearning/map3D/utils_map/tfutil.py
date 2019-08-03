@@ -566,11 +566,15 @@ def make_opt_op(optimizer, fn):
         return optimizer.minimize(fn)
     else:
         if const.summ_grads:
+            l2_norm = lambda t: tf.sqrt(tf.reduce_sum(tf.pow(t, 2)))
             x = fn()
             grads = tf.gradients(x, tf.trainable_variables())
             grads = list(zip(grads, tf.trainable_variables()))
-            for grad, var in grads:
-                tf.summary.histogram(var.name + '/gradient', grad)
+            for gradient, variant in grads:
+                tf.summary.histogram("gradient_norm/" + variable.name, l2_norm(gradient))
+                tf.summary.histogram("gradient/" + variable.name, gradient)
+                tf.summary.histogram("variable_norm/" + variable.name, l2_norm(variable))
+                tf.summary.histogram("variable/" + variable.name, variable)
             update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
             with tf.control_dependencies(update_ops):
                 train_step = optimizer.minimize(x)
