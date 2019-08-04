@@ -28,7 +28,7 @@ for expert in list_of_experts:
 	variant_spec = example_module.get_variant_spec(example_args)
 	#st()
 	eager = False
-	# detector = True
+	action_predictor = True
 	er = ExperimentRunner()
 
 	if eager:
@@ -50,10 +50,10 @@ for expert in list_of_experts:
 		#main_dagger(iteration, mesh)
 		#main_dagger(iteration, mesh) #expert,epoch,iteration)
 		#test()
-		training_epochs = 20
+		training_epochs = 21
 		er.algorithm.train_epoch(expert,training_epochs,iteration)
 		#sample trajectories and store the experts actions
-		max_rollouts = 50 #300 #how many starting conditions to sample and to roll out
+		max_rollouts = 2 #300 #how many starting conditions to sample and to roll out
 		succes_rate = rollout_and_gather_data(max_rollouts, expert, iteration)
 		#main_dagger_without(iteration, mesh)
 		time.stop

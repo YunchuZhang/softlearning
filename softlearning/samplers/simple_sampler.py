@@ -75,7 +75,7 @@ class SimpleSampler(BaseSampler):
 		self.iteration = iteration
 		#ipdb.set_trace()
 		if self._current_observation is None:
-			self._current_observation = self.env.reset()
+			self._current_observation = self.env.reset(iteration)
 		active_obs = self.env.convert_to_active_observation(self._current_observation)
 		# st()
 		# if preprocess:

@@ -13,6 +13,8 @@ import pickle
 
 import utils_map as utils
 
+import time
+
 st = ipdb.set_trace
 def create_stats_ordered_dict(
 		name,
@@ -224,7 +226,7 @@ class MappingTrainer():
 		self.batches = (filenames.get_shape().as_list()[0])// self.batch_size
 
 		for training_step in range(epoch):
-
+			
 			dataset = dataset.shuffle(buffer_size=100)
 			batched_dataset = dataset.batch(self.batch_size)
 			iterator = batched_dataset.make_initializable_iterator()
@@ -233,6 +235,8 @@ class MappingTrainer():
 
 
 			for batch_idx in range(self.batches):
+
+				starting_time = time.time()
 
 				#observation = self.sampler.random_batch()
 
@@ -268,9 +272,7 @@ class MappingTrainer():
 				# kles.append(kle)
 
 				if batch_idx % self.log_interval == 0:
-					print('Train Epoch: {} {}/{}  \tLoss: {:.6f}'.format(
-										  training_step,batch_idx,self.batches,
-										  loss ))
+					print('Train Epoch: {} {}/{}  \tLoss: {:.6f} \tTime: {}'.format( training_step,batch_idx,self.batches,loss, time.time()-starting_time ))
 
 
 		store_path = "/projects/katefgroup/yunchu/store/" +  expert + "_dagger"+ "/model_"+ str(iteration)  #TODO store the last, change maybe to store the best 

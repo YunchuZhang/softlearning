@@ -190,7 +190,7 @@ train_on_val = False
 IS_VIEW_PRED = train_vp
 ckpt_base = ""
 detector= False
-action_predictor = False
+action_predictor = True
 ####
 
 T0 = time.time()
