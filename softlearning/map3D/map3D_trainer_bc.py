@@ -255,12 +255,14 @@ class MappingTrainer():
 				# 	#utils.img.imsave01("vis_new/{}_{}_pred.png".format(epoch,batch_idx), pred_view)
 				# 	#utils.img.imsave01("vis_new/{}_{}_gt.png".format(epoch,batch_idx), query_view)	
 				# else:
-				_, loss,summ = self._session.run([self.model.opt,self.model.loss_,self.model.summ],feed_dict=fd)
+				
+				# _, loss,summ = self._session.run([self.model.opt,self.model.loss_,self.model.summ],feed_dict=fd)
+				_, loss = self._session.run([self.model.opt,self.model.loss_],feed_dict=fd)
 				# st()
 
 
-				step = epoch * self.batches + batch_idx
-				self.train_writer.add_summary(summ,step)
+				# step = epoch * self.batches + batch_idx
+				# self.train_writer.add_summary(summ,step)
 
 
 				# utils.img.imsave01("pred_view_{}.png".format(batch_idx), pred_view)

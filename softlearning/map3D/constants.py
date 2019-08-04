@@ -27,7 +27,7 @@ Hdata = 128
 Wdata = 128
 
 inject_summaries = False
-summ_grads = True
+summ_grads = False
 
 HV = 18
 VV = 3
@@ -190,7 +190,7 @@ train_on_val = False
 IS_VIEW_PRED = train_vp
 ckpt_base = ""
 detector= False
-action_predictor = True
+action_predictor = False
 ####
 
 T0 = time.time()
@@ -737,8 +737,8 @@ OG("rl_new",
    )
 OG("rl_temp","rl_new",ckpt_cfg_dir="ckpt_cfg")
 
-OG("rl_new_reach","rl_new",load_name="rl_new/1")
-OG("rl_new_reach_detect","rl_new",load_name="rl_new_detector/1",detector=True)
+OG("rl_new_reach","rl_new",load_name="rl_new/1",action_predictor=True)
+OG("rl_new_reach_detect","rl_new",load_name="rl_new_detector/1",action_predictor=True)
 OG("rl_new_reach_action_predictor","rl_new",load_name="rl_new/1",action_predictor=True)
 
 

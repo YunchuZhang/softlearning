@@ -120,16 +120,21 @@ class ExperimentRunner():
 			elif not ckpt.model_checkpoint_path:
 				raise Exception("checkpoint not found? (2)")
 			loadpath = ckpt.model_checkpoint_path
-			loadpath = '/projects/katefgroup/mprabhud/rl/ckpt/rl_new/1/main_weights/X-220'
+			st()
+			print(loadpath)
+			#loadpath = '/projects/katefgroup/mprabhud/rl/ckpt/rl_new_detector/1/main_weights/X-220'
 
 			scope, weights = parts[partname]
 
 			if not weights: #nothing to do
 				continue
+
+
+			weights = [v for v in weights if v.op.name.split('/')[2]!='action_predictor']
+
 			
-			weights = {utils.utils.exchange_scope(weight.op.name, scope, partscope): weight
-					   for weight in weights}
-			
+			weights = {utils.utils.exchange_scope(weight.op.name, scope, partscope): weight for weight in weights}
+
 			saver = tf.train.Saver(weights)
 			saver.restore(sess, loadpath)
 			print(f"restore model from {loadpath}")
@@ -189,11 +194,11 @@ class ExperimentRunner():
 		# st()
 
 		initialize_tf_variables(self._session, only_uninitialized=True)
-		# st()
+		st()
 		# if not self.algorithm.detector:
 		self.step = self.map3d_setup(self._session,map3D=bulledtPush)
 		# st()
-		self.initsaver()
+		#self.initsaver()
 
 		self._built = True
 

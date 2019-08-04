@@ -28,7 +28,7 @@ for expert in list_of_experts:
 	variant_spec = example_module.get_variant_spec(example_args)
 	#st()
 	eager = False
-	action_predictor = True
+	#action_predictor = True
 	er = ExperimentRunner()
 
 	if eager:
@@ -44,7 +44,7 @@ for expert in list_of_experts:
 	number_iterations = 5 #number of dagger iterations
 
 	for iteration in range(number_iterations):
-		start_time = time.time()
+		
 		#combine old experience and the expertactions on the sample trajectories to dataset D
 		# and train bc agent on D
 		#main_dagger(iteration, mesh)
@@ -56,9 +56,9 @@ for expert in list_of_experts:
 		max_rollouts = 2 #300 #how many starting conditions to sample and to roll out
 		succes_rate = rollout_and_gather_data(max_rollouts, expert, iteration)
 		#main_dagger_without(iteration, mesh)
-		time.stop
+	
 
-		print("done with iteration ", iteration," on object", mesh, "with succes rate", succes_rate, "and it took me ", start_time - time.time())
+		print("done with iteration ", iteration," on object", mesh, "with succes rate", succes_rate)
 
 
 
