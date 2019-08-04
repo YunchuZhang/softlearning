@@ -7,6 +7,7 @@ import sys
 from examples.map3D.main_map3d import ExperimentRunner
 from examples.instrument import change_env_to_use_correct_mesh
 from softlearning.map3D.test_bc import rollout_and_gather_data
+import time
 example_module_name = "examples.map3D"
 
 #list_of_experts = ["expert_boat","expert_bowl1","expert_can1","expert_car1","expert_car2","expert_mug3"]
@@ -43,19 +44,21 @@ for expert in list_of_experts:
 	number_iterations = 5 #number of dagger iterations
 
 	for iteration in range(number_iterations):
+		start_time = time.time()
 		#combine old experience and the expertactions on the sample trajectories to dataset D
 		# and train bc agent on D
 		#main_dagger(iteration, mesh)
-		#main_dagger(iteration, mesh)
+		#main_dagger(iteration, mesh) #expert,epoch,iteration)
 		#test()
-		er.algorithm.train_epoch(expert,epoch = 20,iteration)
+		training_epochs = 20
+		er.algorithm.train_epoch(expert,training_epochs,iteration)
 		#sample trajectories and store the experts actions
 		max_rollouts = 50 #300 #how many starting conditions to sample and to roll out
 		succes_rate = rollout_and_gather_data(max_rollouts, expert, iteration)
 		#main_dagger_without(iteration, mesh)
+		time.stop
 
-
-		print("done with iteration ", iteration," on object", mesh, "with succes rate", succes_rate)
+		print("done with iteration ", iteration," on object", mesh, "with succes rate", succes_rate, "and it took me ", start_time - time.time())
 
 
 

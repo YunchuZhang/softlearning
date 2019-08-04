@@ -570,7 +570,8 @@ def make_opt_op(optimizer, fn):
             x = fn()
             grads = tf.gradients(x, tf.trainable_variables())
             grads = list(zip(grads, tf.trainable_variables()))
-            for gradient, variant in grads:
+            for gradient, variable in grads:
+                #tf.summary.histogram(var.name + '/gradient', grad)
                 tf.summary.histogram("gradient_norm/" + variable.name, l2_norm(gradient))
                 tf.summary.histogram("gradient/" + variable.name, gradient)
                 tf.summary.histogram("variable_norm/" + variable.name, l2_norm(variable))

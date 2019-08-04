@@ -33,7 +33,7 @@ class BulletPush3DTensor4_cotrain(BulletPushBase):
     def loss(self):
         if not self.detector:
             if self.action_predictor:
-                action_predictor_loss = utils.losses.l1loss(self.predicted_action, self.position)
+                action_predictor_loss = utils.losses.l2loss(self.predicted_action, self.position)
                 summ.scalar("detector_loss", action_predictor_loss)
                 self.loss_ = action_predictor_loss
             else:

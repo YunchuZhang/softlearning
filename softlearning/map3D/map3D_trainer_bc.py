@@ -100,7 +100,7 @@ class MappingTrainer():
 			self.debug_unproject = True
 		else:
 			self.debug_unproject = False
-		self.train_writer = tf.summary.FileWriter("tb" + '/train/{}_{}'.format(self.exp_name,time.time()),session.graph)
+		#self.train_writer = tf.summary.FileWriter("tb" + '/train/{}_self.exp_name_{}'.format(self.exp_name,time.time()),session.graph)
 		self._session = session
 
 		#load_data(self, path)
@@ -205,7 +205,11 @@ class MappingTrainer():
 		#st()
 		dataset = tf.data.Dataset.from_tensor_slices(filenames)
 		dataset = dataset.map(lambda filename: tuple(tf.py_func(self._read_py_function, [filename],[tf.uint8,tf.float32,tf.float32,tf.float32,tf.float32])))
-		
+
+		#self.train_writer = tf.summary.FileWriter("tb" + '/train/{}_'+expert+'_{}_{}'.format(self.exp_name,epoch,time.time()),self._session.graph)
+		self.train_writer = tf.summary.FileWriter("tb" + '/train/'+expert+"/dagger_iteration_"+str(iteration),self._session.graph)
+
+		#st()	
 
 
 		saver = tf.train.Saver()
@@ -251,8 +255,8 @@ class MappingTrainer():
 				# st()
 
 
-				#step = epoch * self.batches + batch_idx
-				#self.train_writer.add_summary(summ,step)
+				step = epoch * self.batches + batch_idx
+				self.train_writer.add_summary(summ,step)
 
 
 				# utils.img.imsave01("pred_view_{}.png".format(batch_idx), pred_view)
