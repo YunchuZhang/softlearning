@@ -68,7 +68,25 @@ class SimpleSampler(BaseSampler):
 		active_obs = self.session.run(self.memory3D_sampler,feed_dict={self.obs_ph[0]:active_obs[0],self.obs_ph[1]:active_obs[1],self.obs_ph[2]:active_obs[2],\
 			self.obs_ph[4]:active_obs[4],self.obs_ph[5]:active_obs[5],self.obs_ph[6]:active_obs[6]})        
 		return active_obs
-	
+
+	def _get_feed_dict(self, active_obs):
+		feed_dict = {}
+		feed_dict.update({'image_observation':active_obs[0]})
+		feed_dict.update({'depth_observation':active_obs[1]})
+		feed_dict.update({'cam_angles_observation':active_obs[2]})
+		feed_dict.update({'state_desired_goal':active_obs[-5]})
+		feed_dict.update({'actions':self.policy.actions_np(active_obs[-9:])[0]})
+		# return feed_dict
+		# 		feed_dict = {}
+		# #st()
+		# feed_dict.update({
+		# 	self._observations_phs[i]: np.expand_dims(batch[i],1)
+		# 	for i in range(5)
+		# })
+
+		return feed_dict
+
+
 	def sample(self, iteration):
 
 		# print(self.iteration, iteration)
@@ -102,17 +120,6 @@ class SimpleSampler(BaseSampler):
 
 		expert_action = self.policy.actions_np(active_obs[-9:])[0] #select only part of the active obs
 
-		def _get_feed_dict(active_obs):
-			feed_dict = {}
-			#st()
-			feed_dict.update({image_observation:active_obs[0]})
-			feed_dict.update({depth_observation:active_obs[1]})
-			feed_dict.update({cam_angles_observation:active_obs[2]})
-			feed_dict.update({state_desired_goal:active_obs[-5]})
-			feed_dict.update({actions:expert_action})
-
-			return feed_dict
-
 
 		tf.reset_default_graph()
 		with tf.Session() as sess:
@@ -137,7 +144,9 @@ class SimpleSampler(BaseSampler):
 				#print("hi yunchu, we use the bc policy")
 
 				#action = sess.run(predicted_action_ph, feed_dict={concatendated_state_ph: np.concatenate((active_obs[-9][0],active_obs[-8][0][3:]), 0).reshape(1,16)})
-				action = sess.run(predicted_action, feed_dict={concatendated_state_ph: np.hstack(active_obs[-9:]).reshape(1,-1)})[0]
+				st()
+				fd = self._get_feed_dict(active_obs)
+				action = sess.run(predicted_position, feed_dict=fd)[0]
 				print('predict',action)
 
 
