@@ -120,7 +120,7 @@ class ExperimentRunner():
 			elif not ckpt.model_checkpoint_path:
 				raise Exception("checkpoint not found? (2)")
 			loadpath = ckpt.model_checkpoint_path
-			st()
+			#st()
 			print(loadpath)
 			#loadpath = '/projects/katefgroup/mprabhud/rl/ckpt/rl_new_detector/1/main_weights/X-220'
 
@@ -194,7 +194,7 @@ class ExperimentRunner():
 		# st()
 
 		initialize_tf_variables(self._session, only_uninitialized=True)
-		st()
+		#st()
 		# if not self.algorithm.detector:
 		self.step = self.map3d_setup(self._session,map3D=bulledtPush)
 		# st()

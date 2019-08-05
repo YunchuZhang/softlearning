@@ -75,7 +75,7 @@ class SimpleSampler(BaseSampler):
 		self.iteration = iteration
 		#ipdb.set_trace()
 		if self._current_observation is None:
-			self._current_observation = self.env.reset(iteration)
+			self._current_observation = self.env.reset()
 		active_obs = self.env.convert_to_active_observation(self._current_observation)
 		# st()
 		# if preprocess:
@@ -101,28 +101,48 @@ class SimpleSampler(BaseSampler):
 
 
 		expert_action = self.policy.actions_np(active_obs[-9:])[0] #select only part of the active obs
-		
+
+		def _get_feed_dict(active_obs):
+			feed_dict = {}
+			#st()
+			feed_dict.update({image_observation:active_obs[0]})
+			feed_dict.update({depth_observation:active_obs[1]})
+			feed_dict.update({cam_angles_observation:active_obs[2]})
+			feed_dict.update({state_desired_goal:active_obs[-5]})
+			feed_dict.update({actions:expert_action})
+
+			return feed_dict
+
+
 		tf.reset_default_graph()
 		with tf.Session() as sess:
-			concatendated_state_ph, actions_ph, predicted_action_ph = self.build_model()
+			#concatendated_state_ph, actions_ph, predicted_action_ph = self.build_model()
 
 			#checkpoint_path = "/projects/katefgroup/yunchu/" + "bowl2/model.ckpt"
 			#checkpoint_path = "/projects/katefgroup/yunchu/store/" + "expert_"+self.mesh + "/model.ckpt"
-			checkpoint_path = "/projects/katefgroup/yunchu/store/" +  self.mesh + "_dagger"+ "/model_"+ str(self.iteration)+"-"+str(self.iteration)
+
+
+			checkpoint_path = "/projects/katefgroup/yunchu/store/" +  self.mesh + "_dagger"
 			#print("checkpoint_path", checkpoint_path)
 			# restore the saved model
-			saver = tf.train.Saver()
+			saver = tf.train.import_meta_graph(checkpoint_path+ "/model_"+ str(self.iteration)+"-"+str(self.iteration)+".meta")
+			#saver = tf.train.Saver()
 			if self.iteration == 0:
 				action = expert_action
 			else:
-				saver.restore(sess, checkpoint_path)
+				saver.restore(sess, tf.train.latest_checkpoint(checkpoint_path))
+				print("i am in ", self.iteration, "and reload", tf.train.latest_checkpoint(checkpoint_path) )
+				#saver.restore(sess, checkpoint_path)
 				#sess.run(tf.global_variables_initializer())
 				#print("hi yunchu, we use the bc policy")
 
 				#action = sess.run(predicted_action_ph, feed_dict={concatendated_state_ph: np.concatenate((active_obs[-9][0],active_obs[-8][0][3:]), 0).reshape(1,16)})
-				action = sess.run(predicted_action_ph, feed_dict={concatendated_state_ph: np.hstack(active_obs[-9:]).reshape(1,-1)})[0]
+				action = sess.run(predicted_action, feed_dict={concatendated_state_ph: np.hstack(active_obs[-9:]).reshape(1,-1)})[0]
 				print('predict',action)
-		
+
+
+
+
  #in the 0 th iteration we execute the expert actions
 
 

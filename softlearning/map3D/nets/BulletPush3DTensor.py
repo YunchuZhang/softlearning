@@ -31,7 +31,6 @@ class BulletPush3DTensor4_cotrain(BulletPushBase):
 
 
     def loss(self):
-        st()
         if  self.detector:
             if const.LOSS_FN=="l1":
                 vp_loss = utils.losses.l1loss(self.predicted_view, self.inputs.state.vp_frame)            
@@ -451,7 +450,6 @@ class BulletPush3DTensor4_cotrain(BulletPushBase):
        goal_5 = tf.reshape(goal_1,[goal_5.shape[0],goal_5.shape[1],goal_5.shape[2],goal_5.shape[3],1])
 
        memory_3D = tf.concat((memory_3D, goal_1 , goal_2 , goal_3 , goal_4 ,goal_5), axis = 4)
-       st()
        if self.detector:
            with tf.compat.v1.variable_scope("detector"):
                self.predicted_position = utils.nets.detector(memory_3D)

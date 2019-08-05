@@ -59,7 +59,6 @@ def rollout_and_gather_data(max_rollouts, mesh, iteration):
 	observation_keys = ["image_observation","depth_observation","cam_angles_observation","image_desired_goal","desired_goal_depth","goal_cam_angle","observation_with_orientation","state_desired_goal", 
 	"state_achieved_goal" ,"state_observation", "state_desired_goal", "state_achieved_goal", "proprio_observation",  "proprio_desired_goal", "proprio_achieved_goal"]
 	#observation_keys = ["image_observation","depth_observation","cam_angles_observation","state_observation", "image_desired_goal","desired_goal_depth","goal_cam_angle"]
-	#st()
 	env_n.reset()
 	env = GymAdapter(None,
 					 None,
@@ -114,8 +113,8 @@ def rollout_and_gather_data(max_rollouts, mesh, iteration):
 		success = 0
 		totalnum = 0
 
-
-		expert_data_path = "/projects/katefgroup/yunchu/dagger_" + str(mesh)
+		#expert_data_path = "/projects/katefgroup/yunchu/dagger_" + str(mesh)
+		expert_data_path = "/projects/katefgroup/yunchu/dagger_minimal" + str(mesh)
 		if not os.path.exists(expert_data_path):
 			os.mkdir(expert_data_path)
 		expert_actions = []

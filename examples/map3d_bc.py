@@ -15,7 +15,9 @@ list_of_experts = ["hat1"]
 
 example_argv = ('--universe=gym', '--checkpoint-frequency=0', '--domain=SawyerPushAndReachEnvEasy', '--task=v0', '--trial-gpus=1', '--exp-name=test', '--replay_pool=SimpleReplayPoolTemp', '--algorithm=SAC', '--mesh=expert_mug3')
 for expert in list_of_experts:
-	expert_name = "--mesh=dagger_" + expert
+	#expert_name = "--mesh=dagger_" + expert
+	expert_name = "--mesh=dagger_minimal" + expert
+
 	example_argv = list(example_argv)
 	example_argv[8] = expert_name
 	example_argv = tuple(example_argv)
@@ -41,7 +43,7 @@ for expert in list_of_experts:
 	er._build()
 	#st()
 	#er._train()
-	number_iterations = 5 #number of dagger iterations
+	number_iterations = 2 #number of dagger iterations
 
 	for iteration in range(number_iterations):
 		
@@ -50,7 +52,7 @@ for expert in list_of_experts:
 		#main_dagger(iteration, mesh)
 		#main_dagger(iteration, mesh) #expert,epoch,iteration)
 		#test()
-		training_epochs = 21
+		training_epochs = 1
 		er.algorithm.train_epoch(expert,training_epochs,iteration)
 		#sample trajectories and store the experts actions
 		max_rollouts = 2 #300 #how many starting conditions to sample and to roll out
@@ -58,7 +60,7 @@ for expert in list_of_experts:
 		#main_dagger_without(iteration, mesh)
 	
 
-		print("done with iteration ", iteration," on object", mesh, "with succes rate", succes_rate)
+		print("done with iteration ", iteration," on object", expert, "with succes rate", succes_rate)
 
 
 

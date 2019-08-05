@@ -15,6 +15,8 @@ import utils_map as utils
 
 import time
 
+
+
 st = ipdb.set_trace
 def create_stats_ordered_dict(
 		name,
@@ -40,6 +42,52 @@ https://github.com/pytorch/vision/blob/master/torchvision/utils.py
 #             observation_keys = observation_keys,
 #             sampler=sampler,
 #             session=self._session)
+
+
+class SampleBuffer(object):
+	def __init__(self, path):
+		self.storage = []
+		self.path = path
+
+	def __len__(self):
+		return
+
+	# Expects tuples of (image_observation, depth_observation, cam_angles_observation, state_desired_goal, actions)
+	def add(self, data):
+		self.storage.append(data)
+
+	def sample(self, batch_size):
+		ind = np.random.randint(0, len(self.storage), size=batch_size)
+		img_obs, depth_obs, cam_angles, sdg, actions = [], [], [], [], []
+
+		for i in ind: 
+			s, s2, a, r, d = self.storage[i]
+			img_obs.append(np.array(s, copy=False))
+			depth_obs.append(np.array(s2, copy=False))
+			cam_angles.append(np.array(a, copy=False))
+			sdg.append(np.array(r, copy=False))
+			actions.append(np.array(d, copy=False))
+
+		return [np.array(img_obs), 
+			np.array(depth_obs), 
+			np.array(cam_angles), 
+			np.array(sdg), 
+			np.array(actions)]
+
+	def save(self, filename):
+		np.save("./buffers/"+filename+".npy", self.storage)
+
+	def load(self, filename):
+		#with open(self.path + '/' + str(filename,encoding ="utf-8" ), 'rb') as f:
+		with open(self.path + '/' + filename, 'rb') as f:
+			data = pickle.loads(f.read())
+		#self.storage. = ( data["image_observation"], data['depth_observation'], data['cam_angles_observation'],data['state_desired_goal'],data["actions"]) #as in the orig implementatino
+
+		self.storage.append(( data["image_observation"], data['depth_observation'], data['cam_angles_observation'],data['state_desired_goal'],data["actions"]))
+		
+
+
+
 
 
 class MappingTrainer():
@@ -201,49 +249,38 @@ class MappingTrainer():
 		kles = []
 		# tempData = {}
 		filenames = os.listdir(self.path)
-		filenames = tf.constant(filenames)
+		sampleBuffer = SampleBuffer(self.path)
+		for transition_name in filenames:
+			sampleBuffer.load(transition_name)
+		print("finished loading")
 		#["/var/data/image1.jpg", "/var/data/image2.jpg", ...]
 		#labels = [0, 37, 29, 1, ...]
-		#st()
-		dataset = tf.data.Dataset.from_tensor_slices(filenames)
-		dataset = dataset.map(lambda filename: tuple(tf.py_func(self._read_py_function, [filename],[tf.uint8,tf.float32,tf.float32,tf.float32,tf.float32])))
-
 		#self.train_writer = tf.summary.FileWriter("tb" + '/train/{}_'+expert+'_{}_{}'.format(self.exp_name,epoch,time.time()),self._session.graph)
-		self.train_writer = tf.summary.FileWriter("tb" + '/train/'+expert+"/dagger_iteration_"+str(iteration),self._session.graph)
+		self.train_writer = tf.summary.FileWriter("tb" + '/train/'+expert+"_"+str(2)+"/dagger_iteration_"+str(iteration),self._session.graph)
 
-		#st()	
-
-
-		saver = tf.train.Saver()
 		#checkpoint_path = "/projects/katefgroup/yunchu/store/" +  mesh + "_dagger"+"/model_"+ str(iteration-1)
 		# create saver to save model variables
 		if iteration != 0:
-			#st()
-			saver.restore(sess,"/projects/katefgroup/yunchu/store/" +  expert + "_dagger"+"/model_"+ str(iteration-1)+"-"+str(iteration-1))
-
+			st()
+			checkpoint_path = "/projects/katefgroup/yunchu/store/" +  expert + "_dagger"
+			saver = tf.train.import_meta_graph(checkpoint_path+ "/model_"+ str(iteration)+"-"+str(iteration)+".meta")
+			print("i am reloading", tf.train.latest_checkpoint(checkpoint_path))
+			saver.restore(self._session,tf.train.latest_checkpoint(checkpoint_path))
+		else:
+			saver = tf.train.Saver()
 
 		#st()
-		self.batches = (filenames.get_shape().as_list()[0])// self.batch_size
-
+		#self.batches = (filenames.get_shape().as_list()[0])// self.batch_size
+		self.batches = len(filenames) // self.batch_size
+		self.batches = 2 #to speed it up
 		for training_step in range(epoch):
-			
-			dataset = dataset.shuffle(buffer_size=100)
-			batched_dataset = dataset.batch(self.batch_size)
-			iterator = batched_dataset.make_initializable_iterator()
-			next_element = iterator.get_next()
-			self._session.run(iterator.initializer)
 
-
+			starting_time = time.time()
 			for batch_idx in range(self.batches):
 
-				starting_time = time.time()
+				#elem = self._session.run(sampleBuffer.sample(self.batch_size))
 
-				#observation = self.sampler.random_batch()
-
-				# st()
-				elem = self._session.run(next_element)
-
-				fd = self._get_feed_dict(elem)
+				fd = self._get_feed_dict(sampleBuffer.sample(self.batch_size))
 
 				#??no use for image?
 
@@ -274,13 +311,13 @@ class MappingTrainer():
 				# kles.append(kle)
 
 				if batch_idx % self.log_interval == 0:
-					print('Train Epoch: {} {}/{}  \tLoss: {:.6f} \tTime: {}'.format( training_step,batch_idx,self.batches,loss, time.time()-starting_time ))
+					print('Train Epoch: {} {}/{}  \tLoss: {:.6f} \tEpochs runs since: {}'.format( training_step,batch_idx,self.batches,loss, time.time()-starting_time ))
 
 
 		store_path = "/projects/katefgroup/yunchu/store/" +  expert + "_dagger"+ "/model_"+ str(iteration)  #TODO store the last, change maybe to store the best 
 		#saver.save(sess, "store/model.ckpt")
 		print(store_path)
-		saver.save(sess, store_path, global_step = iteration)
+		saver.save(self._session, store_path, global_step = iteration)
 
  
 if __name__ == "__main__":
