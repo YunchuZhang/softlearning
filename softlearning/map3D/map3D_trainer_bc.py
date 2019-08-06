@@ -263,7 +263,7 @@ class MappingTrainer():
 		if iteration != 0:
 			st()
 			checkpoint_path = "/projects/katefgroup/yunchu/store/" +  expert + "_dagger"
-			saver = tf.train.import_meta_graph(checkpoint_path+ "/model_"+ str(iteration)+"-"+str(iteration)+".meta")
+			saver = tf.train.import_meta_graph(checkpoint_path+ "/model_"+ str(iteration-1)+"-"+str(iteration-1)+".meta")
 			print("i am reloading", tf.train.latest_checkpoint(checkpoint_path))
 			saver.restore(self._session,tf.train.latest_checkpoint(checkpoint_path))
 		else:

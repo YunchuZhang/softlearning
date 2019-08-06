@@ -119,7 +119,7 @@ class SimpleSampler(BaseSampler):
 
 
 		expert_action = self.policy.actions_np(active_obs[-9:])[0] #select only part of the active obs
-
+		fd = self._get_feed_dict(active_obs)
 
 		tf.reset_default_graph()
 		with tf.Session() as sess:
@@ -145,7 +145,7 @@ class SimpleSampler(BaseSampler):
 
 				#action = sess.run(predicted_action_ph, feed_dict={concatendated_state_ph: np.concatenate((active_obs[-9][0],active_obs[-8][0][3:]), 0).reshape(1,16)})
 				st()
-				fd = self._get_feed_dict(active_obs)
+				
 				action = sess.run(predicted_position, feed_dict=fd)[0]
 				print('predict',action)
 
