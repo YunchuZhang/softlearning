@@ -264,7 +264,7 @@ class MappingTrainer():
 		# create saver to save model variables
 		if iteration != 0:
 			
-			checkpoint_path = "/projects/katefgroup/yunchu/store/" +  expert + "_dagger"
+			checkpoint_path = "/projects/katefgroup/yunchu/store/" +  expert + "_dagger1"
 			saver = tf.train.import_meta_graph(checkpoint_path+ "/model_"+ str(iteration-1)+"-"+str(iteration-1)+".meta")
 			print("i am reloading", tf.train.latest_checkpoint(checkpoint_path))
 			saver.restore(self._session,tf.train.latest_checkpoint(checkpoint_path))
@@ -274,7 +274,7 @@ class MappingTrainer():
 		#st()
 		#self.batches = (filenames.get_shape().as_list()[0])// self.batch_size
 		self.batches = len(filenames) // self.batch_size
-		self.batches = 1 #to speed it up
+		#self.batches = 1 #to speed it up
 		for training_step in range(epoch):
 
 			starting_time = time.time()
@@ -313,11 +313,11 @@ class MappingTrainer():
 				# kles.append(kle)
 
 				if batch_idx % self.log_interval == 0:
-					print('action_predictor',predicted_action)
+					
 					print('Train Epoch: {} {}/{}  \tLoss: {:.6f} \tEpochs runs since: {}'.format( training_step,batch_idx,self.batches,loss, time.time()-starting_time ))
-		st()
-
-		store_path = "/projects/katefgroup/yunchu/store/" +  expert + "_dagger"+ "/model_"+ str(iteration)  #TODO store the last, change maybe to store the best 
+		#st()
+		print('action_predictor',predicted_action)
+		store_path = "/projects/katefgroup/yunchu/store/" +  expert + "_dagger1"+ "/model_"+ str(iteration)  #TODO store the last, change maybe to store the best 
 		#saver.save(sess, "store/model.ckpt")
 		print(store_path)
 		saver.save(self._session, store_path, global_step = iteration)

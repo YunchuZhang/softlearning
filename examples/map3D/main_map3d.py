@@ -103,7 +103,7 @@ class ExperimentRunner():
 
 
 	def map_load(self,sess, name,map3D=None):
-		st()
+		#st()
 		if not path.exists(path.join(self.algorithm.model.ckpt_base,self.algorithm.model.ckpt_cfg_dir, name)):
 			return 0
 		config = Config(name)

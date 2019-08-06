@@ -87,7 +87,7 @@ class SimpleSampler(BaseSampler):
 		return feed_dict
 
 
-	def sample(self, iteration,model):
+	def sample(self, iteration):
 
 		# print(self.iteration, iteration)
 		self.iteration = iteration
@@ -119,50 +119,34 @@ class SimpleSampler(BaseSampler):
 
 
 		expert_action = self.policy.actions_np(active_obs[-9:])[0] #select only part of the active obs
-<<<<<<< HEAD
 		#fd = self._get_feed_dict(active_obs)
 
-=======
-		fd = self._get_feed_dict(active_obs)
->>>>>>> 2e270508facaea45e4011e78ec6b98d0b149dd6f
 
-		#tf.reset_default_graph()
+		tf.reset_default_graph()
 		with tf.Session() as sess:
 			sess.run(tf.global_variables_initializer())
-			#concatendated_state_ph, actions_ph, predicted_action_ph = self.build_model()
 
-			#checkpoint_path = "/projects/katefgroup/yunchu/" + "bowl2/model.ckpt"
-			#checkpoint_path = "/projects/katefgroup/yunchu/store/" + "expert_"+self.mesh + "/model.ckpt"
+			checkpoint_path = "/projects/katefgroup/yunchu/store/" +  self.mesh + "_dagger1"
 
-
-			checkpoint_path = "/projects/katefgroup/yunchu/store/" +  self.mesh + "_dagger"
-			#print("checkpoint_path", checkpoint_path)
-			# restore the saved model
-			saver = tf.train.import_meta_graph(checkpoint_path+ "/model_"+ str(self.iteration)+"-"+str(self.iteration)+".meta")
-			#saver = tf.train.Saver()
 			if self.iteration == 0:
 				action = expert_action
 			else:
+				saver = tf.train.import_meta_graph(checkpoint_path+ "/model_"+ str(self.iteration)+"-"+str(self.iteration)+".meta")
 				saver.restore(sess, tf.train.latest_checkpoint(checkpoint_path))
 				print("i am in ", self.iteration, "and reload", tf.train.latest_checkpoint(checkpoint_path) )
 				#saver.restore(sess, checkpoint_path)
 				#sess.run(tf.global_variables_initializer())
 				#print("hi yunchu, we use the bc policy")
+				graph = tf.get_default_graph()
+				prediction = graph.get_tensor_by_name('Variables/main/action_predictor/final_result/BiasAdd:0')
 
 				#action = sess.run(predicted_action_ph, feed_dict={concatendated_state_ph: np.concatenate((active_obs[-9][0],active_obs[-8][0][3:]), 0).reshape(1,16)})
-				st()
-<<<<<<< HEAD
-				# tensor_name_list = [tensor.name for tensor in tf.get_default_graph().as_graph_def().node]
-				# for tensor_name in tensor_name_list:
-				# 	if tensor_name == 'output_result':
-				# 		print(tensor_name,'\n')
-				action = sess.run([model.predicted_position], feed_dict={'images:0': np.repeat(np.reshape(active_obs[0],(1,1,4,84,84,3)),15,axis=0), \
+				#st()
+
+				action = sess.run([prediction], feed_dict={'images:0': np.repeat(np.reshape(active_obs[0],(1,1,4,84,84,3)),15,axis=0), \
 					'zmapss:0': np.repeat(np.reshape(active_obs[1],(1,1,4,84,84)),15,axis=0),'angles:0':np.repeat(np.reshape(active_obs[2],(1,1,4,2)),15,axis=0),\
 					'goal_centroid:0':np.repeat(np.reshape(active_obs[-5],(1,1,5)),15,axis=0),'position:0':np.repeat(np.reshape(expert_action,(1,1,2)),15,axis=0)})[0]
-=======
-				
-				action = sess.run(predicted_position, feed_dict=fd)[0]
->>>>>>> 2e270508facaea45e4011e78ec6b98d0b149dd6f
+
 				print('predict',action)
 
 
