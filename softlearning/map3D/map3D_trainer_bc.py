@@ -194,6 +194,9 @@ class MappingTrainer():
 		depth_ph = tf.placeholder(tf.float32, [self.batch_size , 1, N, 84, 84],"zmapss")
 		goal_ph =  tf.placeholder(tf.float32, [self.batch_size, 1,5], "goal_centroid")
 		action_ph = tf.placeholder(tf.float32, [self.batch_size ,1,2],"position")
+
+
+
 		self._observations_phs = [img_ph,depth_ph,cam_angle_ph,goal_ph,action_ph]
 		depth_ph = tf.expand_dims(depth_ph,-1)
 		
@@ -229,7 +232,6 @@ class MappingTrainer():
 			self._observations_phs[i]: np.expand_dims(batch[i],1)
 			for i in range(5)
 		})
-
 		return feed_dict
 
 
@@ -261,9 +263,9 @@ class MappingTrainer():
 		#checkpoint_path = "/projects/katefgroup/yunchu/store/" +  mesh + "_dagger"+"/model_"+ str(iteration-1)
 		# create saver to save model variables
 		if iteration != 0:
-			st()
+			
 			checkpoint_path = "/projects/katefgroup/yunchu/store/" +  expert + "_dagger"
-			saver = tf.train.import_meta_graph(checkpoint_path+ "/model_"+ str(iteration)+"-"+str(iteration)+".meta")
+			saver = tf.train.import_meta_graph(checkpoint_path+ "/model_"+ str(iteration-1)+"-"+str(iteration-1)+".meta")
 			print("i am reloading", tf.train.latest_checkpoint(checkpoint_path))
 			saver.restore(self._session,tf.train.latest_checkpoint(checkpoint_path))
 		else:
@@ -272,7 +274,7 @@ class MappingTrainer():
 		#st()
 		#self.batches = (filenames.get_shape().as_list()[0])// self.batch_size
 		self.batches = len(filenames) // self.batch_size
-		self.batches = 2 #to speed it up
+		self.batches = 1 #to speed it up
 		for training_step in range(epoch):
 
 			starting_time = time.time()
@@ -294,7 +296,7 @@ class MappingTrainer():
 				# else:
 				
 				# _, loss,summ = self._session.run([self.model.opt,self.model.loss_,self.model.summ],feed_dict=fd)
-				_, loss = self._session.run([self.model.opt,self.model.loss_],feed_dict=fd)
+				_, loss,predicted_action = self._session.run([self.model.opt,self.model.loss_,self.model.predicted_position],feed_dict=fd)
 				# st()
 
 
@@ -311,8 +313,9 @@ class MappingTrainer():
 				# kles.append(kle)
 
 				if batch_idx % self.log_interval == 0:
+					print('action_predictor',predicted_action)
 					print('Train Epoch: {} {}/{}  \tLoss: {:.6f} \tEpochs runs since: {}'.format( training_step,batch_idx,self.batches,loss, time.time()-starting_time ))
-
+		st()
 
 		store_path = "/projects/katefgroup/yunchu/store/" +  expert + "_dagger"+ "/model_"+ str(iteration)  #TODO store the last, change maybe to store the best 
 		#saver.save(sess, "store/model.ckpt")

@@ -55,8 +55,9 @@ for expert in list_of_experts:
 		training_epochs = 1
 		er.algorithm.train_epoch(expert,training_epochs,iteration)
 		#sample trajectories and store the experts actions
+		#tf.reset_default_graph()
 		max_rollouts = 2 #300 #how many starting conditions to sample and to roll out
-		succes_rate = rollout_and_gather_data(max_rollouts, expert, iteration)
+		succes_rate = rollout_and_gather_data(er.algorithm.model,max_rollouts, expert, iteration)
 		#main_dagger_without(iteration, mesh)
 	
 

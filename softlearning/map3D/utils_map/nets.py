@@ -436,7 +436,7 @@ def action_predictor(inputs):
         net = tf.layers.dense(net,128,activation=tf.nn.relu)
         net = tf.layers.dense(net,64,activation=tf.nn.relu)
         net = tf.layers.dense(net,32,activation=tf.nn.relu)
-        net = tf.layers.dense(net,2) #current action is 2dim, gripper xy position
+        net = tf.layers.dense(net,2,name = 'final_result') #current action is 2dim, gripper xy position
     return net
 
 def depth_channel_net_v2(feature):

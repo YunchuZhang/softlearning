@@ -47,3 +47,6 @@ class Config(object):
 
     def add(self, partname, partscope, partpath):
         self.dct[partname] = (partscope, partpath)
+
+
+

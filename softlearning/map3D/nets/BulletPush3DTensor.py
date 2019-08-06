@@ -456,6 +456,7 @@ class BulletPush3DTensor4_cotrain(BulletPushBase):
        if self.action_predictor:
            with tf.compat.v1.variable_scope("action_predictor"):
                self.predicted_position = utils.nets.action_predictor(memory_3D)
+               #tf.identity(self.predicted_position,name="output_result")
      
     # def predict(self):
     #     # st()

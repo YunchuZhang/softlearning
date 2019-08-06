@@ -29,7 +29,7 @@ multiworld.register_all_envs()
 
 import argparse
 
-def rollout_and_gather_data(max_rollouts, mesh, iteration):
+def rollout_and_gather_data(model,max_rollouts, mesh, iteration):
 	# parser = argparse.ArgumentParser()
 	# parser.add_argument("--mesh", help="input object")
 	# args = parser.parse_args()
@@ -120,7 +120,7 @@ def rollout_and_gather_data(max_rollouts, mesh, iteration):
 		expert_actions = []
 		while True:
 			#print("sampling")
-			current_obs, next_observation, expert_action, reward, terminal, info ,length= sampler.sample(iteration)
+			current_obs, next_observation, expert_action, reward, terminal, info ,length= sampler.sample(iteration,model =model)
 			expert_actions.append(expert_action)
 			#print("obs", current_obs, "expert_action" , expert_action  )
 			print("expert_action" , expert_action  )
