@@ -119,8 +119,12 @@ class SimpleSampler(BaseSampler):
 
 
 		expert_action = self.policy.actions_np(active_obs[-9:])[0] #select only part of the active obs
+<<<<<<< HEAD
 		#fd = self._get_feed_dict(active_obs)
 
+=======
+		fd = self._get_feed_dict(active_obs)
+>>>>>>> 2e270508facaea45e4011e78ec6b98d0b149dd6f
 
 		#tf.reset_default_graph()
 		with tf.Session() as sess:
@@ -147,6 +151,7 @@ class SimpleSampler(BaseSampler):
 
 				#action = sess.run(predicted_action_ph, feed_dict={concatendated_state_ph: np.concatenate((active_obs[-9][0],active_obs[-8][0][3:]), 0).reshape(1,16)})
 				st()
+<<<<<<< HEAD
 				# tensor_name_list = [tensor.name for tensor in tf.get_default_graph().as_graph_def().node]
 				# for tensor_name in tensor_name_list:
 				# 	if tensor_name == 'output_result':
@@ -154,6 +159,10 @@ class SimpleSampler(BaseSampler):
 				action = sess.run([model.predicted_position], feed_dict={'images:0': np.repeat(np.reshape(active_obs[0],(1,1,4,84,84,3)),15,axis=0), \
 					'zmapss:0': np.repeat(np.reshape(active_obs[1],(1,1,4,84,84)),15,axis=0),'angles:0':np.repeat(np.reshape(active_obs[2],(1,1,4,2)),15,axis=0),\
 					'goal_centroid:0':np.repeat(np.reshape(active_obs[-5],(1,1,5)),15,axis=0),'position:0':np.repeat(np.reshape(expert_action,(1,1,2)),15,axis=0)})[0]
+=======
+				
+				action = sess.run(predicted_position, feed_dict=fd)[0]
+>>>>>>> 2e270508facaea45e4011e78ec6b98d0b149dd6f
 				print('predict',action)
 
 
