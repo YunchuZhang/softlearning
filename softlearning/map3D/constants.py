@@ -722,9 +722,9 @@ OG("rl_new",
    # max_T=1,
    CONVLSTM_DIM = 256,
    IS_VIEW_PRED=True,
-   radius = 0.8, boundary_to_center=0.9, fov = 110, fs_2D=8, # 0.8 0.2 20
+   radius=0.4, boundary_to_center=0.2, fov=45, fs_2D=8, # 0.8 0.2 20
    DEBUG_UNPROJECT=False,
-   BS=8, valp=500, is_trainval_diff_summ=True,
+   BS=16, valp=500, is_trainval_diff_summ=True,
    run_full=False,
    #ckpt_cfg_dir="/home/mprabhud/rl/softlearning/softlearning/map3D/ckpt_cfg",
    #ckpt_cfg_dir="/media/shared/Documents/Research/VMGE/3d_temp/ckpt_cfg",

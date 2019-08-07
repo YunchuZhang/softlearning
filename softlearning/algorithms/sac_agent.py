@@ -418,6 +418,7 @@ class SACAgent():
         memory_goal = self.map3D(obs_images_goal, obs_camAngle_goal ,obs_zmap_goal, is_training=None, reuse=True)
 
         if self._stop_3D_grads:
+            print("Stopping 3D gradients")
             memory = tf.stop_gradient(memory)
             memory_goal = tf.stop_gradient(memory_goal)
 
