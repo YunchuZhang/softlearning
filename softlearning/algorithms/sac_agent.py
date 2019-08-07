@@ -418,6 +418,7 @@ class SACAgent():
         #                         reuse=True)
 
         if self._stop_3D_grads:
+            print("Stopping 3D gradients")
             memory = tf.stop_gradient(memory)
             #memory_goal = tf.stop_gradient(memory_goal)
 

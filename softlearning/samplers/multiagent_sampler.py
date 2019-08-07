@@ -1,5 +1,6 @@
 from collections import defaultdict
 
+import copy
 import numpy as np
 
 from .base_sampler import BaseSampler
@@ -56,7 +57,7 @@ class MultiAgentSampler(BaseSampler):
             'infos': info,
         }
 
-        return processed_observation
+        return copy.deepcopy(processed_observation)
 
     def sample(self):
         #pdb.set_trace()
@@ -70,9 +71,12 @@ class MultiAgentSampler(BaseSampler):
 
         active_obs = self.env.convert_to_active_observation(self._current_observations)
 
+
         if self.initialized and self.memory3D_sampler:
+            active_obs = [np.repeat(field, 2, 0) for field in active_obs]
             active_obs = self.session.run(self.memory3D_sampler,feed_dict={self.obs_ph[0]:active_obs[0],self.obs_ph[1]:active_obs[1],self.obs_ph[2]:active_obs[2],\
                 self.obs_ph[3]:active_obs[3]})
+            active_obs = active_obs[:self.num_agents]
 
         actions = self.policy.actions_np(active_obs)
 

@@ -56,11 +56,12 @@ ALGORITHM_PARAMS_BASE = {
         #'avg_weights_every_n_steps': 2,
         'pretrained_map3D': False,
         'stop_3D_grads': False,
-        'eval_render_mode': 'rgb_array',
-        'eval_render_goals': True,
-        'video_save_frequency': 5,
         'eval_n_episodes': 10,
         'eval_deterministic': True,
+        'eval_render_mode': None,
+        #'eval_render_mode': 'rgb_array',
+        #'eval_render_goals': True,
+        #'video_save_frequency': 2,
         'discount': 0.99,
         'tau': 5e-3,
         'reward_scale': 1.0,
@@ -74,13 +75,13 @@ ALGORITHM_PARAMS_ADDITIONAL = {
         'kwargs': {
             'num_agents': 4,
             'reparameterize': REPARAMETERIZE,
-            'lr': 1e-3,
+            'lr': 5e-4,
             'target_update_interval': 1,
             'tau': 5e-3,
             'target_entropy': 'auto',
             'store_extra_policy_info': False,
             'action_prior': 'uniform',
-            'n_initial_exploration_steps': int(1e2),
+            'n_initial_exploration_steps': int(5e3),
         }
     },
     'SQL': {
@@ -263,7 +264,7 @@ SIMPLE_SAMPLER_PARAMS = {
 MULTIAGENT_SAMPLER_PARAMS = {
     'type': 'MultiAgentSampler',
     'kwargs': {
-        'batch_size': 8,
+        'batch_size': 16,
         'num_agents': 8,
     }
 }
@@ -300,9 +301,10 @@ SAMPLER_PARAMS_PER_DOMAIN = {
 SIMPLE_REPLAY_POOL_PARAMS = {
     'type': 'SimpleReplayPool',
     'kwargs': {
+        'normalize_images': False,
         'max_size': tune.sample_from(lambda spec: (
             {
-                'SimpleReplayPool': int(2e5),
+                'SimpleReplayPool': int(5e4),
                 'TrajectoryReplayPool': int(1e4),
             }.get(
                 spec.get('config', spec)
@@ -313,18 +315,19 @@ SIMPLE_REPLAY_POOL_PARAMS = {
     }
 }
 
-SIMPLE_REPLAY_POOL_PARAMS_TEMP = {
-    'type': 'SimpleReplayPool',
-    'kwargs': {
-        'max_size': 2e5
-    }
-}
+#SIMPLE_REPLAY_POOL_PARAMS_TEMP = {
+#    'type': 'SimpleReplayPool',
+#    'kwargs': {
+#        'max_size': 1e4
+#    }
+#}
 
 
 HER_REPLAY_POOL_PARAMS = {
     'type': 'HerReplayPool',
     'kwargs': {
-        'max_size': 1e4,
+        'normalize_images': False,
+        'max_size': 5e4,
         'compute_reward_keys': {'achieved': 'state_achieved_goal',
                                 'desired': 'state_desired_goal',
                                 # These are required by the multiworld ImageEnv
@@ -342,7 +345,7 @@ HER_REPLAY_POOL_PARAMS = {
 
 REPLAY_POOL_PARAMS_BASE = {
     'SimpleReplayPool': SIMPLE_REPLAY_POOL_PARAMS,
-    'SimpleReplayPoolTemp':SIMPLE_REPLAY_POOL_PARAMS_TEMP,
+    #'SimpleReplayPoolTemp':SIMPLE_REPLAY_POOL_PARAMS_TEMP,
     'HerReplayPool': HER_REPLAY_POOL_PARAMS
 }
 
