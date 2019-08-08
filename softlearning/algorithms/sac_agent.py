@@ -425,9 +425,10 @@ class SACAgent():
         latent_state = self._preprocessor([memory])
         #latent_goal = self._preprocessor([memory_goal])
         latent_goal = self._observations_phs[3]
-        print("LATENT SHAPE:", latent_state.get_shape())
+        state_centroid = self._observations_phs[4]
+        #print("LATENT SHAPE:", latent_state.get_shape())
 
-        self.memory = [tf.concat([latent_state, latent_goal], -1)]
+        self.memory = [tf.concat([latent_state, latent_goal, state_centroid], -1)]
         print("MERGED MEMORY SHAPE:", self.memory[0].get_shape())
 
         next_obs_images, next_obs_zmap, next_obs_camAngle = [tf.expand_dims(i,1) for i in self._next_observations_phs[:3]]
@@ -454,8 +455,9 @@ class SACAgent():
         latent_state_next = self._preprocessor([memory_next])
         #latent_goal_next = self._preprocessor([memory_next_goal])
         latent_goal_next = self._next_observations_phs[3]
+        state_centroid_next = self._next_observations_phs[4]
 
-        self.memory_next = [tf.concat([latent_state_next, latent_goal_next], -1)]
+        self.memory_next = [tf.concat([latent_state_next, latent_goal_next, state_centroid_next], -1)]
 
 
     def _get_Q_target(self):

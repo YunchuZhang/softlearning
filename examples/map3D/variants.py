@@ -463,14 +463,15 @@ def get_variant_spec_3D(universe,
     env_train_params["kwargs"]["observation_keys"] = ["image_observation",
                                                       "depth_observation",
                                                       "cam_angles_observation",
-                                                      "state_desired_goal"]
+                                                      "state_desired_goal",
+                                                      "state_observation"]
                                                       #"image_desired_goal",
                                                       #"desired_goal_depth",
                                                       #"goal_cam_angle"]
     #env_train_params["kwargs"]["map3D"] = map3D_model
 
-    variant_spec["Q_params"]['input_shape'] = [(67,)]
-    variant_spec["policy_params"]["input_shape"] = [(67,)]
+    variant_spec["Q_params"]['input_shape'] = [(70,)]
+    variant_spec["policy_params"]["input_shape"] = [(70,)]
 
     preprocessor_params = {
         'type': 'convnet3d_preprocessor',
