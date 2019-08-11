@@ -140,7 +140,8 @@ class Net:
 
 		return dictVal
 
-	def data(self,images,zmaps,angles,goal):
+	def data(self,images,zmaps,angles,goal,state_observation):
+
 		#data = self.child.data_for_selector(self.q_ph)
 		
 		# self.images_val = images
@@ -149,6 +150,8 @@ class Net:
 		# st()
 		data.update({'goal':goal})
 		data.goal = goal
+		data.update({'state_observation':state_observation})
+		data.state_observation = state_observation
 		# data = self.init_placeholders()
 		input_T = data.images.get_shape()[1].value
 		start_t = tf.cast(tf.random.uniform([1], minval=0, maxval=input_T-0.000001 - self.max_T, dtype=tf.float32)[0], tf.int32)
@@ -226,7 +229,7 @@ class Net:
 						 voxels=data.voxels, resize_factor=data.resize_factor)
 		else:
 			return Munch(frames=frames[:, :, :const.NUM_VIEWS], depth_ori = data.zmaps, cameras=data.angles[:, :, :const.NUM_VIEWS], phis = phis[:, :, :const.NUM_VIEWS], thetas=thetas[:, :, :const.NUM_VIEWS],
-						vp_frame = frames[:, 0, -1, :, :, -3:], vp_phi = phis[:, 0, -1], vp_theta = thetas[:, 0, -1], goal = data.goal)
+						vp_frame = frames[:, 0, -1, :, :, -3:], vp_phi = phis[:, 0, -1], vp_theta = thetas[:, 0, -1], goal = data.goal,state_observation = data.state_observation)
 
 
 	def make_action(self, data):
@@ -258,8 +261,8 @@ class Net:
 
 	def optimize(self, fn):
 		global_step = tf.Variable(0, trainable=False)
-		decay_steps = 200000
-		lr = tf.train.exponential_decay(0.003,
+		decay_steps = 20000
+		lr = tf.train.exponential_decay(0.0001,
 										global_step,
 										decay_steps,
 										0.1,
@@ -267,7 +270,7 @@ class Net:
 		self.optimizer = tf.train.AdamOptimizer(lr, const.mom)
 		self.opt = utils.tfutil.make_opt_op(self.optimizer, fn)
 
-	def __call__(self,images,angles,zmaps,goal,batch_size=None,exp_name=None,is_training=None,reuse=False,eager=False,position=None):
+	def __call__(self,images,angles,zmaps,goal,state_observation,batch_size=None,exp_name=None,is_training=None,reuse=False,eager=False,position=None):
 		#index is passed to the data_selector, to control which data is used
 		#self.go_up_to_loss(index)
 		# st()
@@ -294,7 +297,7 @@ class Net:
 		const.x0 = const.W / 2.0
 		const.y0 = const.H / 2.0
 		with tf.compat.v1.variable_scope("Variables",reuse=reuse):
-			val = self.data(images,zmaps,angles,goal)
+			val = self.data(images,zmaps,angles,goal,state_observation)
 			self.optimize(lambda: self.go_up_to_loss(val,is_training))
 			self.assemble()
 		return self.memory_3D

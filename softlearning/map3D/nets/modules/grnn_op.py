@@ -158,7 +158,6 @@ def pass_rotate_to_base_and_aggregate(inputs, thetas, phis, base_theta, base_phi
     phis: [(batch_size)] * num_views, [40, 60]
     base_thetas: [batch_size]
     base_thetas: [batch_size]
-
     """
     extra_outputs=dict()
 
@@ -195,12 +194,10 @@ def pass_rotate_to_base_and_aggregate(inputs, thetas, phis, base_theta, base_phi
                 memory_time_t.append(memory_out)
                 #query feature
  
-
             memorys.append(memory_time_t)
             score, prob, weight_features = self.match_memory(memory_time_t, query_at_time_t)
             logits.append(score)
             weighted_inputs.append(weight_features)
-
         aligned_features = []
         memory = []
         for feat_id in range(len(input_at_time_0)):
@@ -238,7 +235,6 @@ def pass_rotate_to_base_and_aggregate(inputs, thetas, phis, base_theta, base_phi
             gt_voxel_to_print = tf.concat([tf.tile(voxel_scene[:, i, :, :, :], [1,1,1,3]) for i in range(0, s, 2)], 1)
             summ.image(f"feat/step0_aligned_f{f_id}", tf.concat([gt_voxel_to_print * max_value, feat_to_print], 2))
             tf.summary.histogram(f"feat/step0_aligned_f{f_id}_summ", feat[0])
-
         memory_3D_split = [tf.split(feat, self.nviews, axis=0) for feat in memory]
         for f_id, feat in enumerate(memory_3D_split):
             s = feat[0].get_shape()[1].value
@@ -251,4 +247,3 @@ def pass_rotate_to_base_and_aggregate(inputs, thetas, phis, base_theta, base_phi
     """
     return memory, aligned_features, extra_outputs
     
-

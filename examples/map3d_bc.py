@@ -58,34 +58,38 @@ def test():
 	session = tf.Session(config=tf.ConfigProto(gpu_options=gpu_options))
 	tf.keras.backend.set_session(session)
 	sess = tf.keras.backend.get_session()
+	#sess = tf.Session()
+	with tf.Session().as_default() as sess:
+		sess.run(tf.global_variables_initializer())
 
-	print('loading ')
+		print('loading ')
 
-	checkpoint_path = "/projects/katefgroup/yunchu/store/" +  "hat1" + "_dagger"
-	saver = tf.train.import_meta_graph(checkpoint_path+ "/model_0"+"-0"+".meta")
-	print("i am reloading", tf.train.latest_checkpoint(checkpoint_path))
-	saver.restore(sess,tf.train.latest_checkpoint(checkpoint_path))
-	
-	losses = []
-	log_probs = []
-	kles = []
-	# tempData = {}
-	path = "/projects/katefgroup/yunchu/dagger_minimalhat1"
-	filenames = os.listdir(path)
-	sampleBuffer = SampleBuffer(path)
-	for transition_name in filenames:
-		sampleBuffer.load(transition_name)
-	print("finished loading")
-	
-	images,zmapss,angles,goal_centroid,position= sampleBuffer.sample(15)
-	graph = tf.get_default_graph()
-	prediction = graph.get_tensor_by_name('Variables/main/action_predictor/final_result/BiasAdd:0')
-	action = sess.run([prediction], feed_dict={'images:0': np.reshape(images,(15,1,4,84,84,3)), \
-					'zmapss:0': np.reshape(zmapss,(15,1,4,84,84)),'angles:0':np.reshape(angles,(15,1,4,2)),\
-					'goal_centroid:0':np.reshape(goal_centroid,(15,1,5)),\
-					'position:0':np.reshape(position,(15,1,2))})
+		checkpoint_path = "/projects/katefgroup/yunchu/store/" +  "hat1" + "_dagger"
+		saver = tf.train.import_meta_graph(checkpoint_path+ "/model_0"+"-0"+".meta")
+		print("i am reloading", tf.train.latest_checkpoint(checkpoint_path))
+		saver.restore(sess,tf.train.latest_checkpoint(checkpoint_path))
+		
+		losses = []
+		log_probs = []
+		kles = []
+		# tempData = {}
+		path = "/projects/katefgroup/yunchu/dagger_minimalhat1"
+		filenames = os.listdir(path)
+		sampleBuffer = SampleBuffer(path)
+		for transition_name in filenames:
+			sampleBuffer.load(transition_name)
+		print("finished loading")
+		
+		images,zmapss,angles,goal_centroid,position= sampleBuffer.sample(15)
+		graph = tf.get_default_graph()
+		prediction = graph.get_tensor_by_name('Variables/main/action_predictor/final_result/BiasAdd:0')
+		action = sess.run([prediction], feed_dict={'images:0': np.reshape(images,(15,1,4,84,84,3)), \
+						'zmapss:0': np.reshape(zmapss,(15,1,4,84,84)),'angles:0':np.reshape(angles,(15,1,4,2)),\
+						'goal_centroid:0':np.reshape(goal_centroid,(15,1,5)),\
+						'position:0':np.reshape(position,(15,1,2))})
 
-	print('action_predictor',action)
+		print('action_predictor',action)
+
 
 
 
@@ -124,23 +128,25 @@ for expert in list_of_experts:
 	# er._setup("rl_new_reach_detect",variant_spec,eager)
 
 	er._build()
-	#st()
+
 	#test()
 	#er._train()
-	number_iterations = 5 #number of dagger iterations
+	number_iterations = 8 #number of dagger iterations
 
 	for iteration in range(number_iterations):
+		print('In iteration',iteration)
 		
 		#combine old experience and the expertactions on the sample trajectories to dataset D
 		# and train bc agent on D
 		#main_dagger(iteration, mesh)
 		#main_dagger(iteration, mesh) #expert,epoch,iteration)
 		#test()
-		training_epochs = 3
-		er.algorithm.train_epoch(expert,training_epochs,iteration)
+		training_epochs = 10
+		er._train(training_epochs,iteration,expert)
+		#er.algorithm.train_epoch(expert,training_epochs,iteration)
 		#sample trajectories and store the experts actions
-		#tf.reset_default_graph()
-		max_rollouts = 30 #300 #how many starting conditions to sample and to roll out
+
+		max_rollouts = 8 #300 #how many starting conditions to sample and to roll out
 		succes_rate = rollout_and_gather_data(max_rollouts, expert, iteration)
 		#main_dagger_without(iteration, mesh)
 	

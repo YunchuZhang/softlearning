@@ -52,26 +52,28 @@ class SampleBuffer(object):
 	def __len__(self):
 		return
 
-	# Expects tuples of (image_observation, depth_observation, cam_angles_observation, state_desired_goal, actions)
+	# Expects tuples of (image_observation, depth_observation, cam_angles_observation, state_desired_goal, state_observation,actions)
 	def add(self, data):
 		self.storage.append(data)
 
 	def sample(self, batch_size):
 		ind = np.random.randint(0, len(self.storage), size=batch_size)
-		img_obs, depth_obs, cam_angles, sdg, actions = [], [], [], [], []
+		img_obs, depth_obs, cam_angles, sdg, sdg2, actions = [], [], [], [], [] ,[]
 
 		for i in ind: 
-			s, s2, a, r, d = self.storage[i]
+			s, s2, a, r, r2, d = self.storage[i]
 			img_obs.append(np.array(s, copy=False))
 			depth_obs.append(np.array(s2, copy=False))
 			cam_angles.append(np.array(a, copy=False))
 			sdg.append(np.array(r, copy=False))
+			sdg2.append(np.array(r2, copy=False))
 			actions.append(np.array(d, copy=False))
 
 		return [np.array(img_obs), 
 			np.array(depth_obs), 
 			np.array(cam_angles), 
 			np.array(sdg), 
+			np.array(sdg2), 
 			np.array(actions)]
 
 	def save(self, filename):
@@ -83,7 +85,8 @@ class SampleBuffer(object):
 			data = pickle.loads(f.read())
 		#self.storage. = ( data["image_observation"], data['depth_observation'], data['cam_angles_observation'],data['state_desired_goal'],data["actions"]) #as in the orig implementatino
 
-		self.storage.append(( data["image_observation"], data['depth_observation'], data['cam_angles_observation'],data['state_desired_goal'],data["actions"]))
+		self.storage.append(( data["image_observation"], data['depth_observation'], data['cam_angles_observation'],\
+			data['state_desired_goal'],data['state_observation'],data["actions"]))
 		
 
 
@@ -193,14 +196,15 @@ class MappingTrainer():
 		cam_angle_ph = tf.placeholder(tf.float32, [self.batch_size , 1, N, 2],"angles")
 		depth_ph = tf.placeholder(tf.float32, [self.batch_size , 1, N, 84, 84],"zmapss")
 		goal_ph =  tf.placeholder(tf.float32, [self.batch_size, 1,5], "goal_centroid")
+		state_observation_ph =  tf.placeholder(tf.float32, [self.batch_size, 1,5], "state_observation")
 		action_ph = tf.placeholder(tf.float32, [self.batch_size ,1,2],"position")
 
 
 
-		self._observations_phs = [img_ph,depth_ph,cam_angle_ph,goal_ph,action_ph]
+		self._observations_phs = [img_ph,depth_ph,cam_angle_ph,goal_ph,state_observation_ph,action_ph]
 		depth_ph = tf.expand_dims(depth_ph,-1)
 		
-		self.model(img_ph,cam_angle_ph,depth_ph, goal_ph,batch_size=self.batch_size,exp_name=self.exp_name,position=action_ph)
+		self.model(img_ph,cam_angle_ph,depth_ph,goal_ph,state_observation_ph,batch_size=self.batch_size,exp_name=self.exp_name,position=action_ph)
 		#st()
 		self.action_predictor =  self.model.action_predictor
 		# st()
@@ -230,7 +234,7 @@ class MappingTrainer():
 		#st()
 		feed_dict.update({
 			self._observations_phs[i]: np.expand_dims(batch[i],1)
-			for i in range(5)
+			for i in range(6)
 		})
 		return feed_dict
 
@@ -244,7 +248,7 @@ class MappingTrainer():
 		
 
 
-	def train_epoch(self, expert,epoch,iteration):
+	def train_epoch(self, epoch,iteration,expert):
 		training = True
 		losses = []
 		log_probs = []
@@ -262,65 +266,65 @@ class MappingTrainer():
 
 		#checkpoint_path = "/projects/katefgroup/yunchu/store/" +  mesh + "_dagger"+"/model_"+ str(iteration-1)
 		# create saver to save model variables
-		if iteration != 0:
+		# if iteration != 0:
 			
-			checkpoint_path = "/projects/katefgroup/yunchu/store/" +  expert + "_dagger1"
-			saver = tf.train.import_meta_graph(checkpoint_path+ "/model_"+ str(iteration-1)+"-"+str(iteration-1)+".meta")
-			print("i am reloading", tf.train.latest_checkpoint(checkpoint_path))
-			saver.restore(self._session,tf.train.latest_checkpoint(checkpoint_path))
-		else:
-			saver = tf.train.Saver()
+		# 	checkpoint_path = "/projects/katefgroup/yunchu/store/" +  expert + "_dagger"
+		# 	saver = tf.train.import_meta_graph(checkpoint_path+ "/model_"+ str(iteration-1)+"-"+str(iteration-1)+".meta")
+		# 	print("i am reloading", tf.train.latest_checkpoint(checkpoint_path))
+		# 	saver.restore(self._session,tf.train.latest_checkpoint(checkpoint_path))
+		# else:
+		# 	saver = tf.train.Saver()
 
 		#st()
 		#self.batches = (filenames.get_shape().as_list()[0])// self.batch_size
 		self.batches = len(filenames) // self.batch_size
 		#self.batches = 1 #to speed it up
-		for training_step in range(epoch):
+		# for training_step in range(epoch):
 
-			starting_time = time.time()
-			for batch_idx in range(self.batches):
+		starting_time = time.time()
+		for batch_idx in range(self.batches):
 
-				#elem = self._session.run(sampleBuffer.sample(self.batch_size))
+			#elem = self._session.run(sampleBuffer.sample(self.batch_size))
 
-				fd = self._get_feed_dict(sampleBuffer.sample(self.batch_size))
+			fd = self._get_feed_dict(sampleBuffer.sample(self.batch_size))
 
-				#??no use for image?
+			#??no use for image?
 
+			
+			# if batch_idx % self.export_interval == 0 and not self.action_predictor:
+			# 	_,summ, loss,pred_view,query_view = self._session.run([self.model.opt,self.model.summ,self.model.loss_,self.model.vis["pred_views"][0],self.model.vis["query_views"][0]],
+			# 													feed_dict=fd)
+			# 	# st()
+			# 	#utils.img.imsave01("vis_new/{}_{}_pred.png".format(epoch,batch_idx), pred_view)
+			# 	#utils.img.imsave01("vis_new/{}_{}_gt.png".format(epoch,batch_idx), query_view)	
+			# else:
+			
+			# _, loss,summ = self._session.run([self.model.opt,self.model.loss_,self.model.summ],feed_dict=fd)
+			_, loss,predicted_action = self._session.run([self.model.opt,self.model.loss_,self.model.predicted_position],feed_dict=fd)
+			# st()
+
+
+			# step = epoch * self.batches + batch_idx
+			# self.train_writer.add_summary(summ,step)
+
+
+			# utils.img.imsave01("pred_view_{}.png".format(batch_idx), pred_view)
+			# utils.img.imsave01("gt_view_{}.png".format(batch_idx), query_view)
+
+
+			# losses.append(loss)
+			# log_probs.append(log_prob)
+			# kles.append(kle)
+
+			if batch_idx % self.log_interval == 0:
 				
-				# if batch_idx % self.export_interval == 0 and not self.action_predictor:
-				# 	_,summ, loss,pred_view,query_view = self._session.run([self.model.opt,self.model.summ,self.model.loss_,self.model.vis["pred_views"][0],self.model.vis["query_views"][0]],
-				# 													feed_dict=fd)
-				# 	# st()
-				# 	#utils.img.imsave01("vis_new/{}_{}_pred.png".format(epoch,batch_idx), pred_view)
-				# 	#utils.img.imsave01("vis_new/{}_{}_gt.png".format(epoch,batch_idx), query_view)	
-				# else:
-				
-				# _, loss,summ = self._session.run([self.model.opt,self.model.loss_,self.model.summ],feed_dict=fd)
-				_, loss,predicted_action = self._session.run([self.model.opt,self.model.loss_,self.model.predicted_position],feed_dict=fd)
-				# st()
-
-
-				# step = epoch * self.batches + batch_idx
-				# self.train_writer.add_summary(summ,step)
-
-
-				# utils.img.imsave01("pred_view_{}.png".format(batch_idx), pred_view)
-				# utils.img.imsave01("gt_view_{}.png".format(batch_idx), query_view)
-
-
-				# losses.append(loss)
-				# log_probs.append(log_prob)
-				# kles.append(kle)
-
-				if batch_idx % self.log_interval == 0:
-					
-					print('Train Epoch: {} {}/{}  \tLoss: {:.6f} \tEpochs runs since: {}'.format( training_step,batch_idx,self.batches,loss, time.time()-starting_time ))
-		#st()
+				print('Train Epoch: {} {}/{}  \tLoss: {:.6f} \tEpochs runs since: {}'.format( epoch,batch_idx,self.batches,loss, time.time()-starting_time ))
+	#st()
 		print('action_predictor',predicted_action)
-		store_path = "/projects/katefgroup/yunchu/store/" +  expert + "_dagger1"+ "/model_"+ str(iteration)  #TODO store the last, change maybe to store the best 
-		#saver.save(sess, "store/model.ckpt")
-		print(store_path)
-		saver.save(self._session, store_path, global_step = iteration)
+	# store_path = "/projects/katefgroup/yunchu/store/" +  expert + "_dagger"+ "/model_"+ str(iteration)  #TODO store the last, change maybe to store the best 
+	# #saver.save(sess, "store/model.ckpt")
+	# print(store_path)
+	# saver.save(self._session, store_path, global_step = iteration)
 
  
 if __name__ == "__main__":

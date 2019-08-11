@@ -12,7 +12,6 @@ import time
 # >>>>>>> Stashed changes
 from .base_sampler import BaseSampler
 import tensorflow as tf
-
 class SimpleSampler(BaseSampler):
 	def __init__(self, **kwargs):
 		super(SimpleSampler, self).__init__(**kwargs)
@@ -26,9 +25,26 @@ class SimpleSampler(BaseSampler):
 		self._current_observation = None
 		self._total_samples = 0
 
+	def test(self,feed_dict):
+		tf.reset_default_graph()
+		sess1 = tf.InteractiveSession() 
+		sess1.run(tf.global_variables_initializer())
 
 
 
+		checkpoint_path = "/projects/katefgroup/yunchu/store/" +  "hat1" + "_dagger"
+		saver = tf.train.import_meta_graph(checkpoint_path+ "/model_1"+"-1"+".meta")
+		#print("i am reloading", tf.train.latest_checkpoint(checkpoint_path))
+		saver.restore(sess1,tf.train.latest_checkpoint(checkpoint_path))
+
+		graph = tf.get_default_graph()
+		prediction = graph.get_tensor_by_name('Variables/main/action_predictor/final_result/BiasAdd:0')
+		action = sess1.run([prediction], feed_dict=feed_dict)
+		sess1.close()
+
+			#print('action_predictor',action)
+
+		return action[0][0]
 
 	def _process_observations(self,
 							  observation,
@@ -76,13 +92,6 @@ class SimpleSampler(BaseSampler):
 		feed_dict.update({'cam_angles_observation':active_obs[2]})
 		feed_dict.update({'state_desired_goal':active_obs[-5]})
 		feed_dict.update({'actions':self.policy.actions_np(active_obs[-9:])[0]})
-		# return feed_dict
-		# 		feed_dict = {}
-		# #st()
-		# feed_dict.update({
-		# 	self._observations_phs[i]: np.expand_dims(batch[i],1)
-		# 	for i in range(5)
-		# })
 
 		return feed_dict
 
@@ -114,40 +123,42 @@ class SimpleSampler(BaseSampler):
 			active_obs  = [i[:1] for i in active_obs]
 			# active_obs =  np.ones([1, 32, 32, 32, 16])
 			# st()
-		#st()
 
 
 
 		expert_action = self.policy.actions_np(active_obs[-9:])[0] #select only part of the active obs
 		#fd = self._get_feed_dict(active_obs)
 
+		#tf.reset_default_graph()
+		# with tf.Session() as sess:
+		# 	sess.run(tf.global_variables_initializer())
 
-		tf.reset_default_graph()
-		with tf.Session() as sess:
-			sess.run(tf.global_variables_initializer())
+		#checkpoint_path = "/projects/katefgroup/yunchu/store/" +  self.mesh + "_dagger"
 
-			checkpoint_path = "/projects/katefgroup/yunchu/store/" +  self.mesh + "_dagger1"
+		if self.iteration == 0:
+			#st()
+			action = expert_action
+		else:
+			# saver = tf.train.import_meta_graph(checkpoint_path+ "/model_"+ str(self.iteration)+"-"+str(self.iteration)+".meta")
+			# saver.restore(sess, tf.train.latest_checkpoint(checkpoint_path))
+			#print("i am in ", self.iteration, "and reload", tf.train.latest_checkpoint(checkpoint_path) )
+			#saver.restore(sess, checkpoint_path)
+			#sess.run(tf.global_variables_initializer())
+			#print("hi yunchu, we use the bc policy")
+			# graph = tf.get_default_graph()
+			# prediction = graph.get_tensor_by_name('Variables/main/action_predictor/final_result/BiasAdd:0')
+			#st()
+			#action = sess.run(predicted_action_ph, feed_dict={concatendated_state_ph: np.concatenate((active_obs[-9][0],active_obs[-8][0][3:]), 0).reshape(1,16)})
+			feed_dict={'images:0': np.repeat(np.reshape(active_obs[0],(1,1,4,84,84,3)),15,axis=0), \
+				'zmapss:0': np.repeat(np.reshape(active_obs[1],(1,1,4,84,84)),15,axis=0),'angles:0':np.repeat(np.reshape(active_obs[2],(1,1,4,2)),15,axis=0),\
+				'goal_centroid:0':np.repeat(np.reshape(active_obs[-5],(1,1,5)),15,axis=0),'state_observation:0':np.repeat(np.reshape(active_obs[-6],(1,1,5)),15,axis=0),\
+				'position:0':np.repeat(np.reshape(expert_action,(1,1,2)),15,axis=0)}
+			# action = sess.run([prediction], feed_dict={'images:0': np.repeat(np.reshape(active_obs[0],(1,1,4,84,84,3)),15,axis=0), \
+			# 	'zmapss:0': np.repeat(np.reshape(active_obs[1],(1,1,4,84,84)),15,axis=0),'angles:0':np.repeat(np.reshape(active_obs[2],(1,1,4,2)),15,axis=0),\
+			# 	'goal_centroid:0':np.repeat(np.reshape(active_obs[-5],(1,1,5)),15,axis=0),'position:0':np.repeat(np.reshape(expert_action,(1,1,2)),15,axis=0)})[0][0]
+			action = self.test(feed_dict)
+			print('predict',action)
 
-			if self.iteration == 0:
-				action = expert_action
-			else:
-				saver = tf.train.import_meta_graph(checkpoint_path+ "/model_"+ str(self.iteration)+"-"+str(self.iteration)+".meta")
-				saver.restore(sess, tf.train.latest_checkpoint(checkpoint_path))
-				print("i am in ", self.iteration, "and reload", tf.train.latest_checkpoint(checkpoint_path) )
-				#saver.restore(sess, checkpoint_path)
-				#sess.run(tf.global_variables_initializer())
-				#print("hi yunchu, we use the bc policy")
-				graph = tf.get_default_graph()
-				prediction = graph.get_tensor_by_name('Variables/main/action_predictor/final_result/BiasAdd:0')
-
-				#action = sess.run(predicted_action_ph, feed_dict={concatendated_state_ph: np.concatenate((active_obs[-9][0],active_obs[-8][0][3:]), 0).reshape(1,16)})
-				#st()
-
-				action = sess.run([prediction], feed_dict={'images:0': np.repeat(np.reshape(active_obs[0],(1,1,4,84,84,3)),15,axis=0), \
-					'zmapss:0': np.repeat(np.reshape(active_obs[1],(1,1,4,84,84)),15,axis=0),'angles:0':np.repeat(np.reshape(active_obs[2],(1,1,4,2)),15,axis=0),\
-					'goal_centroid:0':np.repeat(np.reshape(active_obs[-5],(1,1,5)),15,axis=0),'position:0':np.repeat(np.reshape(expert_action,(1,1,2)),15,axis=0)})[0]
-
-				print('predict',action)
 
 
 

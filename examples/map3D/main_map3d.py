@@ -72,34 +72,55 @@ class ExperimentRunner():
 				self.savers[partname] = tf.train.Saver(partweights)
 
 
-	def save(self, sess, name, step):
-		# st()
-		config = Config(name, step)
+	def reload(self, sess,expert, iteration):
+		# config = Config(name, step)
 		parts = self.algorithm.model.weights
-		if len(name.split("/")) > 1:
-			savepath = path.join(self.algorithm.model.ckpt_dir, name.split("/")[0])
-			utils.utils.ensure(savepath)
 
-		#savepath = path.join(self.algorithm.model.ckpt_base,self.algorithm.model.ckpt_dir, name)
-		#import pdb; pdb.set_trace()
-		savepath = path.join(self.algorithm.model.ckpt_base,"weights_"+self.expert_name)
-		#expert_name
+		savepath = "/projects/katefgroup/yunchu/store/" +  expert + "_dagger"+ "/model_"+ str(iteration-1)+"-"+str(iteration-1)
+
 		utils.utils.ensure(savepath)
 		for partname in parts:
-			partpath = path.join(savepath, partname)
-			utils.utils.ensure(partpath)
+			# partpath = path.join(savepath, partname)
+			# utils.utils.ensure(partpath)
 			partscope, weights = parts[partname]
 
 			if not weights: #nothing to do
 				continue
 
-			partsavepath = path.join(partpath, 'X')
+			# partsavepath = path.join(partpath, 'X')
 
 			saver = self.savers[partname]
-			saver.save(sess, partsavepath, global_step=step)
+			saver.restore(sess, savepath)
 
-			config.add(partname, partscope, partpath)
-		config.save()
+	def save(self, sess,expert, iteration):
+		# config = Config(name, step)
+		parts = self.algorithm.model.weights
+		# if len(name.split("/")) > 1:
+		# 	savepath = path.join(self.algorithm.model.ckpt_dir, name.split("/")[0])
+		# 	utils.utils.ensure(savepath)
+
+		#savepath = path.join(self.algorithm.model.ckpt_base,self.algorithm.model.ckpt_dir, name)
+		#import pdb; pdb.set_trace()
+		savepath = "/projects/katefgroup/yunchu/store/" +  expert + "_dagger"+ "/model_"+ str(iteration)
+		#savepath = path.join(self.algorithm.model.ckpt_base,"weights_"+self.expert_name)
+		#expert_name
+		utils.utils.ensure(savepath)
+		for partname in parts:
+			# partpath = path.join(savepath, partname)
+			# utils.utils.ensure(partpath)
+			partscope, weights = parts[partname]
+
+			if not weights: #nothing to do
+				continue
+
+			# partsavepath = path.join(partpath, 'X')
+
+			saver = self.savers[partname]
+			saver.save(sess, savepath, global_step=iteration)
+			print('now saving',savepath)
+
+		# 	config.add(partname, partscope, partpath)
+		# config.save()
 
 
 	def map_load(self,sess, name,map3D=None):
@@ -141,12 +162,14 @@ class ExperimentRunner():
 			print(f"restore model from {loadpath}")
 		return config.step
 
-	def _train(self):
-		for i in range(self.step,self.step+1000):
-			self.algorithm.train_epoch(i)
-			# st()
-			if i % 10 ==0:
-				self.save(self._session,self.algorithm.model.load_name,i)
+	def _train(self,epoch,iteration,expert):
+		if iteration != 0:
+			self.reload(self._session,expert,iteration)
+		for i in range(epoch):
+			self.algorithm.train_epoch(i,iteration,expert)
+
+			#if i % 10 ==0:
+		self.save(self._session,expert,iteration)
 				# num = 0
 				# print("Further Sampling")
 				# while num < 1000:
@@ -199,7 +222,7 @@ class ExperimentRunner():
 		# if not self.algorithm.detector:
 		self.step = self.map3d_setup(self._session,map3D=bulledtPush)
 		# st()
-		#self.initsaver()
+		self.initsaver()
 
 		self._built = True
 

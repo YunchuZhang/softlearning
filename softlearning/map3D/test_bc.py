@@ -40,9 +40,9 @@ def rollout_and_gather_data(max_rollouts, mesh, iteration):
 
 
 	gpu_options = tf.GPUOptions(allow_growth=True)
-	session = tf.Session(config=tf.ConfigProto(gpu_options=gpu_options))
-	tf.keras.backend.set_session(session)
-	session = tf.keras.backend.get_session()
+	session1 = tf.Session(config=tf.ConfigProto(gpu_options=gpu_options))
+	tf.keras.backend.set_session(session1)
+	session1 = tf.keras.backend.get_session()
 
 	env = gym.make('SawyerPushAndReachEnvEasy-v0',reward_type="puck_success")
 
@@ -50,7 +50,8 @@ def rollout_and_gather_data(max_rollouts, mesh, iteration):
 				   imsize=84,
 				   normalize=True,
 				   init_camera=init_multiple_cameras,
-				   num_cameras=4,
+				   num_cameras=57,
+				   num_views = 4,
 				   depth=True,
 				   cam_angles=True,
 				   flatten=False)
@@ -78,7 +79,7 @@ def rollout_and_gather_data(max_rollouts, mesh, iteration):
 	variant_path = os.path.join(experiment_path, 'params.json')
 	with open(variant_path, 'r') as f:
 		variant = json.load(f)
-	with session.as_default():
+	with session1.as_default():
 		pickle_path = os.path.join(checkpoint_path, 'checkpoint.pkl')
 		with open(pickle_path, 'rb') as f:
 			picklable = pickle.load(f)
@@ -103,7 +104,7 @@ def rollout_and_gather_data(max_rollouts, mesh, iteration):
 	with policy.set_deterministic(True):
 
 
-		sampler = SimpleSampler(batch_size=40, max_path_length=50, min_pool_size=0,mesh = mesh, iteration=iteration)
+		sampler = SimpleSampler(batch_size=40, max_path_length=30, min_pool_size=0,mesh = mesh, iteration=iteration)
 		sampler.initialize(env, policy, replay_pool)
 		length = 40
 
@@ -124,7 +125,6 @@ def rollout_and_gather_data(max_rollouts, mesh, iteration):
 			expert_actions.append(expert_action)
 			#print("obs", current_obs, "expert_action" , expert_action  )
 			print("expert_action" , expert_action  )
-			#st()
 			#print(terminal)
 			#print(length)
 
@@ -149,12 +149,11 @@ def rollout_and_gather_data(max_rollouts, mesh, iteration):
 				print(number_rollouts)
 
 			if number_rollouts >=max_rollouts: break
-
+		
 		onlyfiles = next(os.walk(expert_data_path))[2]
 		totalnum = len(onlyfiles)
 		print('---------')
 		print("before",totalnum)
-
 		for counter in range(len(expert_actions)):
 			#save the dagger expert trajectories 
 			expert_data = {'image_observation': np.array(replay_pool.fields["observations.image_observation"][counter]),
@@ -197,6 +196,6 @@ if __name__ == '__main__':
 	args = parser.parse_args()
 
 	mesh = args.mesh
-	max_rollouts = 50
-	rollout_and_gather_data(max_rollouts, mesh)
+	max_rollouts = 1
+	rollout_and_gather_data(max_rollouts, mesh,0)
 
