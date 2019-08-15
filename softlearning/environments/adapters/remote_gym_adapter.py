@@ -48,7 +48,7 @@ class RemoteGymAdapter(SoftlearningEnv):
                  domain,
                  task,
                  *args,
-                 num_agents=5,
+                 num_agents=8,
                  normalize=True,
                  observation_keys=None,
                  unwrap_time_limit=True,

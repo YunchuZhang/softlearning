@@ -60,7 +60,7 @@ ALGORITHM_PARAMS_BASE = {
         'eval_render_mode': None, 
         'eval_n_episodes': 10,
         'eval_deterministic': True,
-        'num_agents': 2,
+        'num_agents': 4,
         'discount': 0.99,
         'tau': 5e-3,
         'reward_scale': 1.0,
@@ -220,7 +220,8 @@ ENVIRONMENT_PARAMS = {
     },
     'SawyerReachXYEnv': {
         'v1': {
-            'reward_type': 'hand_success'
+            'reward_type': 'hand_success',
+            'observation_keys': ('state_desired_goal', 'state_achieved_goal')
         }
     },
     'SawyerPushAndReachEnvEasy': {
@@ -281,8 +282,8 @@ SIMPLE_SAMPLER_PARAMS = {
 MULTIAGENT_SAMPLER_PARAMS = {
     'type': 'MultiAgentSampler',
     'kwargs': {
-        'batch_size': 256,
-        'num_agents': 5,
+        'batch_size': 32,
+        'num_agents': 8,
     }
 }
 
@@ -335,7 +336,7 @@ SIMPLE_REPLAY_POOL_PARAMS = {
 HER_REPLAY_POOL_PARAMS = {
     'type': 'HerReplayPool',
     'kwargs': {
-        'max_size': 5e5,
+        'max_size': 5e4,
         'desired_goal_key': 'desired_goal',
         'achieved_goal_key': 'achieved_goal',
         'reward_key': 'rewards',
