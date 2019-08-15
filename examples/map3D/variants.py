@@ -327,7 +327,7 @@ HER_REPLAY_POOL_PARAMS = {
     'type': 'HerReplayPool',
     'kwargs': {
         'normalize_images': False,
-        'max_size': 5e4,
+        'max_size': 4e4,
         'compute_reward_keys': {'achieved': 'state_achieved_goal',
                                 'desired': 'state_desired_goal',
                                 # These are required by the multiworld ImageEnv
@@ -460,9 +460,9 @@ def get_variant_spec_3D(universe,
     environment_params = variant_spec['environment_params']
     env_train_params = environment_params['training']
     # env_train_params["kwargs"] = {}
-    env_train_params["kwargs"]["observation_keys"] = ["image_observation",
-                                                      "depth_observation",
-                                                      "cam_angles_observation",
+    env_train_params["kwargs"]["observation_keys"] = [#"image_observation",
+                                                      #"depth_observation",
+                                                      #"cam_angles_observation",
                                                       "state_desired_goal",
                                                       "state_observation"]
                                                       #"image_desired_goal",
@@ -470,8 +470,8 @@ def get_variant_spec_3D(universe,
                                                       #"goal_cam_angle"]
     #env_train_params["kwargs"]["map3D"] = map3D_model
 
-    variant_spec["Q_params"]['input_shape'] = [(70,)]
-    variant_spec["policy_params"]["input_shape"] = [(70,)]
+    variant_spec["Q_params"]['input_shape'] = [(6,)]
+    variant_spec["policy_params"]["input_shape"] = [(6,)]
 
     preprocessor_params = {
         'type': 'convnet3d_preprocessor',
