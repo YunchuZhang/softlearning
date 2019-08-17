@@ -19,6 +19,7 @@ import ipdb
 st = ipdb.set_trace
 import __init__path
 from utils_map.vis_np import save_voxel
+import cv2
 """
 * agent state prediction is separated from object prediction
 
@@ -436,12 +437,35 @@ class BulletPush3DTensor4_cotrain(BulletPushBase):
 		inputs2Ddec = self.get_inputs2Ddec_gqn3d([memory_3D])
 		outputs2Ddec = self.get_outputs2Ddec_gqn3d(inputs2Ddec)
 		self.predicted_view = outputs2Ddec
+		# down and right
+		
+
+		to_base_batch = []
+		y = 16
+		for batch_id in range(const.BS):
+			# x = int((-self.state_observation[batch_id][0][3]+0.9)*21)
+			# z = int(self.state_observation[batch_id][0][4]*21)
+
+			z = 39.53*self.state_observation[batch_id][0][3] + 15.37
+			z = tf.cast(z,tf.int32)
+			x = -40*self.state_observation[batch_id][0][4]+43
+			x = tf.cast(x,tf.int32)
+
+			
+			# to_base_batch.append(to_base_features2[0][view_id][batch_id * self.T][z-4:z+4, y-4:y+4, x-4:x+4, :])
+			to_base_batch.append(tf.slice(memory_3D, [batch_id , z-4, y-4, x-4, 0], [1, 8, 8, 8, memory_3D.get_shape()[-1].value]))
+			# to_base_features2[0][view_id][batch_id * self.T] = to_base_features2[0][view_id][batch_id * self.T][y-4:y+4, z-4:z+4, x-4:x+4, :]
+
+		new_3D = tf.squeeze(tf.stack(to_base_batch))
+
+
+
 		if self.detector:
 			with tf.compat.v1.variable_scope("detector"):
 				self.predicted_position = utils.nets.detector(memory_3D)
 		if self.action_predictor:
 			with tf.compat.v1.variable_scope("action_predictor"):
-				self.predicted_position = utils.nets.action_predictor(goal,state_observation,memory_3D)
+				self.predicted_position = utils.nets.action_predictor(goal,state_observation,new_3D)
 	   # goal = self.goal #goal is x,y coordinate of the puck
 	   # goal = (goal - (tf.constant([-0.25,0.3,0.02,-0.2, 0.4])))/ (tf.constant([0.5,0.575,0.01,0.4, 0.4])) #feature scaling for the goal coordinates
 	   # goal_1 = tf.multiply(tf.ones(memory_3D.shape[:4]),tf.reshape(goal[:,:,0],[memory_3D.shape[0],1,1,1]))
@@ -602,7 +626,8 @@ class BulletPush3DTensor4_cotrain(BulletPushBase):
 				for view_id in range(3):
 					scipy.misc.imsave(f"dump/input_image_b{batch_id}_v{view_id}.png", 
 							  self.inputs.state.frames[batch_id, 0, view_id, :, :, 2:])
-					scipy.misc.imsave(f"dump/input_depth_b{batch_id}_v{view_id}.png", self.inputs.state.frames[batch_id, 0, view_id, :, :,1])                    
+					scipy.misc.imsave(f"dump/input_depth_b{batch_id}_v{view_id}.png", self.inputs.state.frames[batch_id, 0, view_id, :, :,1])
+
 				#view_id = 0
 				#for t in range(self.T + 1):
 				#    scipy.misc.imsave(f"dump/input_image_b{batch_id}_t{t}_v{view_id}.png",
@@ -619,8 +644,7 @@ class BulletPush3DTensor4_cotrain(BulletPushBase):
 			precomputed_outline = unproject_depth_ori
 			output = [utils.voxel.resize_voxel(voxel, 0.25) for voxel in unproject_depth_ori]
 		# import pickle
-		# inputs2Denc = pickle.load(open("input.p","rb"))
-		# st()
+
 		unprojected_features = grnn_op.unproject_inputs(inputs2Denc, use_outline=const.USE_OUTLINE,\
 															  debug_unproject=const.DEBUG_UNPROJECT)
 		self.unprojected_features_check = unprojected_features
@@ -632,13 +656,23 @@ class BulletPush3DTensor4_cotrain(BulletPushBase):
 			return final_feat
 
 		#self.unprojected_features = [merge_feat(feat, output) for feat in self.unprojected_features]
-
+		unprojected_features2 =unprojected_features
 		if const.DEBUG_UNPROJECT:
 			# from utils_map.vis_np import save_voxel
 			for batch_id in range(const.BS):
 				for view_id in range(3):
 					save_voxel(self.unprojected_features[0][view_id][batch_id * self.T, :, :, :, 2],
 						   f"dump/unprojected_depth_b{batch_id}_{view_id}.binvox")
+
+
+
+					# x = int((-self.state_observation[batch_id][0][3]+0.28)*57)
+					# z = int(-self.state_observation[batch_id][0][4]*16+16)
+
+					# # to_base_features2[0][view_id][batch_id * self.T, z-4:z+4, y-4:y+4, x-4:x+4, ch]
+					 
+					# save_voxel(unprojected_features2[0][view_id][batch_id * self.T, 10:22,16:30, 10:22, 2],
+					# 		   f"dump/unprodepth2_b{batch_id}_{view_id}.binvox")
 
 					if const.OUTLINE_PRECOMPUTED:
 						precompute =precomputed_outline[view_id][batch_id * self.T, :, :, :, :]
@@ -649,8 +683,24 @@ class BulletPush3DTensor4_cotrain(BulletPushBase):
 						save_voxel(precompute[batch_id * self.T, ..., 0],
 						   f"dump/precomputed_32_depth_b{batch_id}_{view_id}.binvox")
 
+
+		
+
+
+# Batchsize*d*h*w*channel
+# Depth ,height,widtg
+# Z,y,x
+# Z is front,y is up, x is left
+
+
+
+
+
 		to_base_features = grnn_op.pass_rotate_to_base(self.unprojected_features, self.thetas, self.phis,\
 									self.base_theta, self.base_phi, aggre=const.AGGREGATION_METHOD)
+
+
+
 
 		if precomputed_outline:
 			to_base_depth = grnn_op.pass_rotate_to_base([precomputed_outline], self.thetas, self.phis,\
@@ -678,6 +728,13 @@ class BulletPush3DTensor4_cotrain(BulletPushBase):
 					to_base_features_out.append([feat[vid] * downsample_depth[vid] for vid in range(nviews)])
 			to_base_features = to_base_features_out
 
+
+
+		to_base_features2 = to_base_features
+
+		# 0.5 ~ 10
+		# 1.6 ~ 32
+		y = 16
 		if const.DEBUG_UNPROJECT:
 			ch = 2
 			if const.OUTLINE_PRECOMPUTED:
@@ -686,6 +743,60 @@ class BulletPush3DTensor4_cotrain(BulletPushBase):
 				for view_id in range(3):
 					save_voxel(to_base_features[0][view_id][batch_id * self.T, :, :, :, ch],
 							   f"dump/aligned_depth_b{batch_id}_{view_id}.binvox")
+
+					
+					# x = int((-self.state_observation[batch_id][0][3]+0.9)*21)
+					# z = int(self.state_observation[batch_id][0][4]*21)
+
+					z = int(39.53*self.state_observation[batch_id][0][3] + 15.37)
+					x = int(-40*self.state_observation[batch_id][0][4]+43)
+
+					
+					# black = tf.zeros_like(to_base_features2[0][view_id][batch_id * self.T, z-4:z+4, y-4:y+4, x-4:x+4, ch], dtype=tf.float32)
+					# tf.assign(to_base_features2[0][view_id][batch_id * self.T, z-4:z+4, y-4:y+4, x-4:x+4, ch],black)
+					#front up left
+					save_voxel(to_base_features2[0][view_id][batch_id * self.T,  z-4:z+4, y-4:y+4, x-4:x+4, ch],
+							   f"dump/aligned_depth20_b{batch_id}_{view_id}{y}{z}{x}.binvox")
+
+	
+
+					# YUNCHU : THIS IS THE PART I've WRITTEN. I've commented below so that you can check later @Rakesh
+					depth_y, depth_x = 32-(y+3), 32-(x+1)
+					depth_image = tf.reduce_sum(to_base_features2[0][view_id][batch_id * self.T, :, :, :, 2], axis=-3)
+					# Put a value of 255 on the position where we think the centroid lies.
+
+					depth_image = depth_image.numpy()
+					max_depth = np.amax(depth_image)
+					depth_image = np.flip(depth_image,(0,1)) * 255.0 / max_depth
+					depth_image[depth_y, depth_x] = 255
+					depth_image = np.repeat(depth_image[:, :, np.newaxis], 3, axis=-1)
+					#cv2.rectangle(depth_image, (depth_x-2, depth_y-2), (depth_x+2, depth_y+2), (255,0,0), 1)
+					scipy.misc.imsave(f"dump/reduced_depth_bbox_xy_b{batch_id}_v{view_id}.png",depth_image)
+
+					# YUNCHU : THIS IS THE PART I've WRITTEN. I've commented below so that you can check later @Rakesh
+					depth_y, depth_z = 32-(y+3), 32-(z)
+					depth_image = tf.reduce_sum(to_base_features2[0][view_id][batch_id * self.T, :, :, :, 2], axis=-1)
+					# Put a value of 255 on the position where we think the centroid lies.
+					depth_image = depth_image.numpy()
+					max_depth = np.amax(depth_image)
+					depth_image = np.flip(depth_image.transpose(), 0) * 255.0 / max_depth
+					depth_image[depth_z, depth_y] = 255
+					depth_image = np.repeat(depth_image[:, :, np.newaxis], 3, axis=-1)
+					#cv2.rectangle(depth_image, (depth_y-2, depth_z-2), (depth_y+2, depth_z+2), (255,0,0), 1)
+					scipy.misc.imsave(f"dump/reduced_depth_bbox_yz_b{batch_id}_v{view_id}.png",depth_image)
+
+					# YUNCHU : THIS IS THE PART I've WRITTEN. I've commented below so that you can check later @Rakesh
+					# depth_z, depth_x = 32-(z+2), 32-(x+1)
+					# depth_image = tf.reduce_sum(to_base_features2[0][view_id][batch_id * self.T, :, :, :, 2], axis=-2)
+					# # Put a value of 255 on the position where we think the centroid lies.
+					# depth_image = depth_image.numpy()
+					# max_depth = np.amax(depth_image)
+					# depth_image = np.flip(depth_image,(0,1)) * 255.0 / max_depth
+					# depth_image[depth_z, depth_x] = 255
+					# depth_image = np.repeat(depth_image[:, :, np.newaxis], 3, axis=-1)
+					# cv2.rectangle(depth_image, (depth_x-2, depth_z-2), (depth_x+2, depth_z+2), (255,0,0), 1)
+					# scipy.misc.imsave(f"dump/reduced_depth_bbox_zx_b{batch_id}_v{view_id}.png",depth_image)
+
 					if const.OUTLINE_PRECOMPUTED:
 						precompute = to_base_depth[view_id][batch_id * self.T, :, :, :, :]
 						save_voxel(precompute[..., 0],
@@ -702,6 +813,27 @@ class BulletPush3DTensor4_cotrain(BulletPushBase):
 						"""
 						save_voxel(precompute[batch_id * self.T, ..., 0],
 							   f"dump/aligned_precomputed_32_0.1_depth_b{batch_id}_{view_id}.binvox", 0.1)
+		# y = 16
+
+
+		# to_base_view = [[]]
+		# for view_id in range(3):
+		# 	to_base_batch = []
+		# 	for batch_id in range(const.BS):
+		# 		# x = int((-self.state_observation[batch_id][0][3]+0.9)*21)
+		# 		# z = int(self.state_observation[batch_id][0][4]*21)
+
+		# 		z = 39.53*self.state_observation[batch_id][0][3] + 15.37
+		# 		z = tf.cast(z,tf.int32)
+		# 		x = -40*self.state_observation[batch_id][0][4]+43
+		# 		x = tf.cast(x,tf.int32)
+
+				
+		# 		# to_base_batch.append(to_base_features2[0][view_id][batch_id * self.T][z-4:z+4, y-4:y+4, x-4:x+4, :])
+		# 		to_base_batch.append(tf.slice(to_base_features2[0][view_id], [batch_id * self.T, z-4, y-4, x-4, 0], [1, 8, 8, 8, to_base_features2[0][0].get_shape()[-1].value]))
+		# 		# to_base_features2[0][view_id][batch_id * self.T] = to_base_features2[0][view_id][batch_id * self.T][y-4:y+4, z-4:z+4, x-4:x+4, :]
+		# 	to_base_view[0].append(tf.squeeze(tf.stack(to_base_batch)))
+
 
 		if const.DEBUG_UNPROJECT:
 			to_base_features_refined = to_base_features
@@ -715,6 +847,8 @@ class BulletPush3DTensor4_cotrain(BulletPushBase):
 		#    unprojected_features_refined,\
 		#    self.thetas, self.phis, self.base_theta, self.base_phi,\
 		#    aggre=const.AGGREGATION_METHOD, is_summ_feat=False)
+
+
 
 		memory_3D = tf.split(memory_3D[0], self.nviews)
 		memory_3D_last = memory_3D[-1]
@@ -742,10 +876,10 @@ class BulletPush3DTensor4_cotrain(BulletPushBase):
 						   f"dump/mask_b{batch_id}.binvox", 0.1)
 					save_voxel((1 - mask[batch_id * self.T, :, :, :, 0]) * memory_3D_last[batch_id, :, :, :, ch],\
 						   f"dump/mask_memory_b{batch_id}.binvox")
-
 		return memory_3D_last
 
 	def pass_2Denc(self, is_summ_feat=False):
+	
 		all_frames = self.all_frames
 		if const.USE_OUTLINE:
 			# [bs x h x w x 3] * nviews
@@ -918,7 +1052,6 @@ class BulletPush3DTensor4_cotrain(BulletPushBase):
 		return updated_states
 
 	def prepare_inputs(self):
-		st()
 		self.summ_inputs = dict()
 		self.bs, T, self.nviews, img_h, img_w, img_c= self.inputs.state.frames.shape
 		# about the image
@@ -939,8 +1072,8 @@ class BulletPush3DTensor4_cotrain(BulletPushBase):
 		self.thetas = thetas
 		self.phis = phis
 		self.base_theta = tf.ones_like(thetas[0], dtype=tf.float32) * 180.0
-		self.base_phi = tf.zeros_like(phis[0], dtype=tf.float32) # want everything to lie on ground
-		# st()
+		self.base_phi = tf.ones_like(phis[0], dtype=tf.float32) * 180.0 # want everything to lie on ground
+
 		if const.run_full:
 			self.orn_reset_base = tf.constant(np.array([1, 0, 0, 0], dtype=np.float32))
 			gt_raw_object_states = self.inputs.state.obj_state[:, :self.T, :, :]

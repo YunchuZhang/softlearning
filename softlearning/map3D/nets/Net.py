@@ -261,8 +261,8 @@ class Net:
 
 	def optimize(self, fn):
 		global_step = tf.Variable(0, trainable=False)
-		decay_steps = 20000
-		lr = tf.train.exponential_decay(0.0001,
+		decay_steps = 2000
+		lr = tf.train.exponential_decay(0.0002,
 										global_step,
 										decay_steps,
 										0.1,

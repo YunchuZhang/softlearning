@@ -123,6 +123,7 @@ for expert in list_of_experts:
 	if eager:
 		tf.enable_eager_execution()
 
+
 	er._setup("rl_new_reach",variant_spec,example_args.mesh ,eager)
 
 	# er._setup("rl_new_reach_detect",variant_spec,eager)
@@ -131,6 +132,19 @@ for expert in list_of_experts:
 
 	#test()
 	#er._train()
+	# st()
+	# iteration = 2
+	# max_rollouts = 10 #300 #how many starting conditions to sample and to roll out
+	# succes_rate = rollout_and_gather_data(max_rollouts, expert, iteration)
+	
+
+	# print("done with iteration ", iteration," on object", expert, "with succes rate", succes_rate)
+
+
+
+
+
+
 	number_iterations = 8 #number of dagger iterations
 
 	for iteration in range(number_iterations):
@@ -141,12 +155,12 @@ for expert in list_of_experts:
 		#main_dagger(iteration, mesh)
 		#main_dagger(iteration, mesh) #expert,epoch,iteration)
 		#test()
-		training_epochs = 10
+		training_epochs = 50
 		er._train(training_epochs,iteration,expert)
 		#er.algorithm.train_epoch(expert,training_epochs,iteration)
 		#sample trajectories and store the experts actions
 
-		max_rollouts = 8 #300 #how many starting conditions to sample and to roll out
+		max_rollouts = 16 #300 #how many starting conditions to sample and to roll out
 		succes_rate = rollout_and_gather_data(max_rollouts, expert, iteration)
 		#main_dagger_without(iteration, mesh)
 	

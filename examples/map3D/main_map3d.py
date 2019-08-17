@@ -76,7 +76,7 @@ class ExperimentRunner():
 		# config = Config(name, step)
 		parts = self.algorithm.model.weights
 
-		savepath = "/projects/katefgroup/yunchu/store/" +  expert + "_dagger"+ "/model_"+ str(iteration-1)+"-"+str(iteration-1)
+		savepath = "/projects/katefgroup/yunchu/store/" +  expert + "_dagger1"+ "/model_"+ str(iteration-1)+"-"+str(iteration-1)
 
 		utils.utils.ensure(savepath)
 		for partname in parts:
@@ -101,7 +101,7 @@ class ExperimentRunner():
 
 		#savepath = path.join(self.algorithm.model.ckpt_base,self.algorithm.model.ckpt_dir, name)
 		#import pdb; pdb.set_trace()
-		savepath = "/projects/katefgroup/yunchu/store/" +  expert + "_dagger"+ "/model_"+ str(iteration)
+		savepath = "/projects/katefgroup/yunchu/store/" +  expert + "_dagger1"+ "/model_"+ str(iteration)
 		#savepath = path.join(self.algorithm.model.ckpt_base,"weights_"+self.expert_name)
 		#expert_name
 		utils.utils.ensure(savepath)
@@ -129,7 +129,7 @@ class ExperimentRunner():
 			return 0
 		config = Config(name)
 		config.load()
-		# st()
+		#st()
 		parts = map3D.weights
 		for partname in config.dct:
 			partscope, partpath = config.dct[partname]
@@ -194,10 +194,10 @@ class ExperimentRunner():
 			get_replay_pool_from_variant(variant, training_environment))
 
 		#sampler = self.sampler = get_sampler_from_variant(variant)
-		sampler = SimpleSampler(batch_size=40, max_path_length=50, min_pool_size=0,mesh = self.expert_name, iteration=0)
+		sampler = SimpleSampler(batch_size=4, max_path_length=50, min_pool_size=0,mesh = self.expert_name, iteration=0)
 		initial_exploration_policy = self.initial_exploration_policy = (
 			get_policy('UniformPolicy', training_environment))
-
+		#sampler.initialize(training_environment, initial_exploration_policy, replay_pool)
 		#st()
 		self.algorithm = bulledtPushTrainer		(
 			variant=variant,
@@ -220,6 +220,7 @@ class ExperimentRunner():
 		initialize_tf_variables(self._session, only_uninitialized=True)
 	
 		# if not self.algorithm.detector:
+
 		self.step = self.map3d_setup(self._session,map3D=bulledtPush)
 		# st()
 		self.initsaver()

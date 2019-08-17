@@ -2,6 +2,8 @@ import utils_map as utils
 import tensorflow as tf
 from . import summary_op as summ_op
 from . import loss as loss
+import ipdb
+st = ipdb.set_trace
 def get_outputs2Denc(inputs, is_training, is_not_bn=False):
     """
     inputs: [images] * num_views
@@ -113,6 +115,7 @@ def translate_multiple(dthetas, phi1s, phi2s, voxs):
 
 
 def align_to_base_single(feature, thetas, phis, base_thetas, base_phis):
+
     dthetas = [base_thetas - theta for theta in thetas]
     phi1s = phis
     phi2s = [base_phis for _ in phis]

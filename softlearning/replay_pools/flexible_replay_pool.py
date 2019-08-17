@@ -70,11 +70,14 @@ class FlexibleReplayPool(ReplayPool):
         self._advance(num_samples)
 
     def random_indices(self, batch_size):
+
         if self._size == 0: return np.arange(0, 0)
         return np.random.randint(0, self._size, batch_size)
 
     def random_batch(self, batch_size, field_name_filter=None, **kwargs):
         random_indices = self.random_indices(batch_size)
+
+        #random_indices = np.array([1,2,10,1])
         return self.batch_by_indices(
             random_indices, field_name_filter=field_name_filter, **kwargs)
 

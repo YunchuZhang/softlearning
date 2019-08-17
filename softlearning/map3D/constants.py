@@ -43,9 +43,9 @@ W = 256
 anchor_size = 0.25 #0.25 #[0.25, 0.25, 0.25]
 #anchor_size = [1.0, 1.0, 1.0]
 
-fov = 30.0
-radius = 4.0
-boundary_to_center=1.0
+fov = 45
+radius = 0.45
+boundary_to_center=0.2
 sigma = 0.05 # for visualization
 S = 128  # cube size
 BS = 2
@@ -723,7 +723,9 @@ OG("rl_new",
    CONVLSTM_DIM = 256,
    IS_VIEW_PRED=True,
    # 0.8 0.9 110
-   radius = 0.8, boundary_to_center=0.9, fov = 110, fs_2D=8, # 0.8 0.2 20radius=0.45, boundary_to_center=0.2, and fov=45 
+   #radius = 0.45, boundary_to_center=0.2, fov = 45, 
+   fs_2D=8, 
+   # 0.8 0.2 20radius=0.45, boundary_to_center=0.2, and fov=45 
    DEBUG_UNPROJECT=False,
    BS=4, valp=500, is_trainval_diff_summ=True,
    run_full=False,

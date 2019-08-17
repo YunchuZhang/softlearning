@@ -154,6 +154,13 @@ def rollout_and_gather_data(max_rollouts, mesh, iteration):
 		totalnum = len(onlyfiles)
 		print('---------')
 		print("before",totalnum)
+		save1 = np.asarray(expert_actions)
+		save2 = replay_pool.fields['actions']
+		np.savetxt("1.csv", save1, delimiter=",")
+		np.savetxt("2.csv", save2, delimiter=",")
+		#np.save("save1.npy", save1)
+		#np.save("save2.npy", save2)
+		
 		for counter in range(len(expert_actions)):
 			#save the dagger expert trajectories 
 			expert_data = {'image_observation': np.array(replay_pool.fields["observations.image_observation"][counter]),
@@ -185,6 +192,7 @@ def rollout_and_gather_data(max_rollouts, mesh, iteration):
 		print(succes_rate)
 		onlyfiles = next(os.walk(expert_data_path))[2] 
 		print("Total_Sample_data",len(onlyfiles))
+
 
 	return succes_rate
 

@@ -31,9 +31,8 @@ class SimpleSampler(BaseSampler):
 		sess1.run(tf.global_variables_initializer())
 
 
-
-		checkpoint_path = "/projects/katefgroup/yunchu/store/" +  "hat1" + "_dagger"
-		saver = tf.train.import_meta_graph(checkpoint_path+ "/model_1"+"-1"+".meta")
+		checkpoint_path = "/projects/katefgroup/yunchu/store/" +  "hat1" + "_dagger1"
+		saver = tf.train.import_meta_graph(checkpoint_path+ "/model_"+ str(self.iteration)+"-"+str(self.iteration)+".meta")
 		#print("i am reloading", tf.train.latest_checkpoint(checkpoint_path))
 		saver.restore(sess1,tf.train.latest_checkpoint(checkpoint_path))
 
@@ -166,10 +165,10 @@ class SimpleSampler(BaseSampler):
  #in the 0 th iteration we execute the expert actions
 
 
-
 		#action = self.policy.actions_np(active_obs[-9:])[0] #select only part of the active obs
 		#current_state = np.concatenate((active_obs[-9][0],active_obs[-8][0][3:]), 0).reshape(1,16)
-		current_state = np.hstack(active_obs[-9:])
+		#current_state = np.hstack(active_obs[-9:])
+		current_state = active_obs[-6]
 		#st()
 
 	   

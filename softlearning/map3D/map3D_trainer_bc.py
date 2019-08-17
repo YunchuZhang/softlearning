@@ -144,7 +144,9 @@ class MappingTrainer():
 		self.export_interval = 100
 		self.model = map3D
 		self.exp_name = exp_name
+		
 		if self.eager_enabled:
+			self._initial_exploration_hook(training_environment, initial_exploration_policy, pool)
 			self.forwardPass()
 		else:
 			self.initGraph()
@@ -177,14 +179,32 @@ class MappingTrainer():
 			# 	'proprio_observation': np.array(replay_pool.fields["observations.proprio_observation"][counter]),
 			# 	'proprio_desired_goal': np.array(replay_pool.fields["observations.proprio_desired_goal"][counter]),
 			# 	'proprio_achieved_goal':np.array(replay_pool.fields["observations.proprio_achieved_goal"][counter])}
+	def _initial_exploration_hook(self, env, initial_exploration_policy, pool):
+		print("starting initial exploration")
+		if self._n_initial_exploration_steps < 1: return
+
+		if not initial_exploration_policy:
+			raise ValueError(
+				"Initial exploration policy must be provided when"
+				" n_initial_exploration_steps > 0.")
+		self.sampler.initialize(env, initial_exploration_policy, pool)
+		t =time.time()
+		while pool.size < 100:
+			self.sampler.sample(iteration = 0)
+			print(time.time()-t, pool.size)
+
+		print("finished initial exploration")
+
+
 
 	def forwardPass(self):
+
 		N =4
 		batch = self.sampler.random_batch()
-		img_ph,depth_ph,cam_angle_ph = [np.expand_dims(batch['observations.{}'.format(key)],1) for i, key in enumerate(self.observation_keys[:3])]
+		img_ph,depth_ph,cam_angle_ph,goal_ph,state_observation_ph = [np.expand_dims(batch['observations.{}'.format(key)],1) for i, key in enumerate(self.observation_keys[:5])]
 		# st()
 		depth_ph = np.expand_dims(depth_ph,-1)
-		self.model(img_ph,cam_angle_ph,depth_ph,batch_size=self.batch_size,exp_name=self.exp_name,eager=True)
+		self.model(img_ph,cam_angle_ph,depth_ph,goal_ph,state_observation_ph,batch_size=4,exp_name=self.exp_name,eager=True)
 		#st()
 
 

@@ -411,18 +411,19 @@ def detector(inputs):
 	return net
 
 def action_predictor(goal,state_observation,inputs):
-	preprocessor_input_shape = (32,32,32,8)
+	preprocessor_input_shape = (8,8,8,8)
 	kwargs = {
 	'output_size': 128,
-	'conv_filters': (16,32,64,128,128),
-	'conv_kernel_sizes': (4,4,4,4,3),
+	'conv_filters': (16,64,128),#(16,32,64,128,128),
+	'conv_kernel_sizes': (4,4,3),
 	'pool_type': 'MaxPool3D',
-	'pool_sizes':(2,2,2,2,2),
-	'pool_strides': (2,2,2,2,2),
+	'pool_sizes':(2,2,2),
+	'pool_strides': (2,2,2),
 	'dense_hidden_layer_sizes': (64, 64),}
 
 	processor = get_convnet3d_preprocessor(observation_shape = preprocessor_input_shape,\
 		name='convnet_preprocessor',**kwargs)
+
 	net = processor(inputs)
 
 	# bn = True

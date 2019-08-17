@@ -456,7 +456,7 @@ def get_variant_spec_3D(universe,
     environment_params = variant_spec['environment_params']
     env_train_params = environment_params['training']
     # env_train_params["kwargs"] = {}
-    env_train_params["kwargs"]["observation_keys"] = ["image_observation","depth_observation","cam_angles_observation","state_observation","image_desired_goal","desired_goal_depth","goal_cam_angle"]
+    env_train_params["kwargs"]["observation_keys"] = ["image_observation","depth_observation","cam_angles_observation","state_desired_goal","state_observation","image_desired_goal","desired_goal_depth","goal_cam_angle"]
     env_train_params["kwargs"]["map3D"] = map3D_model
 
 
