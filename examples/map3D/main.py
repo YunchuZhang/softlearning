@@ -4,6 +4,7 @@ import glob
 import pickle
 import sys
 import tensorflow as tf
+
 from ray import tune
 
 from softlearning.environments.utils import get_environment_from_params,get_environment_from_params_custom
@@ -134,7 +135,7 @@ class ExperimentRunner(tune.Trainable):
 
         initialize_tf_variables(self._session, only_uninitialized=True)
         # st()
-        self.map3d_setup(self._session,bulledtPush.load_name,map3D=bulledtPush)
+        #self.map3d_setup(self._session,bulledtPush.load_name,map3D=bulledtPush)
 
         self._built = True
 

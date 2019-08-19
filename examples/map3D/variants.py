@@ -49,9 +49,9 @@ ALGORITHM_PARAMS_BASE = {
     'type': 'SAC',
 
     'kwargs': {
-        'epoch_length': 1000,
-        'train_every_n_steps': 2,
-        'n_train_repeat': 500,
+        'epoch_length': 100,
+        'train_every_n_steps': 10,
+        'n_train_repeat': 1,
         'eval_render_mode': None,
         'eval_n_episodes': 1,
         'eval_deterministic': True,
@@ -73,7 +73,7 @@ ALGORITHM_PARAMS_ADDITIONAL = {
             'target_entropy': 'auto',
             'store_extra_policy_info': False,
             'action_prior': 'uniform',
-            'n_initial_exploration_steps': int(1e3),
+            'n_initial_exploration_steps': int(5e3),
         }
     },
     'SQL': {

@@ -64,7 +64,7 @@ class SimpleSampler(BaseSampler):
         if self.initialized and self.memory3D_sampler:
             a = time.time()
             active_obs = self.forward(active_obs)
-            print(time.time()-a,"sampler sess")
+            #print(time.time()-a,"sampler sess")
             active_obs = active_obs[:1]
         else:
             active_obs  = [i[:1] for i in active_obs]
@@ -116,7 +116,7 @@ class SimpleSampler(BaseSampler):
                 field_name: np.array(values)
                 for field_name, values in self._current_path.items()
             }
-            st()
+            #st()
             self.pool.add_path(last_path)
             # st()
             self._last_n_paths.appendleft(last_path)

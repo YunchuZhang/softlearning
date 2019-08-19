@@ -548,7 +548,7 @@ class BulletPush3DTensor4_cotrain(BulletPushBase):
                 for view_id in range(3):
                     scipy.misc.imsave(f"dump/input_image_b{batch_id}_v{view_id}.png", 
                               self.inputs.state.frames[batch_id, 0, view_id, :, :, 2:])
-                    scipy.misc.imsave(f"dump/input_depth_b{batch_id}_v{view_id}.png", self.inputs.state.frames[batch_id, 0, view_id, :, :,1])                    
+                    scipy.misc.imsave(f"dump/input_depth_b{batch_id}_v{view_id}.png", self.inputs.state.frames[batch_id, 0, view_id, :, :, 1])                    
                 #view_id = 0
                 #for t in range(self.T + 1):
                 #    scipy.misc.imsave(f"dump/input_image_b{batch_id}_t{t}_v{view_id}.png",
@@ -571,6 +571,7 @@ class BulletPush3DTensor4_cotrain(BulletPushBase):
                                                               debug_unproject=const.DEBUG_UNPROJECT)
         self.unprojected_features_check = unprojected_features
         self.unprojected_features = unprojected_features
+
         def merge_feat(feat_, output_):
             final_feat = []
             for view_id, feat_view in enumerate(feat_):

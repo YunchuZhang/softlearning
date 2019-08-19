@@ -217,6 +217,7 @@ class BulletPushBase(Net):
             self.summ = tf.summary.merge_all()
             self.vis = {"pred_views":self.predicted_view,"query_views":self.inputs.state.vp_frame}
             # self.vis = {}
+
     def build_evaluator(self):
         if const.mode == "test":
             self.evaluator = {

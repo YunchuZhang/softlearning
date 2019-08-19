@@ -19,7 +19,7 @@ class BaseSampler(object):
         self.policy = None
         self.pool = None
 
-    def initialize(self, env, policy, pool,memory3D=None,obs_ph=None,session=None):
+    def initialize(self, env, policy, pool, memory3D=None, obs_ph=None, session=None):
         self.env = env
         self.policy = policy
         self.pool = pool

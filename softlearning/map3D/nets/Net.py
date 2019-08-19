@@ -37,14 +37,14 @@ class Net:
         # N = self.basic_info["num_views"]
         N=54
         def gather_image_(images, idx):
-            images_NTHWC = tf.transpose(images, [2,1, 0, 3, 4, 5])
+            images_NTHWC = tf.transpose(images, [2, 1, 0, 3, 4, 5])
             images_crop = tf.gather_nd(images_NTHWC, tf.expand_dims(idx, 1))
-            return tf.transpose(images_crop, [2,1, 0, 3, 4, 5])
+            return tf.transpose(images_crop, [2, 1, 0, 3, 4, 5])
 
         def gather_angles_(angles, idx):
-            angles_NTC = tf.transpose(angles, [2,1, 0, 3])
+            angles_NTC = tf.transpose(angles, [2, 1, 0, 3])
             angles_crop = tf.gather_nd(angles_NTC, tf.expand_dims(idx, 1))
-            return tf.transpose(angles_crop, [2,1, 0, 3])
+            return tf.transpose(angles_crop, [2, 1, 0, 3])
 
         def extract_rand_view(images, zmaps, angles, sample_size):
             # idx = tf.random_shuffle(tf.range(N), seed=0 if const.mode=="test" else None)[:sample_size]
@@ -94,11 +94,12 @@ class Net:
             stuff += [images_front]
         return Munch(zip(names, stuff))
 
+
     def init_placeholders(self):
         # basic_info = pickle.load(f)
         T = 1
-        W = 84
-        H = 84
+        W = 64
+        H = 64
         # N =1
         self.max_T = const.max_T
 
@@ -109,25 +110,24 @@ class Net:
 
         #TODO_MIHIR change these parameters and placeholders based on the data
 
-        self.images = tf.placeholder(tf.float32, [const.BS, T, const.NUM_VIEWS, W, H, 4],"images")
+        self.images = tf.placeholder(tf.float32, [const.BS, T, const.NUM_VIEWS, W, H, 3],"images")
         self.angles = tf.placeholder(tf.float32, [const.BS, T, const.NUM_VIEWS, 2],"angles")
         self.zmaps = tf.placeholder(tf.float32, [const.BS, T, const.NUM_VIEWS, W, H, 1],"zmapss")
 
-
-        self.dictVal =  Munch(images=self.images,angles=self.angles,zmaps=self.zmaps)
-        
+        self.dictVal =  Munch(images=self.images, angles=self.angles, zmaps=self.zmaps)
 
         return self.dictVal
 
-    def init_Inputs(self,images,zmaps,angles):
+
+    def init_Inputs(self, images, zmaps, angles):
         # basic_info = pickle.load(f)
         # T = 1
         # W = 128
         # H = 128
         # N =1
         T = 1
-        W = 84
-        H = 84
+        W = 64
+        H = 64
         # N =1
         self.max_T = const.max_T
 
@@ -135,15 +135,16 @@ class Net:
         self.image_size_h =const.H
         self.image_size_w =const.W
 
-        dictVal = self.normalize_custom(images,angles,zmaps)
+        dictVal = self.normalize_custom(images, angles, zmaps)
 
         return dictVal
 
-    def data(self,images,zmaps,angles):
+
+    def data(self, images, zmaps, angles):
         #data = self.child.data_for_selector(self.q_ph)
         # st()
         # self.images_val = images
-        data = self.init_Inputs(images,zmaps,angles)
+        data = self.init_Inputs(images, zmaps, angles)
         # st()
 
         # data = self.init_placeholders()
@@ -166,7 +167,9 @@ class Net:
             data = Munch(inputs = self.make_inputs(data))
 
         return data
-    def child_normalize(self,data):
+
+
+    def child_normalize(self, data):
         images = tf.cast(data.images, tf.uint8)
         angles = tf.cast(data.angles, tf.float32)
         zmaps = tf.cast(data.zmaps, tf.float32)
@@ -255,7 +258,16 @@ class Net:
         self.optimizer = tf.train.AdamOptimizer(const.lr, const.mom)
         self.opt = utils.tfutil.make_opt_op(self.optimizer, fn)
 
-    def __call__(self,images,angles,zmaps,batch_size=None,exp_name=None,is_training=None,reuse=False,eager=False,position=None):
+    def __call__(self,
+                 images,
+                 angles,
+                 zmaps,
+                 batch_size=None,
+                 exp_name=None,
+                 is_training=None,
+                 reuse=False,
+                 eager=False,
+                 position=None):
         #index is passed to the data_selector, to control which data is used
         #self.go_up_to_loss(index)
         # st()
@@ -268,10 +280,10 @@ class Net:
             const.BS = batch_size
         if eager:
             const.eager = eager
-            const.DEBUG_UNPROJECT =True
+            const.DEBUG_UNPROJECT = True
 
         # self.detector = detector
-        if position:
+        if position is not None:
             self.position = tf.layers.flatten(position)
         # st()
         const.fx = const.W / 2.0 * 1.0 / math.tan(const.fov * math.pi / 180 / 2)
@@ -280,9 +292,9 @@ class Net:
 
         const.x0 = const.W / 2.0
         const.y0 = const.H / 2.0
-        with tf.compat.v1.variable_scope("Variables",reuse=reuse):
-            val = self.data(images,zmaps,angles)
-            self.optimize(lambda: self.go_up_to_loss(val,is_training))
+        with tf.compat.v1.variable_scope("Variables", reuse=reuse):
+            val = self.data(images, zmaps, angles)
+            self.optimize(lambda: self.go_up_to_loss(val, is_training))
             self.assemble()
         return self.memory_3D
 
