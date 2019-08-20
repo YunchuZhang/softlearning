@@ -24,15 +24,14 @@ def run_experiment(variant, reporter):
     evaluation_environment = training_environment.copy()
 
     pool = SimpleReplayPool(
-        observation_space=training_environment.observation_space,
-        action_space=training_environment.action_space,
+        environment=training_environment,
         max_size=1e6)
 
     sampler = SimpleSampler(
         max_path_length=30, min_pool_size=100, batch_size=64)
 
     Qs = get_Q_function_from_variant(variant, training_environment)
-    policy = get_policy_from_variant(variant, training_environment, Qs)
+    policy = get_policy_from_variant(variant, training_environment)
     plotter = QFPolicyPlotter(
         Q=Qs[0],
         policy=policy,
@@ -69,8 +68,7 @@ def main(argv=None):
     Run 'softlearning launch_example_{gce,ec2} --help' for further
     instructions.
     """
-    # __package__ should be `development.main`
-    run_example_local(__package__, argv)
+    run_example_local('examples.multi_goal', argv)
 
 
 if __name__ == '__main__':
