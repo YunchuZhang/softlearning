@@ -3,8 +3,8 @@
 import numpy as np
 import gym
 from gym import spaces, wrappers
-import ipdb
-st = ipdb.set_trace
+#import ipdb
+#st = ipdb.set_trace
 from .softlearning_env import SoftlearningEnv
 from softlearning.environments.gym import register_environments
 from softlearning.environments.gym.wrappers import NormalizeActionWrapper
