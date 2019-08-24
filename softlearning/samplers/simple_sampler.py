@@ -1,5 +1,6 @@
 from collections import defaultdict
 
+import copy
 import numpy as np
 import ipdb
 st = ipdb.set_trace
@@ -36,7 +37,7 @@ class SimpleSampler(BaseSampler):
             'infos': info,
         }
 
-        return processed_observation
+        return copy.deepcopy(processed_observation)
 
 
     def sample(self):

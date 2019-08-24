@@ -218,7 +218,8 @@ def run_example_local(example_module_name, example_argv, local_mode=False):
         resources=example_args.resources or {},
         local_mode=local_mode,
         include_webui=example_args.include_webui,
-        temp_dir=example_args.temp_dir)
+        temp_dir=example_args.temp_dir,
+        object_store_memory=int(5e9))
 
     tune.run_experiments(
         experiments,

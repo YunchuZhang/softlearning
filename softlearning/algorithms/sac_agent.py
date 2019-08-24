@@ -430,6 +430,7 @@ class SACAgent():
                                  reuse=True)
 
         if self._stop_3D_grads:
+            print("Stopping 3D gradients")
             memory = tf.stop_gradient(memory)
             memory_goal = tf.stop_gradient(memory_goal)
 
@@ -505,7 +506,7 @@ class SACAgent():
         assert Q_target.shape.as_list() == [self.batch_size, 1]
 
         Q_values = self._Q_values = tuple(
-            Q([*self.memory_next, self._actions_ph])
+            Q([*self.memory, self._actions_ph])
             for Q in self._Qs)
 
         Q_losses = self._Q_losses = tuple(
