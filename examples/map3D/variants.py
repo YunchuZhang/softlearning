@@ -315,13 +315,6 @@ SIMPLE_REPLAY_POOL_PARAMS = {
     }
 }
 
-#SIMPLE_REPLAY_POOL_PARAMS_TEMP = {
-#    'type': 'SimpleReplayPool',
-#    'kwargs': {
-#        'max_size': 1e4
-#    }
-#}
-
 
 HER_REPLAY_POOL_PARAMS = {
     'type': 'HerReplayPool',
@@ -345,7 +338,6 @@ HER_REPLAY_POOL_PARAMS = {
 
 REPLAY_POOL_PARAMS_BASE = {
     'SimpleReplayPool': SIMPLE_REPLAY_POOL_PARAMS,
-    #'SimpleReplayPoolTemp':SIMPLE_REPLAY_POOL_PARAMS_TEMP,
     'HerReplayPool': HER_REPLAY_POOL_PARAMS
 }
 

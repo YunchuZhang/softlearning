@@ -4,6 +4,7 @@ import glob
 import pickle
 import sys
 import tensorflow as tf
+
 from ray import tune
 
 from softlearning.environments.utils import get_environment_from_params,get_environment_from_params_custom
@@ -14,6 +15,7 @@ from softlearning.samplers.utils import get_sampler_from_variant
 from softlearning.value_functions.utils import get_Q_function_from_variant
 from softlearning.map3D.fig import Config
 from softlearning.map3D import utils_map as utils
+import os.path as path
 
 from softlearning.misc.utils import set_seed, initialize_tf_variables
 from examples.instrument import run_example_local
@@ -38,7 +40,7 @@ class ExperimentRunner(tune.Trainable):
         tf.reset_default_graph()
         tf.keras.backend.clear_session()
 
-    def map3d_setup(self,sess,map3D=None):
+    def map3d_setup(self,sess,name,map3D=None):
         # coord = tf.train.Coordinator()
         # threads = tf.train.start_queue_runners(coord=coord, sess=sess)
 
@@ -47,7 +49,7 @@ class ExperimentRunner(tune.Trainable):
         #     self.sess = debug.LocalCLIDebugWrapperSession(self.sess)
         #     self.sess.add_tensor_filter("has_inf_or_nan", debug.has_inf_or_nan)
 
-        step =self.map_load(sess,"rl_new/1",map3D=map3D)
+        step =self.map_load(sess,name,map3D=map3D)
 
         # if not const.eager:
         #     tf.get_default_graph().finalize()
@@ -62,7 +64,8 @@ class ExperimentRunner(tune.Trainable):
             partscope, partpath = config.dct[partname]
             if partname not in parts:
                 raise Exception("cannot load, part %s not in model" % partpath)
-            partpath = "/home/mprabhud/rl/softlearning/softlearning/map3D/" +partpath
+            partpath =  path.join(map3D.ckpt_base,partpath)
+            
             ckpt = tf.train.get_checkpoint_state(partpath)
             if not ckpt:
                 raise Exception("checkpoint not found? (1)")
@@ -109,7 +112,6 @@ class ExperimentRunner(tune.Trainable):
         #initial_exploration_policy = self.initial_exploration_policy = (
         #    get_policy('UniformPolicy', training_environment))
 
-
         self.algorithm = get_algorithm_from_variant(
             variant=self._variant,
             batch_size = batch_size,
@@ -130,7 +132,7 @@ class ExperimentRunner(tune.Trainable):
 
         initialize_tf_variables(self._session, only_uninitialized=True)
         # st()
-        #self.map3d_setup(self._session,map3D=bulledtPush)
+        #self.map3d_setup(self._session,bulledtPush.load_name,map3D=bulledtPush)
 
         self._built = True
 
@@ -229,6 +231,7 @@ class ExperimentRunner(tune.Trainable):
 
         training_environment = self.training_environment = picklable[
             'training_environment']
+        
         evaluation_environment = self.evaluation_environment = picklable[
             'evaluation_environment']
 

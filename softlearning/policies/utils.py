@@ -40,8 +40,12 @@ def get_policy_from_variant(variant, env, Qs, *args, **kwargs):
 
     policy_type = policy_params['type']
     policy_kwargs = deepcopy(policy_params['kwargs'])
-    policy_obs_shape = policy_params['input_shape']
-
+    # st()
+    if "input_shape" in policy_params:
+        policy_obs_shape = policy_params['input_shape']
+    else:
+        policy_obs_shape = env.active_observation_shape
+    
     preprocessor_params = policy_kwargs.pop('preprocessor_params', None)
     preprocessor = get_preprocessor_from_params(env, preprocessor_params)
 

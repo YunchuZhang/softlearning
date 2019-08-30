@@ -3,8 +3,9 @@ import gym
 import multiworld
 from multiworld.core.image_env import ImageEnv
 from multiworld.envs.mujoco.cameras import init_multiple_cameras
-# import ipdb
-# st = ipdb.set_trace
+import ipdb
+st = ipdb.set_trace
+# st()
 from softlearning.environments.adapters.gym_adapter import GymAdapter
 from softlearning.replay_pools.simple_replay_pool import SimpleReplayPool
 from softlearning.policies.utils import get_policy
@@ -20,52 +21,60 @@ import os
 from softlearning.map3D import save_images
 multiworld.register_all_envs()
 
-exploration_steps = 4
-
+exploration_steps = 8000
 
 gpu_options = tf.GPUOptions(allow_growth=True)
 session = tf.Session(config=tf.ConfigProto(gpu_options=gpu_options))
 tf.keras.backend.set_session(session)
 session = tf.keras.backend.get_session()
 
-env = gym.make('SawyerPushAndReachEnvEasy-v0')
-env_n = ImageEnv(env,
-               imsize=84,
-               normalize=True,
-               init_camera=init_multiple_cameras,
-               num_cameras=4,
-               depth=True,
-               cam_angles=True,
-               flatten=False)
+#env = gym.make('SawyerPushAndReachEnvEasy-v0')
+#
+#env_n = ImageEnv(env,
+#               imsize=84,
+#               normalize=True,
+#               init_camera=init_multiple_cameras,
+#               num_cameras=4,
+#               depth=True,
+#               cam_angles=True,
+#               flatten=False)
 
-# observation_keys_custom = ['image_observation','depth_observation','cam_angles_observation']
-observation_keys = ["image_observation","depth_observation","cam_angles_observation"]
+observation_keys = ["image_observation",
+                    "depth_observation",
+                    "cam_angles_observation",
+                    "state_observation",
+                    "image_desired_goal",
+                    "desired_goal_depth",
+                    "goal_cam_angle"]
 
-observation_keys_o = ["observations." + i for i in observation_keys]
-# st()
-env_n.reset()
-env = GymAdapter(None,
-                 None,
-                 env=env_n,
+#env_n.reset()
+env = GymAdapter('SawyerMulticameraReach',
+                 'v0',
                  observation_keys=observation_keys)
 
 
-replay_pool = SimpleReplayPool(env, concat_observations=False, max_size=1e4)
+replay_pool = SimpleReplayPool(env,
+                               concat_observations=False,
+                               max_size=1e4)
+
 policy = get_policy('UniformPolicy', env)
 
-sampler = SimpleSampler(batch_size=40, max_path_length=40, min_pool_size=0)
+sampler = SimpleSampler(batch_size=10000, max_path_length=40, min_pool_size=0)
 sampler.initialize(env, policy, replay_pool)
 
 while replay_pool.size < exploration_steps:
-    print("sampling")
+    #print("sampling")
     sampler.sample()
-st()
+#st()
+
+batch = sampler.random_batch(batch_size=1000)
+
+np.save("reaching_data_batch.npy", batch)
 
 # imsave("check_03.png",replay_pool.fields["observations.desired_goal_depth"][0,0])
-observation = sampler.random_batch()
+# observation = sampler.random_batch()
 
-
-save_images.save_some_samples(sampler)
+# save_images.save_some_samples(sampler)
 # def save_replay_buffer(fields):
 #   # key_val = fields.keys()
 #   for i in range(400):

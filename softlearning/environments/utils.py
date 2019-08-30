@@ -47,18 +47,24 @@ def get_environment_from_params_custom(environment_params):
     domain = environment_params['domain']
     # st()
     environment_kwargs_gym = environment_params.get('kwargs', {}).copy()
-    #environment_kwargs_gym.pop("map3D")
-    environment_kwargs_gym.pop("observation_keys")
+
+    assert("map3D" not in environment_kwargs_gym)
+    if "observation_keys" in environment_kwargs_gym:
+      environment_kwargs_gym.pop("observation_keys")
+
     env = gym.make(f"{domain}-{task}",**environment_kwargs_gym)
+
     env_n = ImageEnv(env,
-                   imsize=84,
-                   normalize=True,
-                   init_camera=init_multiple_cameras,
-                   num_cameras=4,
-                   depth=True,
-                   cam_angles=True,
-                   reward_type="wrapped_env",
-                   flatten=False)
+                     imsize=64,
+                     normalize=True,
+                     init_camera=init_multiple_cameras,
+                     num_cameras=57,
+                     num_views=4,
+                     depth=True,
+                     cam_angles=True,
+                     reward_type="wrapped_env",
+                     flatten=False)
+
     environment_kwargs = environment_params.get('kwargs', {}).copy()
     environment_kwargs["env"] = env_n
     return get_environment(universe, domain, task, environment_kwargs)
