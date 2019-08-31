@@ -4,6 +4,10 @@ import numpy as np
 from softlearning.misc.utils import get_git_rev, deep_update
 import softlearning.map3D.constants as map3D_constants
 from softlearning.map3D.nets.BulletPush3DTensor import BulletPush3DTensor4_cotrain
+
+import discovery.hyperparams as hyp
+from discovery.model_mujoco_online import MUJOCO_ONLINE
+
 import ipdb
 st = ipdb.set_trace
 
@@ -437,8 +441,23 @@ def get_variant_spec_3D(universe,
     variant_spec = get_variant_spec_base(
         universe, domain, task, policy, algorithm, sampler, replay_pool, *args, **kwargs)
 
+    checkpoint_dir_ = os.path.join("checkpoints", hyp.name)
+    log_dir_ = os.path.join("logs_mujoco_online", hyp.name)
+
+    if not os.path.exists(checkpoint_dir_):
+        os.makedirs(checkpoint_dir_)
+    if not os.path.exists(log_dir_):
+        os.makedirs(log_dir_)
+
+    #!! g=None might cause issues
+    map3D_model = MUJOCO_OFFLINE(g=None,
+                           sess=None,
+                           checkpoint_dir=checkpoint_dir_,
+                           log_dir=log_dir_
+    )
+
     # map3D_constants.set_experiment("0520_bulletpush3D_4_multicam_bn_mask_nview1_vp")
-    map3D_model = BulletPush3DTensor4_cotrain()
+    # map3D_model = BulletPush3DTensor4_cotrain()
 
 
     # variant_spec["Q_params"]["kwargs"]["preprocessor_params"] = {}
@@ -457,10 +476,7 @@ def get_variant_spec_3D(universe,
     env_train_params = environment_params['training']
     # env_train_params["kwargs"] = {}
     env_train_params["kwargs"]["observation_keys"] = ["image_observation","depth_observation","cam_angles_observation","state_observation","image_desired_goal","desired_goal_depth","goal_cam_angle"]
-    env_train_params["kwargs"]["map3D"] = map3D_model
-
-
-
+    #  env_train_params["kwargs"]["map3D"] = map3D_model
 
     preprocessor_params = {
         'type': 'convnet3d_preprocessor',

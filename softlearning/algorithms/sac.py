@@ -4,8 +4,8 @@ from numbers import Number
 import numpy as np
 import tensorflow as tf
 from tensorflow.python.training import training_util
-from softlearning.map3D import constants as const
-const.set_experiment("rl_new")
+
+import discovery.hyperparams as hyp
 
 from .rl_algorithm import RLAlgorithm
 import ipdb
@@ -238,37 +238,51 @@ class SAC(RLAlgorithm):
         return Q_target
 
     def _init_map3D(self):
-        # self.map3D.set_batchSize(1)
-        
-        # sampler_obs_images, sampler_obs_zmap, sampler_obs_camAngle,sampler_obs_images_goal, sampler_obs_zmap_goal, sampler_obs_camAngle_goal = [tf.expand_dims(i,1) for i in self._sampler_observations_phs[:6]]
-
-        # sampler_obs_zmap = tf.expand_dims(sampler_obs_zmap,-1)
-        # sampler_obs_zmap_goal = tf.expand_dims(sampler_obs_zmap_goal,-1)
-
-        # memory_sampler = self.map3D(sampler_obs_images,sampler_obs_camAngle,sampler_obs_zmap, is_training=None,reuse=False)
-        # memory_sampler_goal = self.map3D(sampler_obs_images_goal,sampler_obs_camAngle_goal,sampler_obs_zmap_goal, is_training=None,reuse=True)
-        # self.memory_sampler = [tf.concat([memory_sampler,memory_sampler_goal],-1)]
-        # # self.memory_sampler = 1
-        # self.map3D.set_batchSize(4)
-        # st()
-        obs_images, obs_zmap, obs_camAngle,obs_position,obs_images_goal,obs_zmap_goal,obs_camAngle_goal = [tf.expand_dims(i,1) for i in self._observations_phs[:7]]
-        obs_zmap = tf.expand_dims(obs_zmap,-1)
-        obs_zmap_goal = tf.expand_dims(obs_zmap_goal,-1)
-
-        # st()
-        memory = self.map3D(obs_images,obs_camAngle,obs_zmap,batch_size=self.batch_size,exp_name=self.exp_name,is_training=None,reuse=False)
-        memory_goal = self.map3D(obs_images_goal, obs_camAngle_goal ,obs_zmap_goal,batch_size=None,exp_name=None, is_training=None,reuse=True)
+        with tf.compat.v1.variable_scope("memory", reuse=False):
+            memory = self.map3D.infer_from_tensors(
+                                                   tf.constant(0),
+                                                   self.rgb_camXs_obs,
+                                                   self.pix_T_cams_obs,
+                                                   self.cam_T_velos_obs,
+                                                   self.origin_T_camRs_obs,
+                                                   self.origin_T_camXs_obs,
+                                                   self.xyz_camXs_obs
+                                                  )
+        with tf.compat.v1.variable_scope("memory", reuse=True):
+            memory_goal = self.map3D.infer_from_tensors(
+                                                        tf.constant(0),
+                                                        self.rgb_camXs_goal,
+                                                        self.pix_T_cams_goal,
+                                                        self.cam_T_velos_goal,
+                                                        self.origin_T_camRs_goal,
+                                                        self.origin_T_camXs_goal,
+                                                        self.xyz_camXs_goal
+                                                       )
         self.memory = [tf.concat([memory,memory_goal],-1)]
 
+        with tf.compat.v1.variable_scope("memory", reuse=True):
+            memory_next = self.map3D.infer_from_tensors(
+                                                        tf.constant(0),
+                                                        self.rgb_camXs_next,
+                                                        self.pix_T_cams_next,
+                                                        self.cam_T_velos_next,
+                                                        self.origin_T_camRs_next,
+                                                        self.origin_T_camXs_next,
+                                                        self.xyz_camXs_next
+                                                       )
 
-        next_obs_images, next_obs_zmap, next_obs_camAngle,obs_position,next_obs_images_goal, next_obs_zmap_goal, next_obs_camAngle_goal = [tf.expand_dims(i,1) for i in self._next_observations_phs[:7]]
+        with tf.compat.v1.variable_scope("memory", reuse=True):
+            memory_next_goal = self.map3D.infer_from_tensors(
+                                                             tf.constant(0),
+                                                             self.rgb_camXs_next_goal,
+                                                             self.pix_T_cams_next_goal,
+                                                             self.cam_T_velos_next_goal,
+                                                             self.origin_T_camRs_next_goal,
+                                                             self.origin_T_camXs_next_goal,
+                                                             self.xyz_camXs_next_goal
+                                                            )
 
-        next_obs_zmap = tf.expand_dims(next_obs_zmap,-1)
-        next_obs_zmap_goal = tf.expand_dims(next_obs_zmap_goal,-1)
-
-        memory_next = self.map3D(next_obs_images,next_obs_camAngle,next_obs_zmap,batch_size=None,exp_name=None, is_training=None,reuse=True)
-        memory_next_goal = self.map3D(next_obs_images_goal,next_obs_camAngle_goal,next_obs_zmap_goal,batch_size=None,exp_name=None, is_training=None,reuse=True)
-        self.memory_next = [tf.concat([memory_next,memory_next_goal],-1)]
+        self.memory_next = [tf.concat([memory_next, memory_next_goal],-1)]
 
 
 
