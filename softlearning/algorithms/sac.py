@@ -259,23 +259,23 @@ class SAC(RLAlgorithm):
         with tf.compat.v1.variable_scope("memory", reuse=True):
             memory_next = self.map3D.infer_from_tensors(
                                                         tf.constant(0),
-                                                        self.rgb_camXs_next,
-                                                        self.pix_T_cams_next,
-                                                        self.cam_T_velos_next,
-                                                        self.origin_T_camRs_next,
-                                                        self.origin_T_camXs_next,
-                                                        self.xyz_camXs_next
+                                                        self.next_rgb_camXs_obs,
+                                                        self.next_pix_T_cams_obs,
+                                                        self.next_cam_T_velos_obs,
+                                                        self.next_origin_T_camRs_obs,
+                                                        self.next_origin_T_camXs_obs,
+                                                        self.next_xyz_camXs_obs
                                                        )
 
         with tf.compat.v1.variable_scope("memory", reuse=True):
             memory_next_goal = self.map3D.infer_from_tensors(
                                                              tf.constant(0),
-                                                             self.rgb_camXs_next_goal,
-                                                             self.pix_T_cams_next_goal,
-                                                             self.cam_T_velos_next_goal,
-                                                             self.origin_T_camRs_next_goal,
-                                                             self.origin_T_camXs_next_goal,
-                                                             self.xyz_camXs_next_goal
+                                                             self.next_rgb_camXs_goal,
+                                                             self.next_pix_T_cams_goal,
+                                                             self.next_cam_T_velos_goal,
+                                                             self.next_origin_T_camRs_goal,
+                                                             self.next_origin_T_camXs_goal,
+                                                             self.next_xyz_camXs_goal
                                                             )
 
         self.memory_next = [tf.concat([memory_next, memory_next_goal],-1)]
