@@ -6,13 +6,11 @@ import math
 import os
 import ipdb
 
-st = ipdb.set_trace
 import tensorflow as tf
 import numpy as np
 
 from softlearning.samplers import rollouts
 from softlearning.misc.utils import save_video
-
 
 class RLAlgorithm(tf.contrib.checkpoint.Checkpointable):
     """Abstract RLAlgorithm.
@@ -31,7 +29,7 @@ class RLAlgorithm(tf.contrib.checkpoint.Checkpointable):
             n_initial_exploration_steps=0,
             initial_exploration_policy=None,
             epoch_length=1000,
-            eval_n_episodes=10,
+            eval_n_episodes=20,
             eval_deterministic=True,
             eval_render_mode=None,
             video_save_frequency=0,
@@ -144,7 +142,6 @@ class RLAlgorithm(tf.contrib.checkpoint.Checkpointable):
         evaluation_environment = self._evaluation_environment
         policy = self._policy
         pool = self._pool
-        st()
 
         if not self._training_started:
             self._init_training()

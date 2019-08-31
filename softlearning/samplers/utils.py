@@ -8,7 +8,9 @@ from . import (
     extra_policy_info_sampler,
     remote_sampler,
     base_sampler,
-    simple_sampler)
+    simple_sampler,
+    base_3D_sampler,
+    simple_3D_sampler)
 
 
 SAMPLERS = {
@@ -18,6 +20,7 @@ SAMPLERS = {
     'RemoteSampler': remote_sampler.RemoteSampler,
     'Sampler': base_sampler.BaseSampler,
     'SimpleSampler': simple_sampler.SimpleSampler,
+    'Simple3DSampler': simple_3D_sampler.SimpleSampler
 }
 
 

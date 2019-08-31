@@ -224,7 +224,7 @@ def run_example_local(example_module_name, example_argv, local_mode=False):
     experiments = {experiment_id: experiment}
 
     #change the xml file to use the desired xml mesh
-    change_env_to_use_correct_mesh(example_args.mesh)
+    # change_env_to_use_correct_mesh(example_args.mesh)
 
     ray.init(
         num_cpus=example_args.cpus,
@@ -254,7 +254,6 @@ def run_example_debug(example_module_name, example_argv):
     """
 
     debug_example_argv = []
-    print("here")
     for option in example_argv:
         if '--trial-cpus' in option:
             available_cpus = multiprocessing.cpu_count()

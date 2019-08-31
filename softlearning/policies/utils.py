@@ -31,7 +31,6 @@ POLICY_FUNCTIONS = {
 def get_policy(policy_type, *args, **kwargs):
     return POLICY_FUNCTIONS[policy_type](*args, **kwargs)
 
-
 def get_policy_from_variant(variant, env, Qs, *args, **kwargs):
     policy_params = variant['policy_params']
     policy_type = policy_params['type']

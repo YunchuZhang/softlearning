@@ -295,8 +295,8 @@ def get_parser(allow_policy_list=False):
     parser.add_argument(
         '--mesh', 
         type = str,
-        default = "can1", 
-        help="which mesh to use in the mujoco environment")
+        default = None, 
+        help="Mesh to use in the mujoco environment")
 
     parser = add_ray_init_args(parser)
     parser = add_ray_tune_args(parser)

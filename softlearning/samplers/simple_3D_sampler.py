@@ -2,7 +2,7 @@ from collections import defaultdict
 
 import numpy as np
 
-from .base_sampler import BaseSampler
+from .base_3D_sampler import BaseSampler
 
 
 class SimpleSampler(BaseSampler):
@@ -40,15 +40,30 @@ class SimpleSampler(BaseSampler):
         if self._current_observation is None:
             self._current_observation = self.env.reset()
 
-        action = self.policy.actions_np([
-            self.env.convert_to_active_observation(
-                self._current_observation)[None]
-        ])[0]
+        obs_req = {field_name: self.env.observation_space.spaces[field_name]
+                   for field_name in self.obs_keys}
+        
+
+        if self.memory3D:
+            active_observation = []
+            for key in self.obs_req:
+                active_observation.append(np.concatenate([
+                    observation[key][None] for observation in self._current_observation
+                ], axis=0))
+            active_obs =[np.repeat(i, 4, 0)  for i in active_observation]
+        
+            active_obs = self.session.run(self.memory3D,feed_dict={self.obs_ph[0]:active_obs[0], \
+                                          self.obs_ph[1]:active_obs[1],self.obs_ph[2]:active_obs[2],\
+                                          self.obs_ph[3]:active_obs[3],self.obs_ph[4]:active_obs[4],\
+                                          self.obs_ph[5]:active_obs[5]})
+            active_obs = active_obs[:1]
+        
+        action = self.policy.actions_np(active_obs)[0]
 
         next_observation, reward, terminal, info = self.env.step(action)
 
-        reward = reward
-        terminal = terminal
+        reward = reward[0]
+        terminal = terminal[0]
 
         self._path_length += 1
         self._path_return += reward
@@ -84,7 +99,6 @@ class SimpleSampler(BaseSampler):
             self._path_length = 0
             self._path_return = 0
             self._current_path = defaultdict(list)
-            #import pdb; pdb.set_trace()
 
             self._n_episodes += 1
         else:

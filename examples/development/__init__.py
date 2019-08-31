@@ -7,7 +7,7 @@ In particular, the examples are exposed to the command line interface
 
 
 def get_trainable_class(*args, **kwargs):
-    from .main import ExperimentRunner
+    from .main_dagger import ExperimentRunner
     return ExperimentRunner
 
 
