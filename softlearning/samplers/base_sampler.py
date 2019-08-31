@@ -103,5 +103,5 @@ class BaseSampler(object):
                                self.obs_ph['origin_T_camXs_goal']: goal_fields['origin_T_camXs'],
                                self.obs_ph['rgb_camXs_goal']: goal_fields['rgb_camXs'],
                                self.obs_ph['xyz_camXs_goal']: goal_fields['xyz_camXs']
-                              }
+                              })
         return memory
