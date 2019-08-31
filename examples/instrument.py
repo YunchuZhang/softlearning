@@ -201,6 +201,7 @@ Number of total trials (including samples/seeds): {total_number_of_trials}
 
     print(experiments_info_text)
 
+
 def change_env_to_use_correct_mesh(mesh):
     current_path = os.getcwd() 
     home_dir = path.abspath(path.join(__file__ ,"../../.."))
@@ -208,7 +209,34 @@ def change_env_to_use_correct_mesh(mesh):
     tree = et.parse(path_to_xml)
     root = tree.getroot()
     [x.attrib for x in root.iter('geom')][0]['mesh']=mesh
+
+     #set the masses, inertia and friction in a plausible way
+
+    physics_dict = {}
+    physics_dict["printer"] =  ["6.0", ".00004 .00003 .00004", "1 1 .0001" ]
+    physics_dict["mug1"] =  ["0.31", ".000000001 .0000000009 .0000000017", "0.008 0.008 .00001" ]
+    physics_dict["mug2"] =  ["0.27", ".000000001 .0000000009 .0000000017", "0.008 0.008 .00001" ]
+    physics_dict["mug3"] =  ["0.33", ".000000001 .0000000009 .0000000017", "0.008 0.008 .00001" ]
+    physics_dict["can1"] =  ["0.55", ".00000002 .00000002 .00000001", "0.2 0.2 .0001" ]
+    physics_dict["car1"] =  ["0.2", ".0000000017 .0000000005 .0000000019", "1.2 1.2 .00001" ]
+    physics_dict["car2"] =  ["0.4", ".0000000017 .0000000005 .0000000019", "1.2 1.2 .00001" ]
+    physics_dict["car3"] =  ["0.5", ".0000000017 .0000000005 .0000000019", "1.2 1.2 .00001" ]
+    physics_dict["car4"] =  ["0.8", ".0000000017 .0000000005 .0000000019", "1.2 1.2 .00001" ]
+    physics_dict["car5"] =  ["2.0", ".0000000017 .0000000005 .0000000019", "1.2 1.2 .00001" ]
+    physics_dict["boat"] =  ["7.0", ".00000002 .00000002 .00000001", "0.2 0.2 .0001" ]
+    physics_dict["bowl1"] =  ["0.1", ".00000002 .00000002 .00000001", "0.2 0.2 .0001" ]
+    physics_dict["bowl2"] =  ["0.3", ".00000002 .00000002 .00000001", "0.2 0.2 .0001" ]
+    physics_dict["bowl4"] =  ["0.7", ".00000002 .00000002 .00000001", "0.2 0.2 .0001" ]
+    physics_dict["hat1"] =  ["0.2", ".00000002 .00000002 .00000001", "0.2 0.2 .0001" ]
+    physics_dict["hat2"] =  ["0.4", ".00000002 .00000002 .00000001", "0.2 0.2 .0001" ]
+
+    #set parameters
+    [x.attrib for x in root.iter('inertial')][0]['mass'] = physics_dict[mesh][0]
+    [x.attrib for x in root.iter('inertial')][0]['diaginertia'] = physics_dict[mesh][1]
+    [x.attrib for x in root.iter('geom')][0]['friction'] = physics_dict[mesh][2]
+
     tree.write(path_to_xml)
+
 
 
 def run_example_local(example_module_name, example_argv, local_mode=False):
