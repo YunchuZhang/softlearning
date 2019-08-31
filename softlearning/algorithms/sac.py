@@ -156,38 +156,34 @@ class SAC(RLAlgorithm):
         self._iteration_ph = tf.placeholder(
             tf.int64, shape=None, name='iteration')
 
-        self._observations_phs = [tf.placeholder(
-            tf.float32,
-            shape=(self.batch_size, *shape),
-            name='observations.{}'.format(key)
-        ) for key, shape in zip(self._observation_keys,
-                                self._observation_shape)]
+        self.pix_T_cams_obs = tf.placeholder(tf.float32, [B, S, 4, 4], name='pix_T_cams')
+        self.cam_T_velos_obs = tf.placeholder(tf.float32, [B, S, 4, 4], name='cam_T_velos')
+        self.origin_T_camRs_obs = tf.placeholder(tf.float32, [B, S, 4, 4], name='origin_T_camRs')
+        self.origin_T_camXs_obs = tf.placeholder(tf.float32, [B, S, 4, 4], name='origin_T_camXs')
+        self.rgb_camX_obs = tf.placeholder(tf.float32, [B, S, H, W, 3], name='rgb_camXs')
+        self.xyz_camXs_obs = tf.placeholder(tf.float32, [B, S, V, 3], name='xyz_camXs')
 
-        self._sampler_observations_phs = [tf.placeholder(
-            tf.float32,
-            shape=(1, *shape),
-            name='sampler_observations.{}'.format(key)
-        ) for key, shape in zip(self._observation_keys[:6],
-                                self._observation_shape[:6])]
+        self.pix_T_cams_goal = tf.placeholder(tf.float32, [B, S, 4, 4], name='pix_T_cams')
+        self.cam_T_velos_goal = tf.placeholder(tf.float32, [B, S, 4, 4], name='cam_T_velos')
+        self.origin_T_camRs_goal = tf.placeholder(tf.float32, [B, S, 4, 4], name='origin_T_camRs')
+        self.origin_T_camXs_goal = tf.placeholder(tf.float32, [B, S, 4, 4], name='origin_T_camXs')
+        self.rgb_camX_goal = tf.placeholder(tf.float32, [B, S, H, W, 3], name='rgb_camXs')
+        self.xyz_camXs_goal = tf.placeholder(tf.float32, [B, S, V, 3], name='xyz_camXs')
 
-        self._next_observations_phs = [tf.placeholder(
-            tf.float32,
-            shape=(self.batch_size, *shape),
-            name='next_observations.{}'.format(key)
-        ) for key, shape in zip(self._observation_keys,
-                                self._observation_shape)]
+        self.next_pix_T_cams_obs = tf.placeholder(tf.float32, [B, S, 4, 4], name='pix_T_cams')
+        self.next_cam_T_velos_obs = tf.placeholder(tf.float32, [B, S, 4, 4], name='cam_T_velos')
+        self.next_origin_T_camRs_obs = tf.placeholder(tf.float32, [B, S, 4, 4], name='origin_T_camRs')
+        self.next_origin_T_camXs_obs = tf.placeholder(tf.float32, [B, S, 4, 4], name='origin_T_camXs')
+        self.next_rgb_camX_obs = tf.placeholder(tf.float32, [B, S, H, W, 3], name='rgb_camXs')
+        self.next_xyz_camXs_obs = tf.placeholder(tf.float32, [B, S, V, 3], name='xyz_camXs')
 
-        #self._observations_ph = tf.placeholder(
-        #    tf.float32,
-        #    shape=(self.batch_size, *self._observation_shape),
-        #    name='observation',
-        #)
+        self.next_pix_T_cams_goal = tf.placeholder(tf.float32, [B, S, 4, 4], name='pix_T_cams')
+        self.next_cam_T_velos_goal = tf.placeholder(tf.float32, [B, S, 4, 4], name='cam_T_velos')
+        self.next_origin_T_camRs_goal = tf.placeholder(tf.float32, [B, S, 4, 4], name='origin_T_camRs')
+        self.next_origin_T_camXs_goal = tf.placeholder(tf.float32, [B, S, 4, 4], name='origin_T_camXs')
+        self.next_rgb_camX_goal = tf.placeholder(tf.float32, [B, S, H, W, 3], name='rgb_camXs')
+        self.next_xyz_camXs_goal = tf.placeholder(tf.float32, [B, S, V, 3], name='xyz_camXs')
 
-        #self._next_observations_ph = tf.placeholder(
-        #    tf.float32,
-        #    shape=(self.batch_size, *self._observation_shape),
-        #    name='next_observation',
-        #)
         self._actions_ph = tf.placeholder(
             tf.float32,
             shape=(self.batch_size, *self._action_shape),
