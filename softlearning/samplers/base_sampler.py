@@ -89,11 +89,19 @@ class BaseSampler(object):
                                 active_obs['goal_cam_dist'])
 
         memory = self.session.run(
-                self.memory3D_sampler,
-                feed_dict={
-                    self.obs_ph['pix_T_cams_obs']: obs_fields['pix_T_cams'],
-                    self.obs_ph['rgb_camXs_obs']: obs_fields['rgb_camXs'],
-                    self.obs_ph[
-
+                    self.memory3D_sampler,
+                    feed_dict={
+                               self.obs_ph['pix_T_cams_obs']: obs_fields['pix_T_cams'],
+                               self.obs_ph['cam_T_velos_obs']: obs_fields['cam_T_velos'],
+                               self.obs_ph['origin_T_camRs_obs']: obs_fields['origin_T_camRs'],
+                               self.obs_ph['origin_T_camXs_obs']: obs_fields['origin_T_camXs'],
+                               self.obs_ph['rgb_camXs_obs']: obs_fields['rgb_camXs'],
+                               self.obs_ph['xyz_camXs_obs']: obs_fields['xyz_camXs'],
+                               self.obs_ph['pix_T_cams_goal']: goal_fields['pix_T_cams'],
+                               self.obs_ph['cam_T_velos_goal']: goal_fields['cam_T_velos'],
+                               self.obs_ph['origin_T_camRs_goal']: goal_fields['origin_T_camRs'],
+                               self.obs_ph['origin_T_camXs_goal']: goal_fields['origin_T_camXs'],
+                               self.obs_ph['rgb_camXs_goal']: goal_fields['rgb_camXs'],
+                               self.obs_ph['xyz_camXs_goal']: goal_fields['xyz_camXs']
+                              }
         return memory
-
