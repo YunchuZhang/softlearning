@@ -160,29 +160,44 @@ class SAC(RLAlgorithm):
         self.cam_T_velos_obs = tf.placeholder(tf.float32, [B, S, 4, 4], name='cam_T_velos_obs')
         self.origin_T_camRs_obs = tf.placeholder(tf.float32, [B, S, 4, 4], name='origin_T_camRs_obs')
         self.origin_T_camXs_obs = tf.placeholder(tf.float32, [B, S, 4, 4], name='origin_T_camXs_obs')
-        self.rgb_camX_obs = tf.placeholder(tf.float32, [B, S, H, W, 3], name='rgb_camXs_obs')
+        self.rgb_camXs_obs = tf.placeholder(tf.float32, [B, S, H, W, 3], name='rgb_camXs_obs')
         self.xyz_camXs_obs = tf.placeholder(tf.float32, [B, S, V, 3], name='xyz_camXs_obs')
 
         self.pix_T_cams_goal = tf.placeholder(tf.float32, [B, S, 4, 4], name='pix_T_cams_goal')
         self.cam_T_velos_goal = tf.placeholder(tf.float32, [B, S, 4, 4], name='cam_T_velos_goal')
         self.origin_T_camRs_goal = tf.placeholder(tf.float32, [B, S, 4, 4], name='origin_T_camRs_goal')
         self.origin_T_camXs_goal = tf.placeholder(tf.float32, [B, S, 4, 4], name='origin_T_camXs_goal')
-        self.rgb_camX_goal = tf.placeholder(tf.float32, [B, S, H, W, 3], name='rgb_camXs_goal')
+        self.rgb_camXs_goal = tf.placeholder(tf.float32, [B, S, H, W, 3], name='rgb_camXs_goal')
         self.xyz_camXs_goal = tf.placeholder(tf.float32, [B, S, V, 3], name='xyz_camXs_goal')
 
         self.next_pix_T_cams_obs = tf.placeholder(tf.float32, [B, S, 4, 4], name='next_pix_T_cams_obs')
         self.next_cam_T_velos_obs = tf.placeholder(tf.float32, [B, S, 4, 4], name='next_cam_T_velos_obs')
         self.next_origin_T_camRs_obs = tf.placeholder(tf.float32, [B, S, 4, 4], name='next_origin_T_camRs_obs')
         self.next_origin_T_camXs_obs = tf.placeholder(tf.float32, [B, S, 4, 4], name='next_origin_T_camXs_obs')
-        self.next_rgb_camX_obs = tf.placeholder(tf.float32, [B, S, H, W, 3], name='next_rgb_camXs_obs')
+        self.next_rgb_camXs_obs = tf.placeholder(tf.float32, [B, S, H, W, 3], name='next_rgb_camXs_obs')
         self.next_xyz_camXs_obs = tf.placeholder(tf.float32, [B, S, V, 3], name='next_xyz_camXs_obs')
 
         self.next_pix_T_cams_goal = tf.placeholder(tf.float32, [B, S, 4, 4], name='next_pix_T_cams_goal')
         self.next_cam_T_velos_goal = tf.placeholder(tf.float32, [B, S, 4, 4], name='next_cam_T_velos_goal')
         self.next_origin_T_camRs_goal = tf.placeholder(tf.float32, [B, S, 4, 4], name='next_origin_T_camRs_goal')
         self.next_origin_T_camXs_goal = tf.placeholder(tf.float32, [B, S, 4, 4], name='next_origin_T_camXs_goal')
-        self.next_rgb_camX_goal = tf.placeholder(tf.float32, [B, S, H, W, 3], name='next_rgb_camXs_goal')
+        self.next_rgb_camXs_goal = tf.placeholder(tf.float32, [B, S, H, W, 3], name='next_rgb_camXs_goal')
         self.next_xyz_camXs_goal = tf.placeholder(tf.float32, [B, S, V, 3], name='next_xyz_camXs_goal')
+
+        self.obs_placeholders = {
+                                 'pix_T_cams_obs': self.pix_T_cams_obs,
+                                 'cam_T_velos_obs': self.cam_T_velos_obs,
+                                 'origin_T_camRs_obs': self.origin_T_camRs_obs,
+                                 'origin_T_camXs_obs': self.origin_T_camXs_obs,
+                                 'rgb_camXs_obs': self.rgb_camXs_obs,
+                                 'xyz_camXs_obs': self.xyz_camXs_obs,
+                                 'pix_T_cams_goal': self.pix_T_cams_goal,
+                                 'cam_T_velos_goal': self.cam_T_velos_goal,
+                                 'origin_T_camRs_goal': self.origin_T_camRs_goal,
+                                 'origin_T_camXs_goal': self.origin_T_camXs_goal,
+                                 'rgb_camXs_goal': self.rgb_camXs_goal,
+                                 'xyz_camXs_goal': self.xyz_camXs_goal
+                                }
 
         self._actions_ph = tf.placeholder(
             tf.float32,
