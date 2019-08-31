@@ -206,17 +206,7 @@ class SAC(RLAlgorithm):
 
         self._terminals_ph = tf.placeholder(
             tf.float32,
-            shape=(self.batch_size, 1),    def forward(self, active_obs):
-        # st()
-        active_obs = self.session.run(
-                self.memory3D_sampler,
-                feed_dict={self.obs_ph['pix_T_cams_obs']: batch['pix_T_cams'],
-                           self.obs_ph['rgb_camXs_obs']: batch['rgb_camXs'],
-                           self.obs_ph[
-                                                 self.obs_ph[1]:active_obs[1],self.obs_ph[2]:active_obs[2],\
-            self.obs_ph[4]:active_obs[4],self.obs_ph[5]:active_obs[5],self.obs_ph[6]:active_obs[6]})        
-        return active_obs
-
+            shape=(self.batch_size, 1),
             name='terminals',
         )
 
