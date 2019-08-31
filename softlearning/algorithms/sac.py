@@ -177,13 +177,6 @@ class SAC(RLAlgorithm):
         self.next_rgb_camXs_obs = tf.placeholder(tf.float32, [B, S, H, W, 3], name='next_rgb_camXs_obs')
         self.next_xyz_camXs_obs = tf.placeholder(tf.float32, [B, S, V, 3], name='next_xyz_camXs_obs')
 
-        self.next_pix_T_cams_goal = tf.placeholder(tf.float32, [B, S, 4, 4], name='next_pix_T_cams_goal')
-        self.next_cam_T_velos_goal = tf.placeholder(tf.float32, [B, S, 4, 4], name='next_cam_T_velos_goal')
-        self.next_origin_T_camRs_goal = tf.placeholder(tf.float32, [B, S, 4, 4], name='next_origin_T_camRs_goal')
-        self.next_origin_T_camXs_goal = tf.placeholder(tf.float32, [B, S, 4, 4], name='next_origin_T_camXs_goal')
-        self.next_rgb_camXs_goal = tf.placeholder(tf.float32, [B, S, H, W, 3], name='next_rgb_camXs_goal')
-        self.next_xyz_camXs_goal = tf.placeholder(tf.float32, [B, S, V, 3], name='next_xyz_camXs_goal')
-
         self.obs_placeholders = {
                                  'pix_T_cams_obs': self.pix_T_cams_obs,
                                  'cam_T_velos_obs': self.cam_T_velos_obs,
@@ -213,7 +206,17 @@ class SAC(RLAlgorithm):
 
         self._terminals_ph = tf.placeholder(
             tf.float32,
-            shape=(self.batch_size, 1),
+            shape=(self.batch_size, 1),    def forward(self, active_obs):
+        # st()
+        active_obs = self.session.run(
+                self.memory3D_sampler,
+                feed_dict={self.obs_ph['pix_T_cams_obs']: batch['pix_T_cams'],
+                           self.obs_ph['rgb_camXs_obs']: batch['rgb_camXs'],
+                           self.obs_ph[
+                                                 self.obs_ph[1]:active_obs[1],self.obs_ph[2]:active_obs[2],\
+            self.obs_ph[4]:active_obs[4],self.obs_ph[5]:active_obs[5],self.obs_ph[6]:active_obs[6]})        
+        return active_obs
+
             name='terminals',
         )
 
@@ -282,26 +285,8 @@ class SAC(RLAlgorithm):
                                                         self.next_xyz_camXs_obs
                                                        )
 
-        with tf.compat.v1.variable_scope("memory", reuse=True):
-            memory_next_goal = self.map3D.infer_from_tensors(
-                                                             tf.constant(0),
-                                                             self.next_rgb_camXs_goal,
-                                                             self.next_pix_T_cams_goal,
-                                                             self.next_cam_T_velos_goal,
-                                                             self.next_origin_T_camRs_goal,
-                                                             self.next_origin_T_camXs_goal,
-                                                             self.next_xyz_camXs_goal
-                                                            )
+        self.memory_next = [tf.concat([memory_next, memory_goal],-1)]
 
-        self.memory_next = [tf.concat([memory_next, memory_next_goal],-1)]
-
-
-
-        # # # st()
-
-        
-
-        # st()
 
     def _init_critic_update(self):
         """Create minimization operation for critic Q-function.
@@ -471,7 +456,7 @@ class SAC(RLAlgorithm):
         feed_dict.update({
             self._next_observations_phs[i]: batch['next_observations.{}'.format(key)]
             for i, key in enumerate(self._observation_keys)
-        })
+        }desired_goal_keydesired_goal_key)
         
         # feed_dict.update({
         #     self._sampler_observations_phs[i]: batch['next_observations.{}'.format(key)][:1]

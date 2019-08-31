@@ -75,3 +75,25 @@ class BaseSampler(object):
         self.env = None
         self.policy = None
         self.pool = None
+
+    def forward_3D(self, active_obs):
+        # st()
+        obs_fields = get_inputs(active_obs['image_observation'],
+                                active_obs['depth_observation'],
+                                active_obs['cam_angles_observation'],
+                                active_obs['cam_dist_observation'])
+
+        goal_fields = get_inputs(active_obs['image_desired_goal'],
+                                active_obs['desired_goal_depth'],
+                                active_obs['goal_cam_angles'],
+                                active_obs['goal_cam_dist'])
+
+        memory = self.session.run(
+                self.memory3D_sampler,
+                feed_dict={
+                    self.obs_ph['pix_T_cams_obs']: obs_fields['pix_T_cams'],
+                    self.obs_ph['rgb_camXs_obs']: obs_fields['rgb_camXs'],
+                    self.obs_ph[
+
+        return memory
+

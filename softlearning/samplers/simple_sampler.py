@@ -12,6 +12,8 @@ import time
 # >>>>>>> Stashed changes
 from .base_sampler import BaseSampler
 
+from discovery.backend.mujoco_online_inputs import get_inputs
+
 class SimpleSampler(BaseSampler):
     def __init__(self, **kwargs):
         super(SimpleSampler, self).__init__(**kwargs)
@@ -43,27 +45,29 @@ class SimpleSampler(BaseSampler):
 
         return processed_observation
 
-    def forward(self,active_obs):
-        # st()
-        active_obs = self.session.run(self.memory3D_sampler,feed_dict={self.obs_ph[0]:active_obs[0],self.obs_ph[1]:active_obs[1],self.obs_ph[2]:active_obs[2],\
-            self.obs_ph[4]:active_obs[4],self.obs_ph[5]:active_obs[5],self.obs_ph[6]:active_obs[6]})        
-        return active_obs
-    
+
     def sample(self):
         if self._current_observation is None:
             self._current_observation = self.env.reset()
-        active_obs = self.env.convert_to_active_observation(self._current_observation)
+
+        active_obs = self.env.convert_to_active_observation(self._current_observation, return_dict=True)
         # st()
         # if preprocess:
-        active_obs =[np.repeat(i,4,0)  for i in active_obs]
+        active_obs = {key: np.vstack([field] * int(self._batch_size)) for key, field in active_obs.items()}
 
-        # if len(active_obs[0].shape) == 5 and len(active_obs[4].shape) == 5:
-        #     # for case when we train 3d code
-        #     active_obs[0] = np.concatenate([active_obs[0],np.ones_like(active_obs[0][...,:1])],-1)
-        #     active_obs[4] = np.concatenate([active_obs[4],np.ones_like(active_obs[4][...,:1])],-1)
+        obs_fields = get_inputs(active_obs['image_observation'],
+                                active_obs['depth_observation'],
+                                active_obs['cam_angles_observation'],
+                                active_obs['cam_dist_observation'])
+
+        goal_fields = get_inputs(active_obs['image_desired_goal'],
+                                active_obs['desired_goal_depth'],
+                                active_obs['goal_cam_angles'],
+                                active_obs['goal_cam_dist'])
+
         if self.initialized and self.memory3D_sampler:
             a = time.time()
-            active_obs = self.forward(active_obs)
+            active_obs = self.forward_3D(active_obs)
             #print(time.time()-a,"sampler sess")
             active_obs = active_obs[:1]
         else:
