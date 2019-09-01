@@ -1,9 +1,8 @@
 from ray import tune
 import numpy as np
+import os
 
 from softlearning.misc.utils import get_git_rev, deep_update
-import softlearning.map3D.constants as map3D_constants
-from softlearning.map3D.nets.BulletPush3DTensor import BulletPush3DTensor4_cotrain
 
 import discovery.hyperparams as hyp
 from discovery.model_mujoco_online import MUJOCO_ONLINE
@@ -450,10 +449,10 @@ def get_variant_spec_3D(universe,
         os.makedirs(log_dir_)
 
     #!! g=None might cause issues
-    map3D_model = MUJOCO_OFFLINE(g=None,
-                           sess=None,
-                           checkpoint_dir=checkpoint_dir_,
-                           log_dir=log_dir_
+    map3D_model = MUJOCO_ONLINE(graph=None,
+                                sess=None,
+                                checkpoint_dir=checkpoint_dir_,
+                                log_dir=log_dir_
     )
 
     # map3D_constants.set_experiment("0520_bulletpush3D_4_multicam_bn_mask_nview1_vp")
