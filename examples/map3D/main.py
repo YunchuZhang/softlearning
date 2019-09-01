@@ -13,8 +13,6 @@ from softlearning.policies.utils import get_policy_from_variant, get_policy
 from softlearning.replay_pools.utils import get_replay_pool_from_variant
 from softlearning.samplers.utils import get_sampler_from_variant
 from softlearning.value_functions.utils import get_Q_function_from_variant
-from softlearning.map3D.fig import Config
-from softlearning.map3D import utils_map as utils
 import os.path as path
 
 from softlearning.misc.utils import set_seed, initialize_tf_variables
