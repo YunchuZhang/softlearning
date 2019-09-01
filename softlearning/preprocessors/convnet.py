@@ -2,8 +2,6 @@ import tensorflow as tf
 
 from softlearning.models.feedforward import feedforward_model
 from softlearning.utils.keras import PicklableKerasModel
-from softlearning.map3D.nets.BulletPush3DTensor import BulletPush3DTensor4_cotrain
-from softlearning.map3D import constants as const
 
 def convnet_preprocessor(
         input_shapes,
@@ -210,22 +208,6 @@ def map3D_preprocessor(
     model = PicklableKerasModel(inputs, output, name=name)
 
     return model
-
-
-def map3D_preprocessor_nonkeras(
-        name='map3D_preprocessor',
-        mapping_model=None,
-        *args,
-        **kwargs):
-
-    #TODO: Need to change this so that the inputs are mapped to the right place
-    # also not sure if this is the best way of doing this
-    # conv_out = mapping_model(inputs[data_pos['images']], inputs[data_pos['zmaps']], inputs[data_pos['cam_angles']])
-    # model = BulletPush3DTensor4_cotrain()
-    model = mapping_model
-    const.set_experiment("rl_new")
-    return model
-
 
 
 if __name__ == "__main__":

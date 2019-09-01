@@ -1,6 +1,7 @@
 from collections import OrderedDict
 from numbers import Number
 
+import os
 import numpy as np
 import tensorflow as tf
 from tensorflow.python.training import training_util
@@ -169,6 +170,8 @@ class SAC(RLAlgorithm):
         """
         self._iteration_ph = tf.placeholder(
             tf.int64, shape=None, name='iteration')
+
+        B, H, W, V, S, N = hyp.B, hyp.H, hyp.W, hyp.V, hyp.S, hyp.N
 
         self.pix_T_cams_obs = tf.placeholder(tf.float32, [B, S, 4, 4], name='pix_T_cams_obs')
         self.cam_T_velos_obs = tf.placeholder(tf.float32, [B, S, 4, 4], name='cam_T_velos_obs')
