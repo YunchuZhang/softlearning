@@ -6,6 +6,7 @@ import tensorflow as tf
 from tensorflow.python.training import training_util
 
 import discovery.hyperparams as hyp
+from discovery.model_mujoco_online import MUJOCO_ONLINE
 
 from .rl_algorithm import RLAlgorithm
 import ipdb
@@ -36,7 +37,6 @@ class SAC(RLAlgorithm):
             exp_name,
             plotter=None,
             tf_summaries=False,
-            map3D = None,
             lr=3e-4,
             reward_scale=1.0,
             target_entropy='auto',
@@ -80,7 +80,6 @@ class SAC(RLAlgorithm):
         self._policy = policy
 
         self._Qs = Qs
-        self.map3D = map3D
         self._Q_targets = tuple(tf.keras.models.clone_model(Q) for Q in Qs)
 
         self._pool = pool
@@ -118,6 +117,21 @@ class SAC(RLAlgorithm):
         self._observation_shape = observation_shape
         #assert len(action_shape) == 1, action_shape
         self._action_shape = action_shape
+
+        checkpoint_dir_ = os.path.join("checkpoints", hyp.name)
+        log_dir_ = os.path.join("logs_mujoco_online", hyp.name)
+
+        if not os.path.exists(checkpoint_dir_):
+            os.makedirs(checkpoint_dir_)
+        if not os.path.exists(log_dir_):
+            os.makedirs(log_dir_)
+
+        #!! g=None might cause issues
+        self.map3D = MUJOCO_ONLINE(graph=None,
+                                    sess=None,
+                                    checkpoint_dir=checkpoint_dir_,
+                                    log_dir=log_dir_
+        )
 
         self._build()
 

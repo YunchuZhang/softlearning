@@ -4,9 +4,6 @@ import os
 
 from softlearning.misc.utils import get_git_rev, deep_update
 
-import discovery.hyperparams as hyp
-from discovery.model_mujoco_online import MUJOCO_ONLINE
-
 import ipdb
 st = ipdb.set_trace
 
@@ -440,21 +437,6 @@ def get_variant_spec_3D(universe,
     variant_spec = get_variant_spec_base(
         universe, domain, task, policy, algorithm, sampler, replay_pool, *args, **kwargs)
 
-    checkpoint_dir_ = os.path.join("checkpoints", hyp.name)
-    log_dir_ = os.path.join("logs_mujoco_online", hyp.name)
-
-    if not os.path.exists(checkpoint_dir_):
-        os.makedirs(checkpoint_dir_)
-    if not os.path.exists(log_dir_):
-        os.makedirs(log_dir_)
-
-    #!! g=None might cause issues
-    map3D_model = MUJOCO_ONLINE(graph=None,
-                                sess=None,
-                                checkpoint_dir=checkpoint_dir_,
-                                log_dir=log_dir_
-    )
-
     # map3D_constants.set_experiment("0520_bulletpush3D_4_multicam_bn_mask_nview1_vp")
     # map3D_model = BulletPush3DTensor4_cotrain()
 
@@ -468,7 +450,6 @@ def get_variant_spec_3D(universe,
 
     # variant["Q_params"]["kwargs"]["preprocessor_params"]["kwargs"]["mapping_model"] = BulletPush3DTensor4_cotrain()
     # st()
-    variant_spec["map3D"] = map3D_model
     variant_spec["exp_name"] = "rl_new_reach_detect"
 
     environment_params = variant_spec['environment_params']

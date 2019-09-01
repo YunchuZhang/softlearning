@@ -51,7 +51,6 @@ class ExperimentRunner(tune.Trainable):
 
         batch_size = variant['sampler_params']['kwargs']['batch_size']
         observation_keys = environment_params['training']["kwargs"]["observation_keys"]
-        bulledtPush = variant["map3D"]
 
         exp_name = variant["exp_name"]
 
@@ -65,10 +64,8 @@ class ExperimentRunner(tune.Trainable):
         initial_exploration_policy = self.initial_exploration_policy = (
             get_policy('UniformPolicy', training_environment))
 
-
         self.algorithm = get_algorithm_from_variant(
             variant=self._variant,
-            map3D =bulledtPush,
             exp_name = variant["exp_name"],
             training_environment=training_environment,
             evaluation_environment=training_environment,
@@ -80,13 +77,8 @@ class ExperimentRunner(tune.Trainable):
             observation_keys = observation_keys,
             sampler=sampler,
             session=self._session)
-        
-
-        # st()
 
         initialize_tf_variables(self._session, only_uninitialized=True)
-        # st()
-        #self.map3d_setup(self._session,bulledtPush.load_name,map3D=bulledtPush)
 
         self._built = True
 
