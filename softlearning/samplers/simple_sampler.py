@@ -51,19 +51,7 @@ class SimpleSampler(BaseSampler):
             self._current_observation = self.env.reset()
 
         active_obs = self.env.convert_to_active_observation(self._current_observation, return_dict=True)
-        # st()
-        # if preprocess:
         active_obs = {key: np.vstack([field] * int(self._batch_size)) for key, field in active_obs.items()}
-
-        obs_fields = get_inputs(active_obs['image_observation'],
-                                active_obs['depth_observation'],
-                                active_obs['cam_angles_observation'],
-                                active_obs['cam_dist_observation'])
-
-        goal_fields = get_inputs(active_obs['image_desired_goal'],
-                                active_obs['desired_goal_depth'],
-                                active_obs['goal_cam_angles'],
-                                active_obs['goal_cam_dist'])
 
         if self.initialized and self.memory3D_sampler:
             a = time.time()
@@ -73,15 +61,10 @@ class SimpleSampler(BaseSampler):
         else:
             active_obs  = [i[:1] for i in active_obs]
             # active_obs =  np.ones([1, 32, 32, 32, 16])
-            # st()
-        # st()
 
         action = self.policy.actions_np(active_obs)[0]
-        
 
         next_observation, reward, terminal, info = self.env.step(action)
-
-        #imsave("check_02.png",next_observation["desired_goal_depth"][0])
 
         self._path_length += 1
         self._path_return += reward
@@ -96,21 +79,6 @@ class SimpleSampler(BaseSampler):
             info=info,
         )
         
-        # processed_sample_filter = {}
-        # observation_keys = []
-
-        # if self.filter_keys:
-        #     for i in self.filter_keys:
-        #         i.split(".")
-        # processed_sample_filter["observations"] = {}
-        # processed_sample_filter["next_observations"] = {}
-
-        # for i in self.observation_keys:
-        #     processed_sample_filter["observations"][i] = processed_sample["observations"][i]
-
-        # processed_sample = processed_sample_filter
-        # st()
-
         for key, value in processed_sample.items():
             self._current_path[key].append(value)
 
