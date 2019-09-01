@@ -438,20 +438,45 @@ class SAC(RLAlgorithm):
             self._terminals_ph: batch['terminals'],
         }
 
-        feed_dict.update({
-            self._observations_phs[i]: batch['observations.{}'.format(key)]
-            for i, key in enumerate(self._observation_keys)
-        })
+        obs_fields = get_inputs(batch['observations.image_observation'],
+                                batch['observations.depth_observation'],
+                                batch['observations.cam_angles_observation'],
+                                batch['observations.cam_dist_observation'])
+
+        goal_fields = get_inputs(batch['observations.image_desired_goal'],
+                                 batch['observations.desired_goal_depth'],
+                                 batch['observations.goal_cam_angles'],
+                                 batch['observations.goal_cam_dist'])
+
+        next_obs_fields = get_inputs(batch['next_observations.image_observation'],
+                                     batch['next_observations.depth_observation'],
+                                     batch['next_observations.cam_angles_observation'],
+                                     batch['next_observations.cam_dist_observation'])
+
 
         feed_dict.update({
-            self._next_observations_phs[i]: batch['next_observations.{}'.format(key)]
-            for i, key in enumerate(self._observation_keys)
-        }desired_goal_keydesired_goal_key)
-        
-        # feed_dict.update({
-        #     self._sampler_observations_phs[i]: batch['next_observations.{}'.format(key)][:1]
-        #     for i, key in enumerate(self._observation_keys)
-        # })
+                           self.pix_T_cams_obs: obs_fields['pix_T_cams'],
+                           self.cam_T_velos_obs: obs_fields['cam_T_velos'],
+                           self.origin_T_camRs_obs: obs_fields['origin_T_camRs'],
+                           self.origin_T_camXs_obs: obs_fields['origin_T_camXs'],
+                           self.rgb_camXs_obs: obs_fields['rgb_camXs'],
+                           self.xyz_camXs_obs: obs_fields['xyz_camXs'],
+
+                           self.pix_T_cams_goal: goal_fields['pix_T_cams'],
+                           self.cam_T_velos_goal: goal_fields['cam_T_velos'],
+                           self.origin_T_camRs_goal: goal_fields['origin_T_camRs'],
+                           self.origin_T_camXs_goal: goal_fields['origin_T_camXs'],
+                           self.rgb_camXs_goal: goal_fields['rgb_camXs'],
+                           self.xyz_camXs_goal: goal_fields['xyz_camXs'],
+
+                           self.next_pix_T_cams_obs: next_obs_fields['pix_T_cams'],
+                           self.next_cam_T_velos_obs: next_obs_fields['cam_T_velos'],
+                           self.next_origin_T_camRs_obs: next_obs_fields['origin_T_camRs'],
+                           self.next_origin_T_camXs_obs: next_obs_fields['origin_T_camXs'],
+                           self.next_rgb_camXs_obs: next_obs_fields['rgb_camXs'],
+                           self.next_xyz_camXs_obs: next_obs_fields['xyz_camXs'],
+                          })
+
         if self._store_extra_policy_info:
             feed_dict[self._log_pis_ph] = batch['log_pis']
             feed_dict[self._raw_actions_ph] = batch['raw_actions']
