@@ -248,7 +248,7 @@ NUM_CHECKPOINTS = 10
 SIMPLE_SAMPLER_PARAMS = {
     'type': 'SimpleSampler',
     'kwargs': {
-        'batch_size': 4,
+        'batch_size': 1,
     }
 }
 
@@ -442,9 +442,9 @@ def get_variant_spec_3D(universe,
 
 
     # variant_spec["Q_params"]["kwargs"]["preprocessor_params"] = {}
-    variant_spec["Q_params"]['input_shape'] = [(32,32,32,16)]
+    variant_spec["Q_params"]['input_shape'] = [(32,32,32,64)]
 
-    variant_spec["policy_params"]["input_shape"] = [(32,32,32,16)]
+    variant_spec["policy_params"]["input_shape"] = [(32,32,32,64)]
     # variant["Q_params"]["kwargs"]["preprocessor_params"]["type"] = 'map3D_preprocessor_nonkeras'
     # variant["Q_params"]["kwargs"]["preprocessor_params"]["kwargs"] = {}
 
@@ -460,10 +460,10 @@ def get_variant_spec_3D(universe,
 
     preprocessor_params = {
         'type': 'convnet3d_preprocessor',
-        'input_shape':(32,32,32,16),
+        'input_shape':(32,32,32,64),
         'kwargs': {
             'output_size': 128,
-            'conv_filters': (16,32,64,128,128),
+            'conv_filters': (64,32,64,128,128),
             'conv_kernel_sizes': (4,4,4,4,3),
             'pool_type': 'MaxPool3D',
             'pool_sizes':(2,2,2,2,2),
