@@ -153,7 +153,7 @@ class RLAlgorithm(tf.contrib.checkpoint.Checkpointable):
                                 policy,
                                 pool,
                                 self.memory,
-                                self._observations_phs,
+                                self.obs_placeholders,
                                 self._session
         )
 

@@ -269,6 +269,7 @@ class SAC(RLAlgorithm):
                                                    self.origin_T_camXs_obs,
                                                    self.xyz_camXs_obs
                                                   )
+
         with tf.compat.v1.variable_scope("memory", reuse=True):
             memory_goal = self.map3D.infer_from_tensors(
                                                         tf.constant(0.0),
@@ -280,6 +281,7 @@ class SAC(RLAlgorithm):
                                                         self.xyz_camXs_goal
                                                        )
         self.memory = [tf.concat([memory,memory_goal],-1)]
+
 
         with tf.compat.v1.variable_scope("memory", reuse=True):
             memory_next = self.map3D.infer_from_tensors(
@@ -458,17 +460,20 @@ class SAC(RLAlgorithm):
         obs_fields = get_inputs(batch['observations.image_observation'],
                                 batch['observations.depth_observation'],
                                 batch['observations.cam_angles_observation'],
-                                batch['observations.cam_dist_observation'])
+                                batch['observations.cam_dist_observation'],
+                                batch['observations.state_observation'])
 
         goal_fields = get_inputs(batch['observations.image_desired_goal'],
                                  batch['observations.desired_goal_depth'],
                                  batch['observations.goal_cam_angles'],
-                                 batch['observations.goal_cam_dist'])
+                                 batch['observations.goal_cam_dist'],
+                                 batch['observations.state_observation'])
 
         next_obs_fields = get_inputs(batch['next_observations.image_observation'],
                                      batch['next_observations.depth_observation'],
                                      batch['next_observations.cam_angles_observation'],
-                                     batch['next_observations.cam_dist_observation'])
+                                     batch['next_observations.cam_dist_observation'],
+                                     batch['observations.state_observation'])
 
 
         feed_dict.update({

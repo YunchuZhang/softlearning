@@ -92,15 +92,15 @@ class SimpleReplayPool(FlexibleReplayPool):
         dict_observations = defaultdict(list)
         for observation in samples['observations']:
             for key, value in observation.items():
-                if ('image' in key or key in ["observation","desired_goal","achieved_goal"]) and (value is not None):
-                    value = unnormalize_image(value)
+                #if ('image' in key or key in ["observation","desired_goal","achieved_goal"]) and (value is not None):
+                    #value = unnormalize_image(value)
                 dict_observations[key].append(value)
 
         dict_next_observations = defaultdict(list)
         for next_observation in samples['next_observations']:
             for key, value in next_observation.items():
-                if('image' in key or key in ["observation","desired_goal","achieved_goal"]) and (value is not None):
-                    value = unnormalize_image(value)
+                #if('image' in key or key in ["observation","desired_goal","achieved_goal"]) and (value is not None):
+                    #value = unnormalize_image(value)
                 dict_next_observations[key].append(value)
 
         samples.update(

@@ -50,16 +50,17 @@ class SimpleSampler(BaseSampler):
         if self._current_observation is None:
             self._current_observation = self.env.reset()
 
-        active_obs = self.env.convert_to_active_observation(self._current_observation, return_dict=True)
-        active_obs = {key: np.vstack([field] * int(self._batch_size)) for key, field in active_obs.items()}
 
         if self.initialized and self.memory3D_sampler:
             a = time.time()
+            active_obs = self.env.convert_to_active_observation(self._current_observation, return_dict=True)
+            active_obs = {key: np.vstack([field] * int(self._batch_size)) for key, field in active_obs.items()}
             active_obs = self.forward_3D(active_obs)
             #print(time.time()-a,"sampler sess")
             active_obs = active_obs[:1]
         else:
-            active_obs  = [i[:1] for i in active_obs]
+            active_obs = self.env.convert_to_active_observation(self._current_observation)
+            #active_obs  = [i[:1] for i in active_obs]
             # active_obs =  np.ones([1, 32, 32, 32, 16])
 
         action = self.policy.actions_np(active_obs)[0]
