@@ -111,13 +111,20 @@ class RemoteGymAdapter(SoftlearningEnv):
         return active_observation_shape
 
 
-    def convert_to_active_observation(self, observations):
+    def convert_to_active_observation(self, observations, return_dict=False):
 
-        active_observation = []
-        for key in self.observation_keys:
-            active_observation.append(np.concatenate([
-                observation[key][None] for observation in observations
-            ], axis=0))
+        if return_dict:
+            active_observation = {}
+            for key in self.observation_keys:
+                active_observation[key] = np.concatenate([
+                    observation[key][None] for observation in observations
+                ], axis=0))
+        else:
+            active_observation = []
+            for key in self.observation_keys:
+                active_observation.append(np.concatenate([
+                    observation[key][None] for observation in observations
+                ], axis=0))
 
         return active_observation
 
