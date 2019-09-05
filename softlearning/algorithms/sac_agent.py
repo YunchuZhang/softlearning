@@ -11,6 +11,10 @@ from tensorflow.core.protobuf import rewriter_config_pb2
 import ray
 from ray.experimental.tf_utils import TensorFlowVariables
 
+import discovery.hyperparams as hyp
+from discovery.model_mujoco_online import MUJOCO_ONLINE
+from discovery.backend.mujoco_online_inputs import get_inputs
+
 from softlearning.environments.utils import get_environment_from_params
 from softlearning.algorithms.utils import get_algorithm_from_variant
 from softlearning.policies.utils import get_policy_from_variant, get_policy
@@ -21,14 +25,6 @@ from softlearning.value_functions.utils import get_Q_function_from_variant
 from softlearning.misc.utils import initialize_tf_variables
 
 #from .rl_agent import RLAgent
-
-from softlearning.map3D import constants as const
-from softlearning.map3D.nets.BulletPush3DTensor import BulletPush3DTensor4_cotrain
-from softlearning.map3D.fig import Config
-from softlearning.map3D import utils_map as utils
-
-const.set_experiment("rl_new")
-
 
 def td_target(reward, discount, next_value):
     return reward + discount * next_value

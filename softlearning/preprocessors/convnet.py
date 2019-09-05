@@ -2,7 +2,6 @@ import tensorflow as tf
 
 from softlearning.models.feedforward import feedforward_model
 from softlearning.utils.keras import create_picklable_keras_model
-from softlearning.utils.keras import PicklableKerasModel
 
 
 def convnet_preprocessor(

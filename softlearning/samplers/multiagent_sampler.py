@@ -69,14 +69,15 @@ class MultiAgentSampler(BaseSampler):
         #        self._current_observations)
         #])
 
-        active_obs = self.env.convert_to_active_observation(self._current_observations)
 
 
         if self.initialized and self.memory3D_sampler:
-            active_obs = [np.vstack([field] * int(self._batch_size / self.num_agents)) for field in active_obs]
-            active_obs = self.session.run(self.memory3D_sampler,feed_dict={self.obs_ph[0]:active_obs[0],self.obs_ph[1]:active_obs[1],self.obs_ph[2]:active_obs[2],\
-                self.obs_ph[3]:active_obs[3],self.obs_ph[4]:active_obs[4],self.obs_ph[5]:active_obs[5]})
+            active_obs = self.env.convert_to_active_observation(self._current_observations, return_dict=True)
+            active_obs = {key: np.vstack([field] * int(self._batch_size / self.num_agents)) for key, field in active_obs.items()}
+            active_obs = self.forward_3D(active_obs)
             active_obs = active_obs[:self.num_agents]
+        else:
+            active_obs = self.env.convert_to_active_observation(self._current_observations)
 
         actions = self.policy.actions_np(active_obs)
 
