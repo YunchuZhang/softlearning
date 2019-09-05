@@ -267,8 +267,9 @@ class RLAlgorithm(tf.contrib.checkpoint.Checkpointable):
                 self.sampler._max_path_length,
                 render_mode=self._eval_render_mode,
                 memory3D=self.memory,
-                obs_ph=self._observations_phs,
-                session=self._session
+                obs_ph=self.obs_placeholders,
+                session=self._session,
+                batch_size=self.batch_size
             )
 
         should_save_video = (

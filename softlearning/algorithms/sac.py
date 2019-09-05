@@ -8,6 +8,7 @@ from tensorflow.python.training import training_util
 
 import discovery.hyperparams as hyp
 from discovery.model_mujoco_online import MUJOCO_ONLINE
+from discovery.backend.mujoco_online_inputs import get_inputs
 
 from .rl_algorithm import RLAlgorithm
 import ipdb
@@ -174,21 +175,18 @@ class SAC(RLAlgorithm):
         B, H, W, V, S, N = hyp.B, hyp.H, hyp.W, hyp.V, hyp.S, hyp.N
 
         self.pix_T_cams_obs = tf.placeholder(tf.float32, [B, S, 4, 4], name='pix_T_cams_obs')
-        self.cam_T_velos_obs = tf.placeholder(tf.float32, [B, S, 4, 4], name='cam_T_velos_obs')
         self.origin_T_camRs_obs = tf.placeholder(tf.float32, [B, S, 4, 4], name='origin_T_camRs_obs')
         self.origin_T_camXs_obs = tf.placeholder(tf.float32, [B, S, 4, 4], name='origin_T_camXs_obs')
         self.rgb_camXs_obs = tf.placeholder(tf.float32, [B, S, H, W, 3], name='rgb_camXs_obs')
         self.xyz_camXs_obs = tf.placeholder(tf.float32, [B, S, V, 3], name='xyz_camXs_obs')
 
         self.pix_T_cams_goal = tf.placeholder(tf.float32, [B, S, 4, 4], name='pix_T_cams_goal')
-        self.cam_T_velos_goal = tf.placeholder(tf.float32, [B, S, 4, 4], name='cam_T_velos_goal')
         self.origin_T_camRs_goal = tf.placeholder(tf.float32, [B, S, 4, 4], name='origin_T_camRs_goal')
         self.origin_T_camXs_goal = tf.placeholder(tf.float32, [B, S, 4, 4], name='origin_T_camXs_goal')
         self.rgb_camXs_goal = tf.placeholder(tf.float32, [B, S, H, W, 3], name='rgb_camXs_goal')
         self.xyz_camXs_goal = tf.placeholder(tf.float32, [B, S, V, 3], name='xyz_camXs_goal')
 
         self.next_pix_T_cams_obs = tf.placeholder(tf.float32, [B, S, 4, 4], name='next_pix_T_cams_obs')
-        self.next_cam_T_velos_obs = tf.placeholder(tf.float32, [B, S, 4, 4], name='next_cam_T_velos_obs')
         self.next_origin_T_camRs_obs = tf.placeholder(tf.float32, [B, S, 4, 4], name='next_origin_T_camRs_obs')
         self.next_origin_T_camXs_obs = tf.placeholder(tf.float32, [B, S, 4, 4], name='next_origin_T_camXs_obs')
         self.next_rgb_camXs_obs = tf.placeholder(tf.float32, [B, S, H, W, 3], name='next_rgb_camXs_obs')
@@ -196,13 +194,11 @@ class SAC(RLAlgorithm):
 
         self.obs_placeholders = {
                                  'pix_T_cams_obs': self.pix_T_cams_obs,
-                                 'cam_T_velos_obs': self.cam_T_velos_obs,
                                  'origin_T_camRs_obs': self.origin_T_camRs_obs,
                                  'origin_T_camXs_obs': self.origin_T_camXs_obs,
                                  'rgb_camXs_obs': self.rgb_camXs_obs,
                                  'xyz_camXs_obs': self.xyz_camXs_obs,
                                  'pix_T_cams_goal': self.pix_T_cams_goal,
-                                 'cam_T_velos_goal': self.cam_T_velos_goal,
                                  'origin_T_camRs_goal': self.origin_T_camRs_goal,
                                  'origin_T_camXs_goal': self.origin_T_camXs_goal,
                                  'rgb_camXs_goal': self.rgb_camXs_goal,
@@ -264,7 +260,6 @@ class SAC(RLAlgorithm):
                                                    tf.constant(0.0),
                                                    self.rgb_camXs_obs,
                                                    self.pix_T_cams_obs,
-                                                   self.cam_T_velos_obs,
                                                    self.origin_T_camRs_obs,
                                                    self.origin_T_camXs_obs,
                                                    self.xyz_camXs_obs
@@ -275,7 +270,6 @@ class SAC(RLAlgorithm):
                                                         tf.constant(0.0),
                                                         self.rgb_camXs_goal,
                                                         self.pix_T_cams_goal,
-                                                        self.cam_T_velos_goal,
                                                         self.origin_T_camRs_goal,
                                                         self.origin_T_camXs_goal,
                                                         self.xyz_camXs_goal
@@ -288,7 +282,6 @@ class SAC(RLAlgorithm):
                                                         tf.constant(0.0),
                                                         self.next_rgb_camXs_obs,
                                                         self.next_pix_T_cams_obs,
-                                                        self.next_cam_T_velos_obs,
                                                         self.next_origin_T_camRs_obs,
                                                         self.next_origin_T_camXs_obs,
                                                         self.next_xyz_camXs_obs
@@ -465,7 +458,7 @@ class SAC(RLAlgorithm):
 
         goal_fields = get_inputs(batch['observations.image_desired_goal'],
                                  batch['observations.desired_goal_depth'],
-                                 batch['observations.goal_cam_angles'],
+                                 batch['observations.goal_cam_angle'],
                                  batch['observations.goal_cam_dist'],
                                  batch['observations.state_observation'])
 
@@ -478,21 +471,18 @@ class SAC(RLAlgorithm):
 
         feed_dict.update({
                            self.pix_T_cams_obs: obs_fields['pix_T_cams'],
-                           self.cam_T_velos_obs: obs_fields['cam_T_velos'],
                            self.origin_T_camRs_obs: obs_fields['origin_T_camRs'],
                            self.origin_T_camXs_obs: obs_fields['origin_T_camXs'],
                            self.rgb_camXs_obs: obs_fields['rgb_camXs'],
                            self.xyz_camXs_obs: obs_fields['xyz_camXs'],
 
                            self.pix_T_cams_goal: goal_fields['pix_T_cams'],
-                           self.cam_T_velos_goal: goal_fields['cam_T_velos'],
                            self.origin_T_camRs_goal: goal_fields['origin_T_camRs'],
                            self.origin_T_camXs_goal: goal_fields['origin_T_camXs'],
                            self.rgb_camXs_goal: goal_fields['rgb_camXs'],
                            self.xyz_camXs_goal: goal_fields['xyz_camXs'],
 
                            self.next_pix_T_cams_obs: next_obs_fields['pix_T_cams'],
-                           self.next_cam_T_velos_obs: next_obs_fields['cam_T_velos'],
                            self.next_origin_T_camRs_obs: next_obs_fields['origin_T_camRs'],
                            self.next_origin_T_camXs_obs: next_obs_fields['origin_T_camXs'],
                            self.next_rgb_camXs_obs: next_obs_fields['rgb_camXs'],

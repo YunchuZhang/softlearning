@@ -43,13 +43,14 @@ def rollout(env,
             memory3D=None,
             obs_ph=None,
             session=None,
-            break_on_terminal=True):
+            break_on_terminal=True,
+            batch_size=None):
 
     pool = replay_pools.SimpleReplayPool(env, max_size=path_length)
     sampler = simple_sampler.SimpleSampler(
         max_path_length=path_length,
         min_pool_size=None,
-        batch_size=None)
+        batch_size=batch_size)
     # st()
     sampler.initialize(env,
                        policy,

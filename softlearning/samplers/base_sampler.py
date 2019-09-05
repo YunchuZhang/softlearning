@@ -88,7 +88,7 @@ class BaseSampler(object):
 
         goal_fields = get_inputs(active_obs['image_desired_goal'],
                                  active_obs['desired_goal_depth'],
-                                 active_obs['goal_cam_angles'],
+                                 active_obs['goal_cam_angle'],
                                  active_obs['goal_cam_dist'],
                                  active_obs['state_observation'])
 
@@ -96,13 +96,11 @@ class BaseSampler(object):
                     self.memory3D_sampler,
                     feed_dict={
                                self.obs_ph['pix_T_cams_obs']: obs_fields['pix_T_cams'],
-                               self.obs_ph['cam_T_velos_obs']: obs_fields['cam_T_velos'],
                                self.obs_ph['origin_T_camRs_obs']: obs_fields['origin_T_camRs'],
                                self.obs_ph['origin_T_camXs_obs']: obs_fields['origin_T_camXs'],
                                self.obs_ph['rgb_camXs_obs']: obs_fields['rgb_camXs'],
                                self.obs_ph['xyz_camXs_obs']: obs_fields['xyz_camXs'],
                                self.obs_ph['pix_T_cams_goal']: goal_fields['pix_T_cams'],
-                               self.obs_ph['cam_T_velos_goal']: goal_fields['cam_T_velos'],
                                self.obs_ph['origin_T_camRs_goal']: goal_fields['origin_T_camRs'],
                                self.obs_ph['origin_T_camXs_goal']: goal_fields['origin_T_camXs'],
                                self.obs_ph['rgb_camXs_goal']: goal_fields['rgb_camXs'],
