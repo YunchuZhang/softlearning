@@ -38,7 +38,7 @@ class RLAgent():
                                 self._policy,
                                 self._pool,
                                 memory3D=self.memory,
-                                obs_ph=self._observations_phs,
+                                obs_ph=self.obs_placeholders,
                                 session=self._session)
 
 
@@ -87,7 +87,7 @@ class RLAgent():
                 self._sampler._max_path_length,
                 sampler=copy.deepcopy(self._sampler),
                 memory3D=self.memory,
-                obs_ph=self._observations_phs,
+                obs_ph=self.obs_placeholders,
                 session=self._session,
                 render_mode=render_mode)
 

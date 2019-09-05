@@ -1,6 +1,8 @@
 from collections import deque, OrderedDict
 from itertools import islice
 
+from discovery.backend.mujoco_online_inputs import get_inputs
+
 
 class BaseSampler(object):
     def __init__(self,
@@ -75,3 +77,33 @@ class BaseSampler(object):
         self.env = None
         self.policy = None
         self.pool = None
+
+    def forward_3D(self, active_obs):
+
+        obs_fields = get_inputs(active_obs['image_observation'],
+                                active_obs['depth_observation'],
+                                active_obs['cam_angles_observation'],
+                                active_obs['cam_dist_observation'],
+                                active_obs['state_observation'])
+
+        goal_fields = get_inputs(active_obs['image_desired_goal'],
+                                 active_obs['desired_goal_depth'],
+                                 active_obs['goal_cam_angle'],
+                                 active_obs['goal_cam_dist'],
+                                 active_obs['state_observation'])
+
+        memory = self.session.run(
+                    self.memory3D_sampler,
+                    feed_dict={
+                               self.obs_ph['pix_T_cams_obs']: obs_fields['pix_T_cams'],
+                               self.obs_ph['origin_T_camRs_obs']: obs_fields['origin_T_camRs'],
+                               self.obs_ph['origin_T_camXs_obs']: obs_fields['origin_T_camXs'],
+                               self.obs_ph['rgb_camXs_obs']: obs_fields['rgb_camXs'],
+                               self.obs_ph['xyz_camXs_obs']: obs_fields['xyz_camXs'],
+                               self.obs_ph['pix_T_cams_goal']: goal_fields['pix_T_cams'],
+                               self.obs_ph['origin_T_camRs_goal']: goal_fields['origin_T_camRs'],
+                               self.obs_ph['origin_T_camXs_goal']: goal_fields['origin_T_camXs'],
+                               self.obs_ph['rgb_camXs_goal']: goal_fields['rgb_camXs'],
+                               self.obs_ph['xyz_camXs_goal']: goal_fields['xyz_camXs']
+                              })
+        return memory

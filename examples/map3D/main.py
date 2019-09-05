@@ -13,8 +13,6 @@ from softlearning.policies.utils import get_policy_from_variant, get_policy
 from softlearning.replay_pools.utils import get_replay_pool_from_variant
 from softlearning.samplers.utils import get_sampler_from_variant
 from softlearning.value_functions.utils import get_Q_function_from_variant
-from softlearning.map3D.fig import Config
-from softlearning.map3D import utils_map as utils
 import os.path as path
 
 from softlearning.misc.utils import set_seed, initialize_tf_variables
@@ -39,53 +37,6 @@ class ExperimentRunner(tune.Trainable):
     def _stop(self):
         tf.reset_default_graph()
         tf.keras.backend.clear_session()
-
-    def map3d_setup(self,sess,name,map3D=None):
-        # coord = tf.train.Coordinator()
-        # threads = tf.train.start_queue_runners(coord=coord, sess=sess)
-
-        #must come after the queue runners
-        # if const.DEBUG_NAN:
-        #     self.sess = debug.LocalCLIDebugWrapperSession(self.sess)
-        #     self.sess.add_tensor_filter("has_inf_or_nan", debug.has_inf_or_nan)
-
-        step =self.map_load(sess,name,map3D=map3D)
-
-        # if not const.eager:
-        #     tf.get_default_graph().finalize()
-        # print('finished graph initialization in %f seconds' % (time() - T1))
-
-
-    def map_load(self,sess, name,map3D=None):
-        config = Config(name)
-        config.load()
-        parts = map3D.weights
-        for partname in config.dct:
-            partscope, partpath = config.dct[partname]
-            if partname not in parts:
-                raise Exception("cannot load, part %s not in model" % partpath)
-            partpath =  path.join(map3D.ckpt_base,partpath)
-            
-            ckpt = tf.train.get_checkpoint_state(partpath)
-            if not ckpt:
-                raise Exception("checkpoint not found? (1)")
-            elif not ckpt.model_checkpoint_path:
-                raise Exception("checkpoint not found? (2)")
-            loadpath = ckpt.model_checkpoint_path
-
-            scope, weights = parts[partname]
-
-            if not weights: #nothing to do
-                continue
-            
-            weights = {utils.utils.exchange_scope(weight.op.name, scope, partscope): weight
-                       for weight in weights}
-
-            saver = tf.train.Saver(weights)
-            saver.restore(sess, loadpath)
-            print(f"restore model from {loadpath}")
-        return config.step
-
 
     def _build(self):
         variant = copy.deepcopy(self._variant)
@@ -131,8 +82,6 @@ class ExperimentRunner(tune.Trainable):
         # st()
 
         initialize_tf_variables(self._session, only_uninitialized=True)
-        # st()
-        #self.map3d_setup(self._session,bulledtPush.load_name,map3D=bulledtPush)
 
         self._built = True
 

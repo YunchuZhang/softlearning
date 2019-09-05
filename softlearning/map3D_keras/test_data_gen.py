@@ -11,7 +11,6 @@ from softlearning.policies.utils import get_policy
 from softlearning.samplers.simple_sampler import SimpleSampler
 import ipdb
 st = ipdb.set_trace
-import softlearning.map3D.constants as const
 # from softlearning.map3D.nets.BulletPush3DTensor import BulletPush3DTensor4_cotrain
 from scipy.misc import imsave
 # from softlearning.map3D.map3D_trainer import MappingTrainer

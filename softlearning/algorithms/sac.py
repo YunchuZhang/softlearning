@@ -1,7 +1,13 @@
 from collections import OrderedDict
 
-import numpy as np
 import os
+import numpy as np
+import tensorflow as tf
+from tensorflow.python.training import training_util
+
+import discovery.hyperparams as hyp
+from discovery.model_mujoco_online import MUJOCO_ONLINE
+from discovery.backend.mujoco_online_inputs import get_inputs
 
 from .rl_algorithm import RLAlgorithm
 from .sac_agent import SACAgent
@@ -15,7 +21,6 @@ class SAC(RLAlgorithm):
             variant,
             plotter=None,
             tf_summaries=False,
-            map3D = None,
             lr=3e-4,
             reward_scale=1.0,
             target_entropy='auto',
@@ -132,7 +137,6 @@ class SAC(RLAlgorithm):
                 save_video(video_frames, video_file_path)
 
         return paths
-
 
     def _env_path_info(self, paths):
         return self.agent.env_path_info(paths)

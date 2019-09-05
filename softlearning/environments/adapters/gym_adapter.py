@@ -106,7 +106,7 @@ class GymAdapter(SoftlearningEnv):
         return active_observation_shape
 
 
-    def convert_to_active_observation(self, observation):
+    def convert_to_active_observation(self, observation, return_dict=False):
         if not isinstance(self._env.observation_space, spaces.Dict):
             return observation
 
@@ -114,9 +114,14 @@ class GymAdapter(SoftlearningEnv):
             self.observation_keys
             or list(self._env.observation_space.spaces.keys()))
 
-        observation = [
-            observation[key][None] for key in observation_keys
-        ]
+        if return_dict:
+            observation = {
+                    key: observation[key][None] for key in observation_keys
+            }
+        else:
+            observation = [
+                observation[key][None] for key in observation_keys
+            ]
 
         return observation
 

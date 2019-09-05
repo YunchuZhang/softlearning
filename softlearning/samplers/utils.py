@@ -49,7 +49,8 @@ def rollouts(n_paths,
              callback=None,
              render_mode=None,
              render_goals=False,
-             break_on_terminal=True):
+             break_on_terminal=True,
+             batch_size=None):
 
     pool = replay_pools.SimpleReplayPool(env, max_size=path_length)
 
@@ -57,7 +58,7 @@ def rollouts(n_paths,
         sampler = simple_sampler.SimpleSampler(
             max_path_length=path_length,
             min_pool_size=None,
-            batch_size=None,
+            batch_size=batch_size,
             store_last_n_paths=n_paths,
         )
 

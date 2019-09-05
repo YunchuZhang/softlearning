@@ -140,7 +140,21 @@ class SACAgent():
 
         self._remote = remote
 
-        self.map3D = BulletPush3DTensor4_cotrain()
+        checkpoint_dir_ = os.path.join("checkpoints", hyp.name)
+        log_dir_ = os.path.join("logs_mujoco_online", hyp.name)
+
+        if not os.path.exists(checkpoint_dir_):
+            os.makedirs(checkpoint_dir_)
+        if not os.path.exists(log_dir_):
+            os.makedirs(log_dir_)
+
+        #!! g=None might cause issues
+        self.map3D = MUJOCO_ONLINE(graph=None,
+                                    sess=None,
+                                    checkpoint_dir=checkpoint_dir_,
+                                    log_dir=log_dir_
+        )
+
         self._stop_3D_grads = stop_3D_grads
 
         self.batch_size = batch_size
@@ -195,7 +209,7 @@ class SACAgent():
                                 self._policy,
                                 self._pool,
                                 memory3D=self.memory,
-                                obs_ph=self._observations_phs,
+                                obs_ph=self.obs_placeholders,
                                 session=self._session)
 
 
@@ -260,7 +274,7 @@ class SACAgent():
                 self._sampler._max_path_length,
                 sampler=get_sampler_from_variant(self.variant),
                 memory3D=self.memory,
-                obs_ph=self._observations_phs,
+                obs_ph=self.obs_placeholders,
                 session=self._session,
                 render_mode=render_mode,
                 render_goals=render_goals)
@@ -317,19 +331,35 @@ class SACAgent():
         self._iteration_ph = tf.placeholder(
             tf.int64, shape=None, name='iteration')
 
-        self._observations_phs = [tf.placeholder(
-            tf.float32,
-            shape=(self.batch_size, *shape),
-            name='observations.{}'.format(key)
-        ) for key, shape in zip(self._observation_keys,
-                                self._observation_shape)]
+        B, H, W, V, S, N = hyp.B, hyp.H, hyp.W, hyp.V, hyp.S, hyp.N
 
-        self._next_observations_phs = [tf.placeholder(
-            tf.float32,
-            shape=(self.batch_size, *shape),
-            name='next_observations.{}'.format(key)
-        ) for key, shape in zip(self._observation_keys,
-                                self._observation_shape)]
+        self.pix_T_cams_obs = tf.placeholder(tf.float32, [B, S, 4, 4], name='pix_T_cams_obs')
+        self.origin_T_camRs_obs = tf.placeholder(tf.float32, [B, S, 4, 4], name='origin_T_camRs_obs')
+        self.origin_T_camXs_obs = tf.placeholder(tf.float32, [B, S, 4, 4], name='origin_T_camXs_obs')
+        self.rgb_camXs_obs = tf.placeholder(tf.float32, [B, S, H, W, 3], name='rgb_camXs_obs')
+        self.xyz_camXs_obs = tf.placeholder(tf.float32, [B, S, V, 3], name='xyz_camXs_obs')
+
+        self.pix_T_cams_goal = tf.placeholder(tf.float32, [B, S, 4, 4], name='pix_T_cams_goal')
+        self.origin_T_camRs_goal = tf.placeholder(tf.float32, [B, S, 4, 4], name='origin_T_camRs_goal')
+        self.origin_T_camXs_goal = tf.placeholder(tf.float32, [B, S, 4, 4], name='origin_T_camXs_goal')
+        self.rgb_camXs_goal = tf.placeholder(tf.float32, [B, S, H, W, 3], name='rgb_camXs_goal')
+        self.xyz_camXs_goal = tf.placeholder(tf.float32, [B, S, V, 3], name='xyz_camXs_goal')
+
+        self.next_pix_T_cams_obs = tf.placeholder(tf.float32, [B, S, 4, 4], name='next_pix_T_cams_obs')
+        self.next_origin_T_camRs_obs = tf.placeholder(tf.float32, [B, S, 4, 4], name='next_origin_T_camRs_obs')
+        self.next_origin_T_camXs_obs = tf.placeholder(tf.float32, [B, S, 4, 4], name='next_origin_T_camXs_obs')
+        self.next_rgb_camXs_obs = tf.placeholder(tf.float32, [B, S, H, W, 3], name='next_rgb_camXs_obs')
+        self.next_xyz_camXs_obs = tf.placeholder(tf.float32, [B, S, V, 3], name='next_xyz_camXs_obs')
+
+        self.obs_placeholders = {
+                                 'pix_T_cams_obs': self.pix_T_cams_obs,
+                                 'origin_T_camRs_obs': self.origin_T_camRs_obs,
+                                 'origin_T_camXs_obs': self.origin_T_camXs_obs,
+                                 'rgb_camXs_obs': self.rgb_camXs_obs,
+                                 'xyz_camXs_obs': self.xyz_camXs_obs,
+                                 'pix_T_cams_goal': self.pix_T_cams_goal,
+                                 'origin_T_camRs_goal': self.origin_T_camRs_goal,
+                                 }
 
         self._actions_ph = tf.placeholder(
             tf.float32,
@@ -395,49 +425,39 @@ class SACAgent():
 
 
     def _init_map3D(self):
-        # self.map3D.set_batchSize(1)
-        
-        # sampler_obs_images, sampler_obs_zmap, sampler_obs_camAngle,sampler_obs_images_goal, sampler_obs_zmap_goal, sampler_obs_camAngle_goal = [tf.expand_dims(i,1) for i in self._sampler_observations_phs[:6]]
+        with tf.compat.v1.variable_scope("memory", reuse=False):
+            memory = self.map3D.infer_from_tensors(
+                                                   tf.constant(0.0),
+                                                   self.rgb_camXs_obs,
+                                                   self.pix_T_cams_obs,
+                                                   self.origin_T_camRs_obs,
+                                                   self.origin_T_camXs_obs,
+                                                   self.xyz_camXs_obs
+                                                  )
 
-        # sampler_obs_zmap = tf.expand_dims(sampler_obs_zmap,-1)
-        # sampler_obs_zmap_goal = tf.expand_dims(sampler_obs_zmap_goal,-1)
-
-        # memory_sampler = self.map3D(sampler_obs_images,sampler_obs_camAngle,sampler_obs_zmap, is_training=None,reuse=False)
-        # memory_sampler_goal = self.map3D(sampler_obs_images_goal,sampler_obs_camAngle_goal,sampler_obs_zmap_goal, is_training=None,reuse=True)
-        # self.memory_sampler = [tf.concat([memory_sampler,memory_sampler_goal],-1)]
-        # # self.memory_sampler = 1
-        # self.map3D.set_batchSize(4)
-
-        obs_images, obs_zmap, obs_camAngle, obs_images_goal, obs_zmap_goal, obs_camAngle_goal = [tf.expand_dims(i,1) for i in self._observations_phs[:6]]
-        obs_zmap = tf.expand_dims(obs_zmap,-1)
-        obs_zmap_goal = tf.expand_dims(obs_zmap_goal,-1)
-
-        # st()
-        memory = self.map3D(obs_images, obs_camAngle, obs_zmap, is_training=None, reuse=False)
-        print("MEMORY SHAPE:", memory.get_shape())
-        memory_goal = self.map3D(obs_images_goal, obs_camAngle_goal ,obs_zmap_goal, is_training=None, reuse=True)
-
-        if self._stop_3D_grads:
-            print("Stopping 3D gradients")
-            memory = tf.stop_gradient(memory)
-            memory_goal = tf.stop_gradient(memory_goal)
-
+        with tf.compat.v1.variable_scope("memory", reuse=True):
+            memory_goal = self.map3D.infer_from_tensors(
+                                                        tf.constant(0.0),
+                                                        self.rgb_camXs_goal,
+                                                        self.pix_T_cams_goal,
+                                                        self.origin_T_camRs_goal,
+                                                        self.origin_T_camXs_goal,
+                                                        self.xyz_camXs_goal
+                                                       )
         self.memory = [tf.concat([memory,memory_goal],-1)]
-        print("MEMORY + GOAL SHAPE:", self.memory[0].get_shape())
 
-        next_obs_images, next_obs_zmap, next_obs_camAngle, next_obs_images_goal, next_obs_zmap_goal, next_obs_camAngle_goal = [tf.expand_dims(i,1) for i in self._next_observations_phs[:6]]
 
-        next_obs_zmap = tf.expand_dims(next_obs_zmap,-1)
-        next_obs_zmap_goal = tf.expand_dims(next_obs_zmap_goal,-1)
+        with tf.compat.v1.variable_scope("memory", reuse=True):
+            memory_next = self.map3D.infer_from_tensors(
+                                                        tf.constant(0.0),
+                                                        self.next_rgb_camXs_obs,
+                                                        self.next_pix_T_cams_obs,
+                                                        self.next_origin_T_camRs_obs,
+                                                        self.next_origin_T_camXs_obs,
+                                                        self.next_xyz_camXs_obs
+                                                       )
 
-        memory_next = self.map3D(next_obs_images, next_obs_camAngle, next_obs_zmap, is_training=None, reuse=True)
-        memory_next_goal = self.map3D(next_obs_images_goal, next_obs_camAngle_goal, next_obs_zmap_goal, is_training=None, reuse=True)
-
-        if self._stop_3D_grads:
-            memory_next = tf.stop_gradient(memory_next)
-            memory_next_goal = tf.stop_gradient(memory_next_goal)
-
-        self.memory_next = [tf.concat([memory_next,memory_next_goal],-1)]
+        self.memory_next = [tf.concat([memory_next, memory_goal],-1)]
 
 
     def _get_Q_target(self):
@@ -629,15 +649,44 @@ class SACAgent():
             self._terminals_ph: batch['terminals'],
         }
 
-        feed_dict.update({
-            self._observations_phs[i]: batch['observations.{}'.format(key)]
-            for i, key in enumerate(self._observation_keys)
-        })
+        obs_fields = get_inputs(batch['observations.image_observation'],
+                                batch['observations.depth_observation'],
+                                batch['observations.cam_angles_observation'],
+                                batch['observations.cam_dist_observation'],
+                                batch['observations.state_observation'])
+
+        goal_fields = get_inputs(batch['observations.image_desired_goal'],
+                                 batch['observations.desired_goal_depth'],
+                                 batch['observations.goal_cam_angle'],
+                                 batch['observations.goal_cam_dist'],
+                                 batch['observations.state_observation'])
+
+        next_obs_fields = get_inputs(batch['next_observations.image_observation'],
+                                     batch['next_observations.depth_observation'],
+                                     batch['next_observations.cam_angles_observation'],
+                                     batch['next_observations.cam_dist_observation'],
+                                     batch['observations.state_observation'])
+
 
         feed_dict.update({
-            self._next_observations_phs[i]: batch['next_observations.{}'.format(key)]
-            for i, key in enumerate(self._observation_keys)
-        })
+                           self.pix_T_cams_obs: obs_fields['pix_T_cams'],
+                           self.origin_T_camRs_obs: obs_fields['origin_T_camRs'],
+                           self.origin_T_camXs_obs: obs_fields['origin_T_camXs'],
+                           self.rgb_camXs_obs: obs_fields['rgb_camXs'],
+                           self.xyz_camXs_obs: obs_fields['xyz_camXs'],
+
+                           self.pix_T_cams_goal: goal_fields['pix_T_cams'],
+                           self.origin_T_camRs_goal: goal_fields['origin_T_camRs'],
+                           self.origin_T_camXs_goal: goal_fields['origin_T_camXs'],
+                           self.rgb_camXs_goal: goal_fields['rgb_camXs'],
+                           self.xyz_camXs_goal: goal_fields['xyz_camXs'],
+
+                           self.next_pix_T_cams_obs: next_obs_fields['pix_T_cams'],
+                           self.next_origin_T_camRs_obs: next_obs_fields['origin_T_camRs'],
+                           self.next_origin_T_camXs_obs: next_obs_fields['origin_T_camXs'],
+                           self.next_rgb_camXs_obs: next_obs_fields['rgb_camXs'],
+                           self.next_xyz_camXs_obs: next_obs_fields['xyz_camXs'],
+                          })
 
         if self._store_extra_policy_info:
             feed_dict[self._log_pis_ph] = batch['log_pis']
