@@ -355,6 +355,9 @@ class SACAgent():
                                  'xyz_camXs_obs': self.xyz_camXs_obs,
                                  'pix_T_cams_goal': self.pix_T_cams_goal,
                                  'origin_T_camRs_goal': self.origin_T_camRs_goal,
+                                 'origin_T_camXs_goal': self.origin_T_camXs_goal,
+                                 'rgb_camXs_goal': self.rgb_camXs_goal,
+                                 'xyz_camXs_goal': self.xyz_camXs_goal,
                                  }
 
         self._actions_ph = tf.placeholder(

@@ -231,7 +231,7 @@ class RLAlgorithm():
     def _evaluation_paths(self):
         raise NotImplementedError
 
-    def _evaluate_rollouts(self, paths, env):
+    def _evaluate_rollouts(self, paths, env_infos):
         """Compute evaluation metrics for the given rollouts."""
 
         total_returns = [path['rewards'].sum() for path in paths]
