@@ -50,7 +50,7 @@ ALGORITHM_PARAMS_BASE = {
     'type': 'SAC',
 
     'kwargs': {
-        'epoch_length': 1000,
+        'epoch_length': 10000,
         'train_every_n_steps': 1,
         'n_train_repeat': 3,
         #'avg_weights_every_n_steps': 2,
@@ -463,16 +463,17 @@ def get_variant_spec_3D(universe,
                                                       "cam_dist_observation",
                                                       "state_observation",
                                                       "image_desired_goal",
+                                                      "state_desired_goal",
                                                       "desired_goal_depth",
                                                       "goal_cam_angle",
                                                       "goal_cam_dist"]
 
     preprocessor_params = {
         'type': 'convnet3d_preprocessor',
-        'input_shape':(32,32,32,64),
+        'input_shape':(32,32,32,32),
         'kwargs': {
             'output_size': 128,
-            'conv_filters': (64,32,64),
+            'conv_filters': (32,32,64),
             'conv_kernel_sizes': (5,4,3),
             'conv_strides': (3, 2, 2),
             #'pool_type': 'MaxPool3D',
