@@ -18,12 +18,7 @@ class Net:
         self.is_training =True
         self.weights = {}
         self.opname = const.opname
-        const.fx = const.W / 2.0 * 1.0 / math.tan(const.fov * math.pi / 180 / 2)
-        const.fy = const.fx
-        const.focal_length = const.fx / (const.W / 2.0)
-
-        const.x0 = const.W / 2.0
-        const.y0 = const.H / 2.0
+        self.detector = False
         # self.setup_data(val)
         # self.predict()
         # self.extra_out = dict()
@@ -42,14 +37,14 @@ class Net:
         # N = self.basic_info["num_views"]
         N=54
         def gather_image_(images, idx):
-            images_NTHWC = tf.transpose(images, [2,1, 0, 3, 4, 5])
+            images_NTHWC = tf.transpose(images, [2, 1, 0, 3, 4, 5])
             images_crop = tf.gather_nd(images_NTHWC, tf.expand_dims(idx, 1))
-            return tf.transpose(images_crop, [2,1, 0, 3, 4, 5])
+            return tf.transpose(images_crop, [2, 1, 0, 3, 4, 5])
 
         def gather_angles_(angles, idx):
-            angles_NTC = tf.transpose(angles, [2,1, 0, 3])
+            angles_NTC = tf.transpose(angles, [2, 1, 0, 3])
             angles_crop = tf.gather_nd(angles_NTC, tf.expand_dims(idx, 1))
-            return tf.transpose(angles_crop, [2,1, 0, 3])
+            return tf.transpose(angles_crop, [2, 1, 0, 3])
 
         def extract_rand_view(images, zmaps, angles, sample_size):
             # idx = tf.random_shuffle(tf.range(N), seed=0 if const.mode=="test" else None)[:sample_size]
@@ -60,7 +55,6 @@ class Net:
             zmaps = gather_image_(zmaps, idx)
             angles = gather_angles_(angles, idx)
             return images, zmaps, angles, idx
-
         # if const.mode == "test":
         #     images_front = images[:, 13, :, :, :3]
         #     images_side = images[:, 8, :, :, :3]
@@ -72,21 +66,25 @@ class Net:
             nviews += const.NUM_PREDS
 
         images, zmaps, angles, idx = extract_rand_view(images, zmaps, angles, nviews)
+
         angles = tf.convert_to_tensor(angles)
         zmaps = tf.convert_to_tensor(zmaps)
 
         input_T = images.get_shape()[1].value
         # randomly select a chunk that has length of max_T
+        
         start_t = tf.cast(tf.random.uniform([1], minval=0, maxval=input_T-0.000001 - self.max_T,dtype=tf.float32)[0], tf.int32)        
+
         images = self.clip_data(images, start_t, self.max_T+1)
         angles = self.clip_data(angles, start_t, self.max_T+1)
         zmaps = self.clip_data(zmaps, start_t, self.max_T+1)
+
         # xyzorn_objects = self.clip_data(xyzorn_objects, start_t, self.max_T+1)
         # object_class = self.clip_data(object_class, start_t, self.max_T + 1)
         # xyzorn_agent = self.clip_data(xyzorn_agent, start_t, self.max_T + 1)
         # actions = self.clip_data(actions, start_t, self.max_T)
 
-        images = images/255.0 
+        # images = images
         #tf.compat.as_text(raw_seq_filename, encoding='utf-8')
 
         names = ['images', 'angles', 'zmaps']
@@ -96,11 +94,12 @@ class Net:
             stuff += [images_front]
         return Munch(zip(names, stuff))
 
+
     def init_placeholders(self):
         # basic_info = pickle.load(f)
         T = 1
-        W = 84
-        H = 84
+        W = 64
+        H = 64
         # N =1
         self.max_T = const.max_T
 
@@ -111,25 +110,24 @@ class Net:
 
         #TODO_MIHIR change these parameters and placeholders based on the data
 
-        self.images = tf.placeholder(tf.float32, [const.BS, T, const.NUM_VIEWS, W, H, 4],"images")
+        self.images = tf.placeholder(tf.float32, [const.BS, T, const.NUM_VIEWS, W, H, 3],"images")
         self.angles = tf.placeholder(tf.float32, [const.BS, T, const.NUM_VIEWS, 2],"angles")
         self.zmaps = tf.placeholder(tf.float32, [const.BS, T, const.NUM_VIEWS, W, H, 1],"zmapss")
 
-
-        self.dictVal =  Munch(images=self.images,angles=self.angles,zmaps=self.zmaps)
-        
+        self.dictVal =  Munch(images=self.images, angles=self.angles, zmaps=self.zmaps)
 
         return self.dictVal
 
-    def init_Inputs(self,images,zmaps,angles):
+
+    def init_Inputs(self, images, zmaps, angles):
         # basic_info = pickle.load(f)
         # T = 1
         # W = 128
         # H = 128
         # N =1
         T = 1
-        W = 84
-        H = 84
+        W = 64
+        H = 64
         # N =1
         self.max_T = const.max_T
 
@@ -137,14 +135,16 @@ class Net:
         self.image_size_h =const.H
         self.image_size_w =const.W
 
-        dictVal = self.normalize_custom(images,angles,zmaps)
+        dictVal = self.normalize_custom(images, angles, zmaps)
 
         return dictVal
 
-    def data(self,images,zmaps,angles):
+
+    def data(self, images, zmaps, angles):
         #data = self.child.data_for_selector(self.q_ph)
         # st()
-        data = self.init_Inputs(images,zmaps,angles)
+        # self.images_val = images
+        data = self.init_Inputs(images, zmaps, angles)
         # st()
 
         # data = self.init_placeholders()
@@ -154,6 +154,7 @@ class Net:
         data.images = self.clip_data(data.images, start_t, self.max_T + 1)
         data.angles = self.clip_data(data.angles, start_t, self.max_T + 1)
         data.zmaps = self.clip_data(data.zmaps, start_t, self.max_T + 1)
+
         if const.run_full:
             data.xyzorn_objects = self.clip_data(data.xyzorn_objects, start_t, self.max_T + 1)
             data.object_class = self.clip_data(data.object_class, start_t, self.max_T + 1)
@@ -166,10 +167,13 @@ class Net:
             data = Munch(inputs = self.make_inputs(data))
 
         return data
-    def child_normalize(self,data):
+
+
+    def child_normalize(self, data):
         images = tf.cast(data.images, tf.uint8)
         angles = tf.cast(data.angles, tf.float32)
         zmaps = tf.cast(data.zmaps, tf.float32)
+
     def get_delta(self, xyzorn, xyzorn_after):
         delta_pos = xyzorn_after[:,:,:,:3] - xyzorn[:,:,:,:3]
         #quat1 = tfq.Quaternion(tf.concat([xyzorn[:,:,:,6:7], xyzorn[:,:,:,3:6]], 3))
@@ -254,14 +258,43 @@ class Net:
         self.optimizer = tf.train.AdamOptimizer(const.lr, const.mom)
         self.opt = utils.tfutil.make_opt_op(self.optimizer, fn)
 
-    def __call__(self,images,angles,zmaps,is_training=None,reuse=False):
+    def __call__(self,
+                 images,
+                 angles,
+                 zmaps,
+                 batch_size=None,
+                 exp_name=None,
+                 is_training=None,
+                 reuse=False,
+                 eager=False,
+                 position=None):
         #index is passed to the data_selector, to control which data is used
         #self.go_up_to_loss(index)
-        # if batch_size:
-        #     const.BS = batch_size
-        with tf.compat.v1.variable_scope("Variables",reuse=reuse):
-            val = self.data(images,zmaps,angles)
-            self.optimize(lambda: self.go_up_to_loss(val,is_training))
+        # st()
+        # self.exp_name = exp_name
+        # st()
+        if exp_name:
+            const.set_experiment(exp_name)
+            self.__dict__.update(const.__dict__)
+        if batch_size:
+            const.BS = batch_size
+        if eager:
+            const.eager = eager
+            const.DEBUG_UNPROJECT = True
+
+        # self.detector = detector
+        if position is not None:
+            self.position = tf.layers.flatten(position)
+        # st()
+        const.fx = const.W / 2.0 * 1.0 / math.tan(const.fov * math.pi / 180 / 2)
+        const.fy = const.fx
+        const.focal_length = const.fx / (const.W / 2.0)
+
+        const.x0 = const.W / 2.0
+        const.y0 = const.H / 2.0
+        with tf.compat.v1.variable_scope("Variables", reuse=reuse):
+            val = self.data(images, zmaps, angles)
+            self.optimize(lambda: self.go_up_to_loss(val, is_training))
             self.assemble()
         return self.memory_3D
 

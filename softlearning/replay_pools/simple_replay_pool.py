@@ -92,7 +92,6 @@ class SimpleReplayPool(FlexibleReplayPool):
         if not isinstance(self._observation_space, Dict):
             return super(SimpleReplayPool, self).add_samples(samples)
 
-
         dict_observations = defaultdict(list)
         for observation in samples['observations']:
             for key, value in observation.items():

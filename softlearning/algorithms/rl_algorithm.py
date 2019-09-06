@@ -5,9 +5,6 @@ import gtimer as gt
 import os
 
 import numpy as np
-import time
-import ipdb
-st = ipdb.set_trace
 
 
 class RLAlgorithm():
@@ -122,10 +119,8 @@ class RLAlgorithm():
     def _train(self):
         """Return a generator that performs RL training.
         """
-
         if not self._training_started:
             self._init_training()
-
             self._initial_exploration_hook()
 
         self._init_sampler()
@@ -156,12 +151,8 @@ class RLAlgorithm():
                                   steps=self._train_every_n_steps)
                 gt.stamp('sample')
 
-                # print(samples_now,start_samples,self._epoch_length,"params")
-                gt.stamp('sample')
-                # print("training")
                 if self.ready_to_train:
                     self._do_training_repeats(timestep=self._total_timestep)
-
                 gt.stamp('train')
 
                 self._timestep_after_hook()
@@ -184,13 +175,11 @@ class RLAlgorithm():
                 gt.stamp('evaluation_metrics')
             else:
                 evaluation_metrics = {}
-            print("evaluation done")
+
             self._epoch_after_hook(training_paths)
             gt.stamp('epoch_after_hook')
 
             sampler_diagnostics = self._sampler_diagnostics()
-
-            # st()
 
             diagnostics = self.get_diagnostics(
                 iteration=self._total_timestep,
@@ -242,7 +231,7 @@ class RLAlgorithm():
     def _evaluation_paths(self):
         raise NotImplementedError
 
-    def _evaluate_rollouts(self, paths, env_infos):
+    def _evaluate_rollouts(self, paths, env):
         """Compute evaluation metrics for the given rollouts."""
 
         total_returns = [path['rewards'].sum() for path in paths]
@@ -259,6 +248,7 @@ class RLAlgorithm():
             ('episode-length-std', np.std(episode_lengths)),
         ))
 
+        env_infos = env.get_path_infos(paths)
         for key, value in env_infos.items():
             diagnostics[f'env_infos/{key}'] = value
 

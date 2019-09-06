@@ -106,7 +106,7 @@ tb_dir = 'log'
 data_dir = 'data'
 ckpt_dir = 'ckpt'
 ckpt_cfg_dir = 'ckpt_cfg'
-loss="CE"
+LOSS_FN="CE"
 
 
 # debug flags
@@ -188,8 +188,8 @@ train_vp = False
 train_on_val = False
 
 IS_VIEW_PRED = train_vp
-
-
+ckpt_base = ""
+detector= False
 ####
 
 T0 = time.time()
@@ -710,7 +710,7 @@ OG("rl_new",
    IS_NOT_BN_IN_3D = True,
    lr=0.001,
    max_T = 0,
-   opname="bulletpush3D_4_cotrain", H =64, W=64,
+   opname="bulletpush3D_4_cotrain", H=64, W=64,
    CONVLSTM_STEPS = 6,
    #data_dir="/projects/katefgroup/xian/data",
    #data_dir="/home/mprabhud/rl/softlearning/softlearning/map3D",
@@ -726,16 +726,20 @@ OG("rl_new",
    DEBUG_UNPROJECT=False,
    BS=16, valp=500, is_trainval_diff_summ=True,
    run_full=False,
-   #ckpt_cfg_dir="/home/mprabhud/rl/softlearning/softlearning/map3D/ckpt_cfg",
-   #ckpt_cfg_dir="/media/shared/Documents/Research/VMGE/3d_temp/ckpt_cfg",
-   ckpt_cfg_dir="/home/adhaig/softlearning/softlearning/map3D/ckpt_cfg",
-   load_name="rl_new/1"
+#    #ckpt_cfg_dir="/home/mprabhud/rl/softlearning/softlearning/map3D/ckpt_cfg",
+#    ckpt_cfg_dir="/media/shared/Documents/Research/VMGE/3d_temp/ckpt_cfg",
+#    load_name="rl_new/1"
+   ckpt_cfg_dir="ckpt_cfg",
+   load_name="rl_new/1",
+   #ckpt_base = "/home/mprabhud/rl/softlearning/softlearning/map3D/"
+   ckpt_base = "/media/shared/Research/VMGE/softlearning/softlearning/map3D/"
    #load_name = "0517_bulletpush3D_4_multicam_bn_mask/no_bn_on_top_3d_shuffle"
    #load_name = "0517_bulletpush3D_4_multicam_bn_mask/xian_bs4"
    )
 OG("rl_temp","rl_new",ckpt_cfg_dir="ckpt_cfg")
 
-
+OG("rl_new_reach","rl_new",load_name="rl_new/1")
+OG("rl_new_reach_detect","rl_new",load_name="rl_new_detector/1",detector=True)
 
 
 ############################## SLAM Baseline #######################################
@@ -1337,5 +1341,3 @@ focal_length = fx / (W / 2.0) #NO SCALING
 
 x0 = W / 2.0
 y0 = H / 2.0
-        
-
