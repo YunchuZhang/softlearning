@@ -248,6 +248,7 @@ class RLAlgorithm():
             ('episode-length-std', np.std(episode_lengths)),
         ))
 
+        env_infos = env.get_path_infos(paths)
         for key, value in env_infos.items():
             diagnostics[f'env_infos/{key}'] = value
 
