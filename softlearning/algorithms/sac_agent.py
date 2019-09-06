@@ -23,6 +23,7 @@ from softlearning.samplers.utils import get_sampler_from_variant
 from softlearning.samplers import rollouts
 from softlearning.value_functions.utils import get_Q_function_from_variant
 from softlearning.misc.utils import initialize_tf_variables
+from softlearning.preprocessors.utils import get_preprocessor_from_params
 
 #from .rl_agent import RLAgent
 
@@ -105,7 +106,7 @@ class SACAgent():
         self._sampler = get_sampler_from_variant(variant)
         self._pool = get_replay_pool_from_variant(variant, self._training_environment)
 
-        self._preprocessor = get_preprocessor_from_params(self._training_environment, variant['preprocess_params'])
+        self._preprocessor = get_preprocessor_from_params(self._training_environment, variant['preprocessor_params'])
 
         self._Qs = get_Q_function_from_variant(variant, self._training_environment)
         self._policy = get_policy_from_variant(variant, self._training_environment, self._Qs)
@@ -440,15 +441,15 @@ class SACAgent():
 
             latent_state = self._preprocessor([memory])
 
-        with tf.compat.v1.variable_scope("memory", reuse=True):
-            memory_goal = self.map3D.infer_from_tensors(
-                                                   tf.constant(np.zeros(hyp.B), dtype=tf.float32),
-                                                        self.rgb_camXs_goal,
-                                                        self.pix_T_cams_goal,
-                                                        self.origin_T_camRs_goal,
-                                                        self.origin_T_camXs_goal,
-                                                        self.xyz_camXs_goal
-                                                       )
+        #  with tf.compat.v1.variable_scope("memory", reuse=True):
+            #  memory_goal = self.map3D.infer_from_tensors(
+                                                   #  tf.constant(np.zeros(hyp.B), dtype=tf.float32),
+                                                        #  self.rgb_camXs_goal,
+                                                        #  self.pix_T_cams_goal,
+                                                        #  self.origin_T_camRs_goal,
+                                                        #  self.origin_T_camXs_goal,
+                                                        #  self.xyz_camXs_goal
+                                                       #  )
 
 
         self.memory = [tf.concat([latent_state, self.centroid_goal],-1)]
@@ -664,11 +665,11 @@ class SACAgent():
                                 batch['observations.cam_dist_observation'],
                                 batch['observations.state_observation'])
 
-        goal_fields = get_inputs(batch['observations.image_desired_goal'],
-                                 batch['observations.desired_goal_depth'],
-                                 batch['observations.goal_cam_angle'],
-                                 batch['observations.goal_cam_dist'],
-                                 batch['observations.state_observation'])
+        #  goal_fields = get_inputs(batch['observations.image_desired_goal'],
+                                 #  batch['observations.desired_goal_depth'],
+                                 #  batch['observations.goal_cam_angle'],
+                                 #  batch['observations.goal_cam_dist'],
+                                 #  batch['observations.state_observation'])
 
         next_obs_fields = get_inputs(batch['next_observations.image_observation'],
                                      batch['next_observations.depth_observation'],
@@ -684,12 +685,12 @@ class SACAgent():
                            self.rgb_camXs_obs: obs_fields['rgb_camXs'],
                            self.xyz_camXs_obs: obs_fields['xyz_camXs'],
 
-                           self.pix_T_cams_goal: goal_fields['pix_T_cams'],
-                           self.origin_T_camRs_goal: goal_fields['origin_T_camRs'],
-                           self.origin_T_camXs_goal: goal_fields['origin_T_camXs'],
-                           self.rgb_camXs_goal: goal_fields['rgb_camXs'],
-                           self.xyz_camXs_goal: goal_fields['xyz_camXs'],
-                           self.centroid_goal: batch['state_desired_goal'],
+                           #  self.pix_T_cams_goal: goal_fields['pix_T_cams'],
+                           #  self.origin_T_camRs_goal: goal_fields['origin_T_camRs'],
+                           #  self.origin_T_camXs_goal: goal_fields['origin_T_camXs'],
+                           #  self.rgb_camXs_goal: goal_fields['rgb_camXs'],
+                           #  self.xyz_camXs_goal: goal_fields['xyz_camXs'],
+                           self.centroid_goal: batch['observations.state_desired_goal'],
 
                            self.next_pix_T_cams_obs: next_obs_fields['pix_T_cams'],
                            self.next_origin_T_camRs_obs: next_obs_fields['origin_T_camRs'],

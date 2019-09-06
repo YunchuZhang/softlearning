@@ -86,11 +86,11 @@ class BaseSampler(object):
                                 active_obs['cam_dist_observation'],
                                 active_obs['state_observation'])
 
-        goal_fields = get_inputs(active_obs['image_desired_goal'],
-                                 active_obs['desired_goal_depth'],
-                                 active_obs['goal_cam_angle'],
-                                 active_obs['goal_cam_dist'],
-                                 active_obs['state_observation'])
+        #  goal_fields = get_inputs(active_obs['image_desired_goal'],
+                                 #  active_obs['desired_goal_depth'],
+                                 #  active_obs['goal_cam_angle'],
+                                 #  active_obs['goal_cam_dist'],
+                                 #  active_obs['state_observation'])
 
         memory = self.session.run(
                     self.memory3D_sampler,
