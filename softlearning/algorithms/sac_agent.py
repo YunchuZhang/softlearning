@@ -423,7 +423,7 @@ class SACAgent():
     def _init_map3D(self):
         with tf.compat.v1.variable_scope("memory", reuse=False):
             memory = self.map3D.infer_from_tensors(
-                                                   tf.constant(0.0),
+                                                   tf.constant(np.zeros(hyp.B), dtype=tf.float32),
                                                    self.rgb_camXs_obs,
                                                    self.pix_T_cams_obs,
                                                    self.origin_T_camRs_obs,
@@ -433,7 +433,7 @@ class SACAgent():
 
         with tf.compat.v1.variable_scope("memory", reuse=True):
             memory_goal = self.map3D.infer_from_tensors(
-                                                        tf.constant(0.0),
+                                                   tf.constant(np.zeros(hyp.B), dtype=tf.float32),
                                                         self.rgb_camXs_goal,
                                                         self.pix_T_cams_goal,
                                                         self.origin_T_camRs_goal,
@@ -445,7 +445,7 @@ class SACAgent():
 
         with tf.compat.v1.variable_scope("memory", reuse=True):
             memory_next = self.map3D.infer_from_tensors(
-                                                        tf.constant(0.0),
+                                                        tf.constant(np.zeros(hyp.B), dtype=tf.float32),
                                                         self.next_rgb_camXs_obs,
                                                         self.next_pix_T_cams_obs,
                                                         self.next_origin_T_camRs_obs,

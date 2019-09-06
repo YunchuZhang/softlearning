@@ -118,7 +118,7 @@ class RemoteGymAdapter(SoftlearningEnv):
             for key in self.observation_keys:
                 active_observation[key] = np.concatenate([
                     observation[key][None] for observation in observations
-                ], axis=0))
+                ], axis=0)
         else:
             active_observation = []
             for key in self.observation_keys:

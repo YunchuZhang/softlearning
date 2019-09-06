@@ -50,7 +50,7 @@ ALGORITHM_PARAMS_BASE = {
     'type': 'SAC',
 
     'kwargs': {
-        'epoch_length': 10000,
+        'epoch_length': 1000,
         'train_every_n_steps': 1,
         'n_train_repeat': 3,
         #'avg_weights_every_n_steps': 2,
@@ -265,7 +265,7 @@ MULTIAGENT_SAMPLER_PARAMS = {
     'type': 'MultiAgentSampler',
     'kwargs': {
         'num_agents': 8,
-        'batch_size': 1,
+        'batch_size': 8,
     }
 }
 
