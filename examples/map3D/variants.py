@@ -450,9 +450,9 @@ def get_variant_spec_3D(universe,
         universe, domain, task, policy, algorithm, sampler, replay_pool, *args, **kwargs)
 
 
-    variant_spec["Q_params"]['input_shape'] = [(32,32,32,64)]
+    variant_spec["Q_params"]['input_shape'] = [(131,)]
 
-    variant_spec["policy_params"]["input_shape"] = [(32,32,32,64)]
+    variant_spec["policy_params"]["input_shape"] = [(131,)]
     variant_spec["exp_name"] = "rl_new_reach_detect"
 
     environment_params = variant_spec['environment_params']
@@ -481,10 +481,11 @@ def get_variant_spec_3D(universe,
             'dense_hidden_layer_sizes': (64, 64),
         },
     }
-    variant_spec['policy_params']['kwargs']['preprocessor_params'] = (
-        preprocessor_params.copy())
-    variant_spec['Q_params']['kwargs']['preprocessor_params'] = (
-        preprocessor_params.copy())
+    variant_spec['preprocessor_params'] = preprocessor_params.copy()
+    #variant_spec['policy_params']['kwargs']['preprocessor_params'] = (
+    #    preprocessor_params.copy())
+    #variant_spec['Q_params']['kwargs']['preprocessor_params'] = (
+    #    preprocessor_params.copy())
 
     return variant_spec
 

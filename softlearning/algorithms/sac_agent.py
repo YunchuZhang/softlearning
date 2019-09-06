@@ -105,6 +105,8 @@ class SACAgent():
         self._sampler = get_sampler_from_variant(variant)
         self._pool = get_replay_pool_from_variant(variant, self._training_environment)
 
+        self._preprocessor = get_preprocessor_from_params(self._training_environment, variant['preprocess_params'])
+
         self._Qs = get_Q_function_from_variant(variant, self._training_environment)
         self._policy = get_policy_from_variant(variant, self._training_environment, self._Qs)
 
@@ -335,11 +337,12 @@ class SACAgent():
         self.rgb_camXs_obs = tf.placeholder(tf.float32, [B, S, H, W, 3], name='rgb_camXs_obs')
         self.xyz_camXs_obs = tf.placeholder(tf.float32, [B, S, V, 3], name='xyz_camXs_obs')
 
-        self.pix_T_cams_goal = tf.placeholder(tf.float32, [B, S, 4, 4], name='pix_T_cams_goal')
-        self.origin_T_camRs_goal = tf.placeholder(tf.float32, [B, S, 4, 4], name='origin_T_camRs_goal')
-        self.origin_T_camXs_goal = tf.placeholder(tf.float32, [B, S, 4, 4], name='origin_T_camXs_goal')
-        self.rgb_camXs_goal = tf.placeholder(tf.float32, [B, S, H, W, 3], name='rgb_camXs_goal')
-        self.xyz_camXs_goal = tf.placeholder(tf.float32, [B, S, V, 3], name='xyz_camXs_goal')
+        #self.pix_T_cams_goal = tf.placeholder(tf.float32, [B, S, 4, 4], name='pix_T_cams_goal')
+        #self.origin_T_camRs_goal = tf.placeholder(tf.float32, [B, S, 4, 4], name='origin_T_camRs_goal')
+        #self.origin_T_camXs_goal = tf.placeholder(tf.float32, [B, S, 4, 4], name='origin_T_camXs_goal')
+        #self.rgb_camXs_goal = tf.placeholder(tf.float32, [B, S, H, W, 3], name='rgb_camXs_goal')
+        #self.xyz_camXs_goal = tf.placeholder(tf.float32, [B, S, V, 3], name='xyz_camXs_goal')
+        self.centroid_goal = tf.placeholder(tf.float32, [B, 3], name='centroid_goal')
 
         self.next_pix_T_cams_obs = tf.placeholder(tf.float32, [B, S, 4, 4], name='next_pix_T_cams_obs')
         self.next_origin_T_camRs_obs = tf.placeholder(tf.float32, [B, S, 4, 4], name='next_origin_T_camRs_obs')
@@ -353,11 +356,12 @@ class SACAgent():
                                  'origin_T_camXs_obs': self.origin_T_camXs_obs,
                                  'rgb_camXs_obs': self.rgb_camXs_obs,
                                  'xyz_camXs_obs': self.xyz_camXs_obs,
-                                 'pix_T_cams_goal': self.pix_T_cams_goal,
-                                 'origin_T_camRs_goal': self.origin_T_camRs_goal,
-                                 'origin_T_camXs_goal': self.origin_T_camXs_goal,
-                                 'rgb_camXs_goal': self.rgb_camXs_goal,
-                                 'xyz_camXs_goal': self.xyz_camXs_goal,
+                                 #'pix_T_cams_goal': self.pix_T_cams_goal,
+                                 #'origin_T_camRs_goal': self.origin_T_camRs_goal,
+                                 #'origin_T_camXs_goal': self.origin_T_camXs_goal,
+                                 #'rgb_camXs_goal': self.rgb_camXs_goal,
+                                 #'xyz_camXs_goal': self.xyz_camXs_goal,
+                                 'centroid_goal': self.centroid_goal,
                                  }
 
         self._actions_ph = tf.placeholder(
@@ -434,6 +438,8 @@ class SACAgent():
                                                    self.xyz_camXs_obs
                                                   )
 
+            latent_state = self._preprocessor([memory])
+
         with tf.compat.v1.variable_scope("memory", reuse=True):
             memory_goal = self.map3D.infer_from_tensors(
                                                    tf.constant(np.zeros(hyp.B), dtype=tf.float32),
@@ -443,7 +449,9 @@ class SACAgent():
                                                         self.origin_T_camXs_goal,
                                                         self.xyz_camXs_goal
                                                        )
-        self.memory = [tf.concat([memory,memory_goal],-1)]
+
+
+        self.memory = [tf.concat([latent_state, self.centroid_goal],-1)]
 
 
         with tf.compat.v1.variable_scope("memory", reuse=True):
@@ -456,7 +464,9 @@ class SACAgent():
                                                         self.next_xyz_camXs_obs
                                                        )
 
-        self.memory_next = [tf.concat([memory_next, memory_goal],-1)]
+            next_latent_state = self._preprocessor([memory])
+
+        self.memory_next = [tf.concat([next_latent_state, self.centroid_goal],-1)]
 
 
     def _get_Q_target(self):
@@ -679,6 +689,7 @@ class SACAgent():
                            self.origin_T_camXs_goal: goal_fields['origin_T_camXs'],
                            self.rgb_camXs_goal: goal_fields['rgb_camXs'],
                            self.xyz_camXs_goal: goal_fields['xyz_camXs'],
+                           self.centroid_goal: batch['state_desired_goal'],
 
                            self.next_pix_T_cams_obs: next_obs_fields['pix_T_cams'],
                            self.next_origin_T_camRs_obs: next_obs_fields['origin_T_camRs'],

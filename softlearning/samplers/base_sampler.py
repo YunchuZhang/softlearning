@@ -100,10 +100,11 @@ class BaseSampler(object):
                                self.obs_ph['origin_T_camXs_obs']: obs_fields['origin_T_camXs'],
                                self.obs_ph['rgb_camXs_obs']: obs_fields['rgb_camXs'],
                                self.obs_ph['xyz_camXs_obs']: obs_fields['xyz_camXs'],
-                               self.obs_ph['pix_T_cams_goal']: goal_fields['pix_T_cams'],
-                               self.obs_ph['origin_T_camRs_goal']: goal_fields['origin_T_camRs'],
-                               self.obs_ph['origin_T_camXs_goal']: goal_fields['origin_T_camXs'],
-                               self.obs_ph['rgb_camXs_goal']: goal_fields['rgb_camXs'],
-                               self.obs_ph['xyz_camXs_goal']: goal_fields['xyz_camXs']
+                               #self.obs_ph['pix_T_cams_goal']: goal_fields['pix_T_cams'],
+                               #self.obs_ph['origin_T_camRs_goal']: goal_fields['origin_T_camRs'],
+                               #self.obs_ph['origin_T_camXs_goal']: goal_fields['origin_T_camXs'],
+                               #self.obs_ph['rgb_camXs_goal']: goal_fields['rgb_camXs'],
+                               #self.obs_ph['xyz_camXs_goal']: goal_fields['xyz_camXs']
+                               self.obs_ph['centroid_goal']: active_obs['state_desired_goal'],
                               })
         return memory
