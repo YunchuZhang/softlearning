@@ -106,7 +106,6 @@ class SimpleSampler(BaseSampler):
             'last-path-return': self._last_path_return,
             'episodes': self._n_episodes,
             'total-samples': self._total_samples,
-            'current_trajectory': self.trajectory
         })
 
         return diagnostics

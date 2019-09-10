@@ -446,7 +446,7 @@ def get_variant_spec(args):
     return variant_spec
 
 def change_env_to_use_correct_mesh(mesh):
-    path_to_xml = os.path.join('/projects/katefgroup/rakeshm/multiworld/multiworld/envs/assets/sawyer_xyz/sawyer_push_box.xml')
+    path_to_xml = os.path.join('/home/rakeshm/multiworld/multiworld/envs/assets/sawyer_xyz/sawyer_push_box.xml')
     tree = et.parse(path_to_xml)
     root = tree.getroot()
     [x.attrib for x in root.iter('geom')][0]['mesh']=mesh
