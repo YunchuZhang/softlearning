@@ -457,13 +457,12 @@ def get_variant_spec_3D(universe,
     # env_train_params["kwargs"] = {}
     env_train_params["kwargs"]["observation_keys"] = ["image_observation",
                                                       "depth_observation",
-                                                      "cam_angles_observation",
-                                                      "cam_dist_observation",
+                                                      "cam_info_observation",
                                                       "state_observation",
+                                                      "state_desired_goal",
                                                       "image_desired_goal",
                                                       "desired_goal_depth",
-                                                      "goal_cam_angle",
-                                                      "goal_cam_dist"]
+                                                      "cam_info_goal"]
     #  env_train_params["kwargs"]["map3D"] = map3D_model
 
     preprocessor_params = {
@@ -483,29 +482,6 @@ def get_variant_spec_3D(universe,
         preprocessor_params.copy())
     variant_spec['Q_params']['kwargs']['preprocessor_params'] = (
         preprocessor_params.copy())
-    # env_eval_params  = environment_params['evaluation']
-    # env_train_params["kwargs"] = {}
-    # env_eval_params["kwargs"]["observation_keys"] = ["image_observation","depth_observation","cam_angles_observation","image_desired_goal","desired_goal_depth","goal_cam_angle","achieved_goal"]
-    # env_eval_params["kwargs"]["map3D"] = map3D_model
-    # if 'image' in task.lower() or 'image' in domain.lower():
-    #     preprocessor_params = {
-    #         'type': 'map3D_preprocessor',
-    #         # TODO: These are just copied and need to be changed
-    #         'kwargs': {
-    #             'mapping_model': map3D_model,
-    #             'output_size': M,
-    #             'filters': (4, 4),
-    #             'kernel_sizes': ((3, 3), (3, 3)),
-    #             'pool_type': 'MaxPool2D',
-    #             'pool_sizes': ((2, 2), (2, 2)),
-    #             'pool_strides': (2, 2),
-    #             'dense_hidden_layer_sizes': (),
-    #         },
-    #     }
-    #     variant_spec['policy_params']['kwargs']['preprocessor_params'] = (
-    #         preprocessor_params.copy())
-    #     variant_spec['Q_params']['kwargs']['preprocessor_params'] = (
-    #         preprocessor_params.copy())
 
     return variant_spec
 
