@@ -661,15 +661,13 @@ class SACAgent():
 
         obs_fields = get_inputs(batch['observations.image_observation'],
                                 batch['observations.depth_observation'],
-                                batch['observations.cam_angles_observation'],
-                                batch['observations.cam_dist_observation'],
+                                batch['observations.cam_info_observation'],
                                 batch['observations.state_observation'])
 
-        #  goal_fields = get_inputs(batch['observations.image_desired_goal'],
-                                 #  batch['observations.desired_goal_depth'],
-                                 #  batch['observations.goal_cam_angle'],
-                                 #  batch['observations.goal_cam_dist'],
-                                 #  batch['observations.state_observation'])
+        #goal_fields = get_inputs(batch['observations.image_desired_goal'],
+        #                         batch['observations.desired_goal_depth'],
+        #                         batch['observations.cam_info_goal'],
+        #                         batch['observations.state_desired_goal'])
 
         next_obs_fields = get_inputs(batch['next_observations.image_observation'],
                                      batch['next_observations.depth_observation'],
