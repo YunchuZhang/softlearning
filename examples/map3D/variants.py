@@ -459,13 +459,12 @@ def get_variant_spec_3D(universe,
     env_train_params = environment_params['training']
     env_train_params["kwargs"]["observation_keys"] = ["image_observation",
                                                       "depth_observation",
-                                                      "cam_angles_observation",
-                                                      "cam_dist_observation",
+                                                      "cam_info_observation",
                                                       "state_observation",
+                                                      "state_desired_goal",
                                                       "image_desired_goal",
                                                       "desired_goal_depth",
-                                                      "goal_cam_angle",
-                                                      "goal_cam_dist"]
+                                                      "cam_info_goal"]
 
     preprocessor_params = {
         'type': 'convnet3d_preprocessor',
