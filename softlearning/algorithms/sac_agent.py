@@ -338,7 +338,9 @@ class SACAgent():
         self.rgb_camXs_obs = tf.placeholder(tf.float32, [B, S, H, W, 3], name='rgb_camXs_obs')
         self.xyz_camXs_obs = tf.placeholder(tf.float32, [B, S, V, 3], name='xyz_camXs_obs')
 
-        self.state_centroid = tf.placeholder(tf.float32, [B, 15], name='state_centroid')
+        self.state_centroid = tf.placeholder(tf.float32,
+                                             [B, *self._training_environment.observation_space.spaces['full_state_observation'].shape],
+                                             name='state_centroid')
 
         #self.pix_T_cams_goal = tf.placeholder(tf.float32, [B, S, 4, 4], name='pix_T_cams_goal')
         #self.origin_T_camRs_goal = tf.placeholder(tf.float32, [B, S, 4, 4], name='origin_T_camRs_goal')
@@ -353,7 +355,9 @@ class SACAgent():
         self.next_rgb_camXs_obs = tf.placeholder(tf.float32, [B, S, H, W, 3], name='next_rgb_camXs_obs')
         self.next_xyz_camXs_obs = tf.placeholder(tf.float32, [B, S, V, 3], name='next_xyz_camXs_obs')
 
-        self.next_state_centroid = tf.placeholder(tf.float32, [B, 15], name='next_state_centroid')
+        self.next_state_centroid = tf.placeholder(tf.float32,
+                                                  [B, *self._training_environment.observation_space.spaces['full_state_observation'].shape],
+                                                  name='next_state_centroid')
 
         self.puck_xyz_camRs_obs = tf.placeholder(tf.float32, [B, 1, 3], name='puck_xyz_camRs_obs')
         self.camRs_T_puck_obs = tf.placeholder(tf.float32, [B, 1, 3, 3], name='camRs_T_puck_obs')
