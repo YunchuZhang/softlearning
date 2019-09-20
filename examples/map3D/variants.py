@@ -81,7 +81,7 @@ ALGORITHM_PARAMS_ADDITIONAL = {
             'target_entropy': 'auto',
             'store_extra_policy_info': False,
             'action_prior': 'uniform',
-            'n_initial_exploration_steps': int(1e3),
+            'n_initial_exploration_steps': int(5e3),
         }
     },
     'SQL': {
@@ -320,7 +320,7 @@ HER_REPLAY_POOL_PARAMS = {
     'type': 'HerReplayPool',
     'kwargs': {
         'normalize_images': False,
-        'max_size': 5e4,
+        'max_size': 4e4,
         'compute_reward_keys': {'achieved': 'state_achieved_goal',
                                 'desired': 'state_desired_goal',
                                 # These are required by the multiworld ImageEnv
@@ -464,7 +464,7 @@ def get_variant_spec_3D(universe,
                                                       "state_desired_goal",
                                                       "image_desired_goal",
                                                       "state_desired_goal",
-                                                      "desired_goal_depth",
+                                                      "depth_desired_goal",
                                                       "cam_info_goal"]
 
     preprocessor_params = {

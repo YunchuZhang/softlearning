@@ -351,6 +351,13 @@ class SACAgent():
         self.next_rgb_camXs_obs = tf.placeholder(tf.float32, [B, S, H, W, 3], name='next_rgb_camXs_obs')
         self.next_xyz_camXs_obs = tf.placeholder(tf.float32, [B, S, V, 3], name='next_xyz_camXs_obs')
 
+        self.puck_xyz_camRs_obs = tf.placeholder(tf.float32, [B, 1, 3], name='puck_xyz_camRs_obs')
+        self.camRs_T_puck_obs = tf.placeholder(tf.float32, [B, 1, 3, 3], name='camRs_T_puck_obs')
+
+        self.next_puck_xyz_camRs_obs = tf.placeholder(tf.float32, [B, 1, 3], name='next_puck_xyz_camRs_obs')
+        self.next_camRs_T_puck_obs = tf.placeholder(tf.float32, [B, 1, 3, 3], name='next_camRs_T_puck_obs')
+        self.obj_size = tf.placeholder(tf.float32, [B, 3], name='obj_size')
+
         self.obs_placeholders = {
                                  'pix_T_cams_obs': self.pix_T_cams_obs,
                                  'origin_T_camRs_obs': self.origin_T_camRs_obs,
@@ -363,6 +370,8 @@ class SACAgent():
                                  #'rgb_camXs_goal': self.rgb_camXs_goal,
                                  #'xyz_camXs_goal': self.xyz_camXs_goal,
                                  'centroid_goal': self.centroid_goal,
+                                 'puck_xyz_camRs': self.puck_xyz_camRs_obs,
+                                 'camRs_T_puck': self.camRs_T_puck_obs,
                                  }
 
         self._actions_ph = tf.placeholder(
@@ -436,7 +445,11 @@ class SACAgent():
                                                    self.pix_T_cams_obs,
                                                    self.origin_T_camRs_obs,
                                                    self.origin_T_camXs_obs,
-                                                   self.xyz_camXs_obs
+                                                   self.xyz_camXs_obs,
+                                                   self.puck_xyz_camRs_obs,
+                                                   None,
+                                                   self.camRs_T_puck_obs,
+                                                   self.obj_size
                                                   )
 
             latent_state = self._preprocessor([memory])
@@ -462,7 +475,11 @@ class SACAgent():
                                                         self.next_pix_T_cams_obs,
                                                         self.next_origin_T_camRs_obs,
                                                         self.next_origin_T_camXs_obs,
-                                                        self.next_xyz_camXs_obs
+                                                        self.next_xyz_camXs_obs,
+                                                        self.next_puck_xyz_camRs_obs,
+                                                        None,
+                                                        self.next_camRs_T_puck_obs,
+                                                        self.obj_size
                                                        )
 
             next_latent_state = self._preprocessor([memory])
@@ -682,6 +699,8 @@ class SACAgent():
                            self.origin_T_camXs_obs: obs_fields['origin_T_camXs'],
                            self.rgb_camXs_obs: obs_fields['rgb_camXs'],
                            self.xyz_camXs_obs: obs_fields['xyz_camXs'],
+                           self.puck_xyz_camRs_obs: obs_fields['puck_xyz_camRs'],
+                           self.camRs_T_puck_obs: obs_fields['camRs_T_puck'],
 
                            #  self.pix_T_cams_goal: goal_fields['pix_T_cams'],
                            #  self.origin_T_camRs_goal: goal_fields['origin_T_camRs'],
@@ -695,6 +714,8 @@ class SACAgent():
                            self.next_origin_T_camXs_obs: next_obs_fields['origin_T_camXs'],
                            self.next_rgb_camXs_obs: next_obs_fields['rgb_camXs'],
                            self.next_xyz_camXs_obs: next_obs_fields['xyz_camXs'],
+                           self.next_puck_xyz_camRs_obs: obs_fields['next_puck_xyz_camRs_obs'],
+                           self.next_camRs_T_puck_obs: obs_fields['next_camRs_T_puck_obs'],
                           })
 
         if self._store_extra_policy_info:
