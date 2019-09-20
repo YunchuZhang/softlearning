@@ -338,6 +338,8 @@ class SACAgent():
         self.rgb_camXs_obs = tf.placeholder(tf.float32, [B, S, H, W, 3], name='rgb_camXs_obs')
         self.xyz_camXs_obs = tf.placeholder(tf.float32, [B, S, V, 3], name='xyz_camXs_obs')
 
+        self.state_centroid = tf.placeholder(tf.float32, [B, 15], name='state_centroid')
+
         #self.pix_T_cams_goal = tf.placeholder(tf.float32, [B, S, 4, 4], name='pix_T_cams_goal')
         #self.origin_T_camRs_goal = tf.placeholder(tf.float32, [B, S, 4, 4], name='origin_T_camRs_goal')
         #self.origin_T_camXs_goal = tf.placeholder(tf.float32, [B, S, 4, 4], name='origin_T_camXs_goal')
@@ -350,6 +352,8 @@ class SACAgent():
         self.next_origin_T_camXs_obs = tf.placeholder(tf.float32, [B, S, 4, 4], name='next_origin_T_camXs_obs')
         self.next_rgb_camXs_obs = tf.placeholder(tf.float32, [B, S, H, W, 3], name='next_rgb_camXs_obs')
         self.next_xyz_camXs_obs = tf.placeholder(tf.float32, [B, S, V, 3], name='next_xyz_camXs_obs')
+
+        self.next_state_centroid = tf.placeholder(tf.float32, [B, 15], name='next_state_centroid')
 
         self.puck_xyz_camRs_obs = tf.placeholder(tf.float32, [B, 1, 3], name='puck_xyz_camRs_obs')
         self.camRs_T_puck_obs = tf.placeholder(tf.float32, [B, 1, 3, 3], name='camRs_T_puck_obs')
@@ -364,6 +368,8 @@ class SACAgent():
                                  'origin_T_camXs_obs': self.origin_T_camXs_obs,
                                  'rgb_camXs_obs': self.rgb_camXs_obs,
                                  'xyz_camXs_obs': self.xyz_camXs_obs,
+
+                                 'state_centroid': self.state_centroid,
                                  #'pix_T_cams_goal': self.pix_T_cams_goal,
                                  #'origin_T_camRs_goal': self.origin_T_camRs_goal,
                                  #'origin_T_camXs_goal': self.origin_T_camXs_goal,
@@ -465,7 +471,7 @@ class SACAgent():
                                                        #  )
 
 
-        self.memory = [tf.concat([latent_state, self.centroid_goal],-1)]
+        self.memory = [tf.concat([latent_state, self.state_centroid, self.centroid_goal],-1)]
 
 
         with tf.compat.v1.variable_scope("memory", reuse=True):
@@ -484,7 +490,7 @@ class SACAgent():
 
             next_latent_state = self._preprocessor([memory])
 
-        self.memory_next = [tf.concat([next_latent_state, self.centroid_goal],-1)]
+        self.memory_next = [tf.concat([next_latent_state, self.next_state_centroid, self.centroid_goal],-1)]
 
 
     def _get_Q_target(self):
@@ -702,6 +708,8 @@ class SACAgent():
                            self.puck_xyz_camRs_obs: obs_fields['puck_xyz_camRs'],
                            self.camRs_T_puck_obs: obs_fields['camRs_T_puck'],
 
+                           self.state_centroid: batch['observations.full_state_observation'],
+
                            #  self.pix_T_cams_goal: goal_fields['pix_T_cams'],
                            #  self.origin_T_camRs_goal: goal_fields['origin_T_camRs'],
                            #  self.origin_T_camXs_goal: goal_fields['origin_T_camXs'],
@@ -716,6 +724,8 @@ class SACAgent():
                            self.next_xyz_camXs_obs: next_obs_fields['xyz_camXs'],
                            self.next_puck_xyz_camRs_obs: obs_fields['next_puck_xyz_camRs_obs'],
                            self.next_camRs_T_puck_obs: obs_fields['next_camRs_T_puck_obs'],
+
+                           self.next_state_centroid: batch['next_observations.full_state_observation']
                           })
 
         if self._store_extra_policy_info:
