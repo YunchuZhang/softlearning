@@ -73,7 +73,7 @@ ALGORITHM_PARAMS_ADDITIONAL = {
     'SAC': {
         'type': 'RemoteSAC',
         'kwargs': {
-            'num_agents': 4,
+            'num_agents': 1,
             'reparameterize': REPARAMETERIZE,
             'lr': 5e-4,
             'target_update_interval': 1,
@@ -247,7 +247,12 @@ ENVIRONMENT_PARAMS = {
         'v1': {
             'reward_type': 'dense'
         }
-    }
+    },
+    'SawyerMulticameraPushRandomObjects': {
+        'v0': {
+            'num_agents': 4,
+        }
+    },
 }
 
 
@@ -264,7 +269,7 @@ SIMPLE_SAMPLER_PARAMS = {
 MULTIAGENT_SAMPLER_PARAMS = {
     'type': 'MultiAgentSampler',
     'kwargs': {
-        'num_agents': 8,
+        'num_agents': 4,
         'batch_size': 8,
     }
 }
@@ -450,9 +455,9 @@ def get_variant_spec_3D(universe,
         universe, domain, task, policy, algorithm, sampler, replay_pool, *args, **kwargs)
 
 
-    variant_spec["Q_params"]['input_shape'] = [(131,)]
+    variant_spec["Q_params"]['input_shape'] = [(133,)]
 
-    variant_spec["policy_params"]["input_shape"] = [(131,)]
+    variant_spec["policy_params"]["input_shape"] = [(133,)]
     variant_spec["exp_name"] = "rl_new_reach_detect"
 
     environment_params = variant_spec['environment_params']

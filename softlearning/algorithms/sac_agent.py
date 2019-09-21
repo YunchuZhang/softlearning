@@ -62,7 +62,8 @@ class SACAgent():
             map3D=None,
             pretrained_map3D=True,
             stop_3D_grads=False,
-            observation_keys=None
+            observation_keys=None,
+            do_cropping=True,
     ):
         """
         Args:
@@ -94,6 +95,7 @@ class SACAgent():
 
         print("starting sac agent initialization")
         sys.stdout.flush()
+        self.do_cropping = do_cropping
 
         self.variant = variant
 
@@ -242,7 +244,9 @@ class SACAgent():
 
 
     def do_sampling(self, timestep, steps):
+        #  print("\n\n\n\n\n\nINSIDE SAC AGENT'S DO SAMPLING\n\n\n\n\n\n")
         for _ in range(steps):
+            #  print("\n\n\n\nSAMPLED\n\n\n\n")
             self._sampler.sample()
 
     def ready_to_train(self):
@@ -347,7 +351,7 @@ class SACAgent():
         #self.origin_T_camXs_goal = tf.placeholder(tf.float32, [B, S, 4, 4], name='origin_T_camXs_goal')
         #self.rgb_camXs_goal = tf.placeholder(tf.float32, [B, S, H, W, 3], name='rgb_camXs_goal')
         #self.xyz_camXs_goal = tf.placeholder(tf.float32, [B, S, V, 3], name='xyz_camXs_goal')
-        self.centroid_goal = tf.placeholder(tf.float32, [B, 3], name='centroid_goal')
+        self.centroid_goal = tf.placeholder(tf.float32, [B, *(self._training_environment._observation_space.spaces['state_desired_goal'].shape)], name='centroid_goal')
 
         self.next_pix_T_cams_obs = tf.placeholder(tf.float32, [B, S, 4, 4], name='next_pix_T_cams_obs')
         self.next_origin_T_camRs_obs = tf.placeholder(tf.float32, [B, S, 4, 4], name='next_origin_T_camRs_obs')
@@ -359,12 +363,13 @@ class SACAgent():
                                                   [B, *self._training_environment.observation_space.spaces['full_state_observation'].shape],
                                                   name='next_state_centroid')
 
-        self.puck_xyz_camRs_obs = tf.placeholder(tf.float32, [B, 1, 3], name='puck_xyz_camRs_obs')
-        self.camRs_T_puck_obs = tf.placeholder(tf.float32, [B, 1, 3, 3], name='camRs_T_puck_obs')
+        if self.do_cropping:
+            self.camRs_T_puck_obs = tf.placeholder(tf.float32, [B, 1, 3, 3], name='camRs_T_puck_obs')
+            self.puck_xyz_camRs_obs = tf.placeholder(tf.float32, [B, 1, 3], name='puck_xyz_camRs_obs')
 
-        self.next_puck_xyz_camRs_obs = tf.placeholder(tf.float32, [B, 1, 3], name='next_puck_xyz_camRs_obs')
-        self.next_camRs_T_puck_obs = tf.placeholder(tf.float32, [B, 1, 3, 3], name='next_camRs_T_puck_obs')
-        self.obj_size = tf.placeholder(tf.float32, [B, 3], name='obj_size')
+            self.next_puck_xyz_camRs_obs = tf.placeholder(tf.float32, [B, 1, 3], name='next_puck_xyz_camRs_obs')
+            self.next_camRs_T_puck_obs = tf.placeholder(tf.float32, [B, 1, 3, 3], name='next_camRs_T_puck_obs')
+            self.obj_size = tf.placeholder(tf.float32, [B, 3], name='obj_size')
 
         self.obs_placeholders = {
                                  'pix_T_cams_obs': self.pix_T_cams_obs,
@@ -380,9 +385,13 @@ class SACAgent():
                                  #'rgb_camXs_goal': self.rgb_camXs_goal,
                                  #'xyz_camXs_goal': self.xyz_camXs_goal,
                                  'centroid_goal': self.centroid_goal,
-                                 'puck_xyz_camRs': self.puck_xyz_camRs_obs,
-                                 'camRs_T_puck': self.camRs_T_puck_obs,
                                  }
+
+        if self.do_cropping:
+            self.obs_placeholders.update({
+                 'puck_xyz_camRs': self.puck_xyz_camRs_obs,
+                 'camRs_T_puck': self.camRs_T_puck_obs,
+            })
 
         self._actions_ph = tf.placeholder(
             tf.float32,
@@ -449,18 +458,27 @@ class SACAgent():
 
     def _init_map3D(self):
         with tf.compat.v1.variable_scope("memory", reuse=False):
-            memory = self.map3D.infer_from_tensors(
-                                                   tf.constant(np.zeros(hyp.B), dtype=tf.float32),
-                                                   self.rgb_camXs_obs,
-                                                   self.pix_T_cams_obs,
-                                                   self.origin_T_camRs_obs,
-                                                   self.origin_T_camXs_obs,
-                                                   self.xyz_camXs_obs,
-                                                   self.puck_xyz_camRs_obs,
-                                                   None,
-                                                   self.camRs_T_puck_obs,
-                                                   self.obj_size
-                                                  )
+            if self.do_cropping:
+                memory = self.map3D.infer_from_tensors(
+                                                       tf.constant(np.zeros(hyp.B), dtype=tf.float32),
+                                                       self.rgb_camXs_obs,
+                                                       self.pix_T_cams_obs,
+                                                       self.origin_T_camRs_obs,
+                                                       self.origin_T_camXs_obs,
+                                                       self.xyz_camXs_obs,
+                                                       self.puck_xyz_camRs_obs,
+                                                       self.camRs_T_puck_obs,
+                                                       self.obj_size,
+                                                      )
+            else:
+                memory = self.map3D.infer_from_tensors(
+                                                       tf.constant(np.zeros(hyp.B), dtype=tf.float32),
+                                                       self.rgb_camXs_obs,
+                                                       self.pix_T_cams_obs,
+                                                       self.origin_T_camRs_obs,
+                                                       self.origin_T_camXs_obs,
+                                                       self.xyz_camXs_obs,
+                                                      )
 
             latent_state = self._preprocessor([memory])
 
@@ -479,18 +497,27 @@ class SACAgent():
 
 
         with tf.compat.v1.variable_scope("memory", reuse=True):
-            memory_next = self.map3D.infer_from_tensors(
-                                                        tf.constant(np.zeros(hyp.B), dtype=tf.float32),
-                                                        self.next_rgb_camXs_obs,
-                                                        self.next_pix_T_cams_obs,
-                                                        self.next_origin_T_camRs_obs,
-                                                        self.next_origin_T_camXs_obs,
-                                                        self.next_xyz_camXs_obs,
-                                                        self.next_puck_xyz_camRs_obs,
-                                                        None,
-                                                        self.next_camRs_T_puck_obs,
-                                                        self.obj_size
-                                                       )
+            if self.do_cropping:
+                memory_next = self.map3D.infer_from_tensors(
+                                            tf.constant(np.zeros(hyp.B), dtype=tf.float32),
+                                            self.next_rgb_camXs_obs,
+                                            self.next_pix_T_cams_obs,
+                                            self.next_origin_T_camRs_obs,
+                                            self.next_origin_T_camXs_obs,
+                                            self.next_xyz_camXs_obs,
+                                            self.next_puck_xyz_camRs_obs,
+                                            self.next_camRs_T_puck_obs,
+                                            self.obj_size
+                                           )
+            else:
+                memory_next = self.map3D.infer_from_tensors(
+                                            tf.constant(np.zeros(hyp.B), dtype=tf.float32),
+                                            self.next_rgb_camXs_obs,
+                                            self.next_pix_T_cams_obs,
+                                            self.next_origin_T_camRs_obs,
+                                            self.next_origin_T_camXs_obs,
+                                            self.next_xyz_camXs_obs,
+                                           )
 
             next_latent_state = self._preprocessor([memory])
 
@@ -698,8 +725,7 @@ class SACAgent():
 
         next_obs_fields = get_inputs(batch['next_observations.image_observation'],
                                      batch['next_observations.depth_observation'],
-                                     batch['next_observations.cam_angles_observation'],
-                                     batch['next_observations.cam_dist_observation'],
+                                     batch['next_observations.cam_info_observation'],
                                      batch['observations.state_observation'])
 
 
@@ -709,8 +735,6 @@ class SACAgent():
                            self.origin_T_camXs_obs: obs_fields['origin_T_camXs'],
                            self.rgb_camXs_obs: obs_fields['rgb_camXs'],
                            self.xyz_camXs_obs: obs_fields['xyz_camXs'],
-                           self.puck_xyz_camRs_obs: obs_fields['puck_xyz_camRs'],
-                           self.camRs_T_puck_obs: obs_fields['camRs_T_puck'],
 
                            self.state_centroid: batch['observations.full_state_observation'],
 
@@ -726,11 +750,18 @@ class SACAgent():
                            self.next_origin_T_camXs_obs: next_obs_fields['origin_T_camXs'],
                            self.next_rgb_camXs_obs: next_obs_fields['rgb_camXs'],
                            self.next_xyz_camXs_obs: next_obs_fields['xyz_camXs'],
-                           self.next_puck_xyz_camRs_obs: obs_fields['next_puck_xyz_camRs_obs'],
-                           self.next_camRs_T_puck_obs: obs_fields['next_camRs_T_puck_obs'],
 
                            self.next_state_centroid: batch['next_observations.full_state_observation']
                           })
+
+        if self.do_cropping:
+            feed_dict.update({
+                              self.next_puck_xyz_camRs_obs: obs_fields['next_puck_xyz_camRs_obs'],
+                              self.next_camRs_T_puck_obs: obs_fields['next_camRs_T_puck_obs'],
+                              self.puck_xyz_camRs_obs: obs_fields['puck_xyz_camRs'],
+                              self.camRs_T_puck_obs: obs_fields['camRs_T_puck'],
+                              self.next_puck_xyz_camRs_obs: obs_fields['puck_xyz_camRs'],
+                             })
 
         if self._store_extra_policy_info:
             feed_dict[self._log_pis_ph] = batch['log_pis']
