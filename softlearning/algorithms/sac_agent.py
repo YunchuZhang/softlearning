@@ -237,7 +237,7 @@ class SACAgent():
 
         self._sampler.initialize(self._training_environment, self._initial_exploration_policy, self._pool)
         while self._pool.size < self._n_initial_exploration_steps:
-            self._sampler.sample()
+            self._sampler.sample(self.do_cropping)
 
         print("finished initial exploration")
         sys.stdout.flush()
@@ -247,7 +247,7 @@ class SACAgent():
         #  print("\n\n\n\n\n\nINSIDE SAC AGENT'S DO SAMPLING\n\n\n\n\n\n")
         for _ in range(steps):
             #  print("\n\n\n\nSAMPLED\n\n\n\n")
-            self._sampler.sample()
+            self._sampler.sample(self.do_cropping)
 
     def ready_to_train(self):
         return self._sampler.batch_ready()
@@ -713,20 +713,30 @@ class SACAgent():
             self._terminals_ph: batch['terminals'],
         }
 
-        obs_fields = get_inputs(batch['observations.image_observation'],
-                                batch['observations.depth_observation'],
-                                batch['observations.cam_info_observation'],
-                                batch['observations.state_observation'])
+        if self.do_cropping:
+            obs_fields = get_inputs(batch['observations.image_observation'],
+                                    batch['observations.depth_observation'],
+                                    batch['observations.cam_info_observation'],
+                                    batch['observations.full_state_observation'])
+        else:
+            obs_fields = get_inputs(batch['observations.image_observation'],
+                                    batch['observations.depth_observation'],
+                                    batch['observations.cam_info_observation'])
 
         #goal_fields = get_inputs(batch['observations.image_desired_goal'],
         #                         batch['observations.desired_goal_depth'],
         #                         batch['observations.cam_info_goal'],
         #                         batch['observations.state_desired_goal'])
 
-        next_obs_fields = get_inputs(batch['next_observations.image_observation'],
-                                     batch['next_observations.depth_observation'],
-                                     batch['next_observations.cam_info_observation'],
-                                     batch['observations.state_observation'])
+        if self.do_cropping:
+            next_obs_fields = get_inputs(batch['next_observations.image_observation'],
+                                         batch['next_observations.depth_observation'],
+                                         batch['next_observations.cam_info_observation'],
+                                         batch['observations.full_state_observation'])
+        else:
+            next_obs_fields = get_inputs(batch['next_observations.image_observation'],
+                                         batch['next_observations.depth_observation'],
+                                         batch['next_observations.cam_info_observation'])
 
 
         feed_dict.update({

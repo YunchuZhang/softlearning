@@ -117,7 +117,6 @@ class RLAlgorithm():
         raise NotImplementedError
 
     def _train(self):
-        import sys
         """Return a generator that performs RL training.
         """
         if not self._training_started:

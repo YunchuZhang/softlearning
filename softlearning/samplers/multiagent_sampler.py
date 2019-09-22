@@ -59,7 +59,7 @@ class MultiAgentSampler(BaseSampler):
 
         return copy.deepcopy(processed_observation)
 
-    def sample(self):
+    def sample(self, do_cropping):
         #pdb.set_trace()
         if self._current_observations is None:
             self._current_observations = self.env.reset()
@@ -74,7 +74,7 @@ class MultiAgentSampler(BaseSampler):
         if self.initialized and self.memory3D_sampler:
             active_obs = self.env.convert_to_active_observation(self._current_observations, return_dict=True)
             active_obs = {key: np.vstack([field] * int(self._batch_size / self.num_agents)) for key, field in active_obs.items()}
-            active_obs = self.forward_3D(active_obs)
+            active_obs = self.forward_3D(active_obs, do_cropping)
             active_obs = active_obs[:self.num_agents]
         else:
             active_obs = self.env.convert_to_active_observation(self._current_observations)

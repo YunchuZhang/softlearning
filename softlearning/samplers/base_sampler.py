@@ -45,7 +45,7 @@ class BaseSampler(object):
 
         return last_n_paths
 
-    def sample(self):
+    def sample(self, do_cropping):
         raise NotImplementedError
 
     def batch_ready(self):
@@ -78,19 +78,43 @@ class BaseSampler(object):
         self.policy = None
         self.pool = None
 
-    def forward_3D(self, active_obs):
+    def forward_3D(self, active_obs, do_cropping):
 
-        obs_fields = get_inputs(active_obs['image_observation'],
-                                active_obs['depth_observation'],
-                                active_obs['cam_info_observation'],
-                                active_obs['state_observation'])
+        if do_cropping:
+            obs_fields = get_inputs(active_obs['image_observation'],
+                                    active_obs['depth_observation'],
+                                    active_obs['cam_info_observation'],
+                                    active_obs['full_state_observation'])
+            memory = self.session.run(
+                    self.memory3D_sampler,
+                    feed_dict={
+                               self.obs_ph['pix_T_cams_obs']: obs_fields['pix_T_cams'],
+                               self.obs_ph['origin_T_camRs_obs']: obs_fields['origin_T_camRs'],
+                               self.obs_ph['origin_T_camXs_obs']: obs_fields['origin_T_camXs'],
+                               self.obs_ph['rgb_camXs_obs']: obs_fields['rgb_camXs'],
+                               self.obs_ph['xyz_camXs_obs']: obs_fields['xyz_camXs'],
+
+                               self.obs_ph['state_centroid']: active_obs['full_state_observation'],
+                               #self.obs_ph['pix_T_cams_goal']: goal_fields['pix_T_cams'],
+                               #self.obs_ph['origin_T_camRs_goal']: goal_fields['origin_T_camRs'],
+                               #self.obs_ph['origin_T_camXs_goal']: goal_fields['origin_T_camXs'],
+                               #self.obs_ph['rgb_camXs_goal']: goal_fields['rgb_camXs'],
+                               #self.obs_ph['xyz_camXs_goal']: goal_fields['xyz_camXs']
+                               self.obs_ph['centroid_goal']: active_obs['state_desired_goal'],
+                               self.obs_ph['puck_xyz_camRs']: obs_fields['crop_center_xyz_camRs'],
+                               self.obs_ph['camRs_T_puck']: obs_fields['camRs_T_crop']
+                              })
+        else:
+            obs_fields = get_inputs(active_obs['image_observation'],
+                                    active_obs['depth_observation'],
+                                    active_obs['cam_info_observation'])
 
         #goal_fields = get_inputs(active_obs['image_desired_goal'],
         #                         active_obs['desired_goal_depth'],
         #                         active_obs['cam_info_goal'],
         #                         active_obs['state_desired_goal'])
 
-        memory = self.session.run(
+            memory = self.session.run(
                     self.memory3D_sampler,
                     feed_dict={
                                self.obs_ph['pix_T_cams_obs']: obs_fields['pix_T_cams'],
