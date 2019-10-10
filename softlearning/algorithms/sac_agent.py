@@ -63,7 +63,7 @@ class SACAgent():
             pretrained_map3D=True,
             stop_3D_grads=False,
             observation_keys=None,
-            do_cropping=True,
+            do_cropping=False,
     ):
         """
         Args:
@@ -276,6 +276,7 @@ class SACAgent():
                 self._policy,
                 self._sampler._max_path_length,
                 sampler=get_sampler_from_variant(self.variant),
+                do_cropping=self.do_cropping
                 memory3D=self.memory,
                 obs_ph=self.obs_placeholders,
                 session=self._session,

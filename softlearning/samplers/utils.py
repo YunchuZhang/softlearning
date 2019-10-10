@@ -43,6 +43,7 @@ def rollouts(n_paths,
              policy,
              path_length,
              sampler=None,
+             do_cropping=False,
              memory3D=None,
              obs_ph=None,
              session=None,
@@ -84,7 +85,7 @@ def rollouts(n_paths,
         goal = None
 
         for t in range(path_length):
-            observation, reward, terminal, info = sampler.sample()
+            observation, reward, terminal, info = sampler.sample(do_cropping)
 
             if callback is not None:
                 callback(observation)
