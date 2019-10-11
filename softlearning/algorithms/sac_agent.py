@@ -276,7 +276,7 @@ class SACAgent():
                 self._policy,
                 self._sampler._max_path_length,
                 sampler=get_sampler_from_variant(self.variant),
-                do_cropping=self.do_cropping
+                do_cropping=self.do_cropping,
                 memory3D=self.memory,
                 obs_ph=self.obs_placeholders,
                 session=self._session,
