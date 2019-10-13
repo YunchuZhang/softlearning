@@ -43,6 +43,7 @@ MAX_PATH_LENGTH_PER_DOMAIN = {
     'Point2DEnv': 50,
     'Pendulum': 200,
     'SawyerReachXYEnv': 50,
+    'SawyerPushRandomObjects': 500,
     'SawyerMulticameraReach': 50,
 }
 
@@ -73,7 +74,7 @@ ALGORITHM_PARAMS_ADDITIONAL = {
     'SAC': {
         'type': 'RemoteSAC',
         'kwargs': {
-            'num_agents': 1,
+            'num_agents': 4,
             'reparameterize': REPARAMETERIZE,
             'lr': 5e-4,
             'target_update_interval': 1,
@@ -135,6 +136,8 @@ NUM_EPOCHS_PER_DOMAIN = {
     'SawyerPushAndReachEnvEasy': 1000,
     'SawyerPushAndReachEnvMedium': 1000,
     'SawyerPushAndReachEnvHard': 1000,
+    'SawyerPushRandomObjects': 4000,
+
 }
 
 DEFAULT_ALGORITHM_DOMAIN_PARAMS = {
@@ -241,6 +244,15 @@ ENVIRONMENT_PARAMS = {
             #'reward_type': 'hand_success'
             #'reward_type': 'hand_distance'
             'reward_type': 'puck_success'
+        }
+    },
+    'SawyerPushRandomObjects': {
+        'v0': {
+            #'observation_keys': ('full_state_observation', 'state_desired_goal', 'state_achieved_goal'),
+            'xml_paths': ['sawyer_xyz/sawyer_push_book.xml'],
+            #'clamp_puck_on_step': False,
+            'track_object': True,
+            #'reward_type': 'puck_success'
         }
     },
     'FetchReach': {
@@ -455,9 +467,9 @@ def get_variant_spec_3D(universe,
         universe, domain, task, policy, algorithm, sampler, replay_pool, *args, **kwargs)
 
 
-    variant_spec["Q_params"]['input_shape'] = [(133,)]
+    variant_spec["Q_params"]['input_shape'] = [(148,)]
 
-    variant_spec["policy_params"]["input_shape"] = [(133,)]
+    variant_spec["policy_params"]["input_shape"] = [(148,)]
     variant_spec["exp_name"] = "rl_new_reach_detect"
 
     environment_params = variant_spec['environment_params']
