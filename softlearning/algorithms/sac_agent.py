@@ -174,7 +174,7 @@ class SACAgent():
 
         self._build()
 
-        gpu_options = tf.GPUOptions(allow_growth=False)
+        gpu_options = tf.GPUOptions(allow_growth=True)
         config_proto = tf.ConfigProto(gpu_options=gpu_options)
         #config_proto = tf.ConfigProto(log_device_placement=False, allow_soft_placement=True, device_count={'GPU': 0})
         #off = rewriter_config_pb2.RewriterConfig.OFF
@@ -211,7 +211,8 @@ class SACAgent():
                                 self._pool,
                                 memory3D=self.memory,
                                 obs_ph=self.obs_placeholders,
-                                session=self._session)
+                                session=self._session,
+                                )
 
 
     def sampler_diagnostics(self):
@@ -281,7 +282,8 @@ class SACAgent():
                 obs_ph=self.obs_placeholders,
                 session=self._session,
                 render_mode=render_mode,
-                render_goals=render_goals)
+                render_goals=render_goals,
+                do_cropping=self.do_cropping)
 
             return paths
 
@@ -392,6 +394,7 @@ class SACAgent():
             self.obs_placeholders.update({
                  'puck_xyz_camRs': self.puck_xyz_camRs_obs,
                  'camRs_T_puck': self.camRs_T_puck_obs,
+                 'obj_size': self.obj_size,
             })
 
         self._actions_ph = tf.placeholder(
@@ -460,7 +463,7 @@ class SACAgent():
     def _init_map3D(self):
         with tf.compat.v1.variable_scope("memory", reuse=False):
             if self.do_cropping:
-                memory = self.map3D.infer_from_tensors(
+                memory, summary = self.map3D.infer_from_tensors(
                                                        tf.constant(np.zeros(hyp.B), dtype=tf.float32),
                                                        self.rgb_camXs_obs,
                                                        self.pix_T_cams_obs,
@@ -470,17 +473,21 @@ class SACAgent():
                                                        self.puck_xyz_camRs_obs,
                                                        self.camRs_T_puck_obs,
                                                        self.obj_size,
+                                                       return_summary=True
                                                       )
+                #  self._training_ops.update(print_ops)
             else:
-                memory = self.map3D.infer_from_tensors(
+                memory, summary = self.map3D.infer_from_tensors(
                                                        tf.constant(np.zeros(hyp.B), dtype=tf.float32),
                                                        self.rgb_camXs_obs,
                                                        self.pix_T_cams_obs,
                                                        self.origin_T_camRs_obs,
                                                        self.origin_T_camXs_obs,
                                                        self.xyz_camXs_obs,
+                                                       return_summary=True
                                                       )
 
+            self.summary_op = summary
             latent_state = self._preprocessor([memory])
 
         #  with tf.compat.v1.variable_scope("memory", reuse=True):
@@ -733,7 +740,7 @@ class SACAgent():
             next_obs_fields = get_inputs(batch['next_observations.image_observation'],
                                          batch['next_observations.depth_observation'],
                                          batch['next_observations.cam_info_observation'],
-                                         batch['observations.full_state_observation'])
+                                         batch['next_observations.full_state_observation'])
         else:
             next_obs_fields = get_inputs(batch['next_observations.image_observation'],
                                          batch['next_observations.depth_observation'],
@@ -767,11 +774,11 @@ class SACAgent():
 
         if self.do_cropping:
             feed_dict.update({
-                              self.next_puck_xyz_camRs_obs: obs_fields['next_puck_xyz_camRs_obs'],
-                              self.next_camRs_T_puck_obs: obs_fields['next_camRs_T_puck_obs'],
-                              self.puck_xyz_camRs_obs: obs_fields['puck_xyz_camRs'],
-                              self.camRs_T_puck_obs: obs_fields['camRs_T_puck'],
-                              self.next_puck_xyz_camRs_obs: obs_fields['puck_xyz_camRs'],
+                              self.next_puck_xyz_camRs_obs: next_obs_fields['crop_center_xyz_camRs'],
+                              self.next_camRs_T_puck_obs: next_obs_fields['camRs_T_crop'],
+                              self.puck_xyz_camRs_obs: obs_fields['crop_center_xyz_camRs'],
+                              self.camRs_T_puck_obs: obs_fields['camRs_T_crop'],
+                              self.obj_size: batch['observations.object_size'],
                              })
 
         if self._store_extra_policy_info:
@@ -786,14 +793,16 @@ class SACAgent():
 
     def get_diagnostics(self, iteration, batch):
         feed_dict = self._get_feed_dict(iteration, batch)
-        (Q_values, Q_losses, alpha, global_step, memory) = self._session.run(
-            (self._Q_values,
+        (summ, Q_values, Q_losses, alpha, global_step, memory) = self._session.run(
+            (self.summary_op,
+             self._Q_values,
              self._Q_losses,
              self._alpha,
              self.global_step,
              self.memory),
             feed_dict)
 
+        self.map3D.write_summ(summ)
         policy_diagnostics = self._policy.get_diagnostics(memory)
         return Q_values, Q_losses, alpha, global_step, policy_diagnostics
 
