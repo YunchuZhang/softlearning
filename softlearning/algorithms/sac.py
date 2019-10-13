@@ -75,7 +75,6 @@ class SAC(RLAlgorithm):
             save_full_state=save_full_state,
             remote=remote,
             n_initial_exploration_steps=n_initial_exploration_steps,
-            map3D=map3D,
             batch_size=batch_size,
             observation_keys=observation_keys
         )

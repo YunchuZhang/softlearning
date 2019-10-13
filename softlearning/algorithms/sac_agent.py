@@ -30,7 +30,7 @@ from softlearning.preprocessors.utils import get_preprocessor_from_params
 def td_target(reward, discount, next_value):
     return reward + discount * next_value
 
-@ray.remote(num_gpus=1, num_cpus=3)
+#@ray.remote(num_gpus=1, num_cpus=3)
 class SACAgent():
     """Soft Actor-Critic (SAC)
 
@@ -60,7 +60,7 @@ class SACAgent():
             n_initial_exploration_steps=0,
             batch_size=None,
             map3D=None,
-            pretrained_map3D=True,
+            pretrained_map3D=False,
             stop_3D_grads=False,
             observation_keys=None,
             do_cropping=False,
@@ -99,7 +99,7 @@ class SACAgent():
 
         self.variant = variant
 
-        os.environ["CUDA_VISIBLE_DEVICES"] = ",".join(map(str, ray.get_gpu_ids()))
+        #os.environ["CUDA_VISIBLE_DEVICES"] = ",".join(map(str, ray.get_gpu_ids()))
 
         self._training_environment = get_environment_from_params(variant['environment_params']['training'])
         #self._evaluation_environment = get_environment_from_params(variant['environment_params']['evaluation'])
@@ -352,7 +352,7 @@ class SACAgent():
         #self.origin_T_camXs_goal = tf.placeholder(tf.float32, [B, S, 4, 4], name='origin_T_camXs_goal')
         #self.rgb_camXs_goal = tf.placeholder(tf.float32, [B, S, H, W, 3], name='rgb_camXs_goal')
         #self.xyz_camXs_goal = tf.placeholder(tf.float32, [B, S, V, 3], name='xyz_camXs_goal')
-        self.centroid_goal = tf.placeholder(tf.float32, [B, *(self._training_environment._observation_space.spaces['state_desired_goal'].shape)], name='centroid_goal')
+        self.centroid_goal = tf.placeholder(tf.float32, [B, *(self._training_environment.observation_space.spaces['state_desired_goal'].shape)], name='centroid_goal')
 
         self.next_pix_T_cams_obs = tf.placeholder(tf.float32, [B, S, 4, 4], name='next_pix_T_cams_obs')
         self.next_origin_T_camRs_obs = tf.placeholder(tf.float32, [B, S, 4, 4], name='next_origin_T_camRs_obs')

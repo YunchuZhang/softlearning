@@ -50,13 +50,13 @@ ALGORITHM_PARAMS_BASE = {
     'type': 'SAC',
 
     'kwargs': {
-        'epoch_length': 10000,
-        'train_every_n_steps': 1,
-        'n_train_repeat': 3,
+        'epoch_length': 1000,
+        'train_every_n_steps': 10,
+        'n_train_repeat': 1,
         #'avg_weights_every_n_steps': 2,
         'pretrained_map3D': False,
         'stop_3D_grads': False,
-        'eval_n_episodes': 10,
+        'eval_n_episodes': 5,
         'eval_deterministic': True,
         'eval_render_mode': None,
         #'eval_render_mode': 'rgb_array',
@@ -71,7 +71,7 @@ ALGORITHM_PARAMS_BASE = {
 
 ALGORITHM_PARAMS_ADDITIONAL = {
     'SAC': {
-        'type': 'RemoteSAC',
+        'type': 'SAC',
         'kwargs': {
             'num_agents': 1,
             'reparameterize': REPARAMETERIZE,
@@ -81,7 +81,7 @@ ALGORITHM_PARAMS_ADDITIONAL = {
             'target_entropy': 'auto',
             'store_extra_policy_info': False,
             'action_prior': 'uniform',
-            'n_initial_exploration_steps': int(5e3),
+            'n_initial_exploration_steps': int(1e2),
         }
     },
     'SQL': {
@@ -250,7 +250,7 @@ ENVIRONMENT_PARAMS = {
     },
     'SawyerMulticameraPushRandomObjects': {
         'v0': {
-            'num_agents': 4,
+            #'num_agents': 4,
         }
     },
 }
@@ -262,7 +262,7 @@ NUM_CHECKPOINTS = 10
 SIMPLE_SAMPLER_PARAMS = {
     'type': 'SimpleSampler',
     'kwargs': {
-        'batch_size': 1,
+        'batch_size': 8,
     }
 }
 
@@ -455,9 +455,9 @@ def get_variant_spec_3D(universe,
         universe, domain, task, policy, algorithm, sampler, replay_pool, *args, **kwargs)
 
 
-    variant_spec["Q_params"]['input_shape'] = [(133,)]
+    variant_spec["Q_params"]['input_shape'] = [(148,)]
 
-    variant_spec["policy_params"]["input_shape"] = [(133,)]
+    variant_spec["policy_params"]["input_shape"] = [(148,)]
     variant_spec["exp_name"] = "rl_new_reach_detect"
 
     environment_params = variant_spec['environment_params']
@@ -469,7 +469,6 @@ def get_variant_spec_3D(universe,
                                                       "full_state_observation",
                                                       "state_desired_goal",
                                                       "image_desired_goal",
-                                                      "state_desired_goal",
                                                       "depth_desired_goal",
                                                       "cam_info_goal"]
 
