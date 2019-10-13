@@ -2,6 +2,7 @@ from collections import deque, OrderedDict
 from itertools import islice
 
 from discovery.backend.mujoco_online_inputs import get_inputs
+import sys
 
 
 class BaseSampler(object):
@@ -29,7 +30,6 @@ class BaseSampler(object):
         self.memory3D_sampler = memory3D
         self.obs_ph = obs_ph
         self.session = session
-
 
     def set_policy(self, policy):
         self.policy = policy
@@ -85,6 +85,7 @@ class BaseSampler(object):
                                     active_obs['depth_observation'],
                                     active_obs['cam_info_observation'],
                                     active_obs['full_state_observation'])
+
             memory = self.session.run(
                     self.memory3D_sampler,
                     feed_dict={
@@ -102,7 +103,8 @@ class BaseSampler(object):
                                #self.obs_ph['xyz_camXs_goal']: goal_fields['xyz_camXs']
                                self.obs_ph['centroid_goal']: active_obs['state_desired_goal'],
                                self.obs_ph['puck_xyz_camRs']: obs_fields['crop_center_xyz_camRs'],
-                               self.obs_ph['camRs_T_puck']: obs_fields['camRs_T_crop']
+                               self.obs_ph['camRs_T_puck']: obs_fields['camRs_T_crop'],
+                               self.obs_ph['obj_size']: active_obs['object_size'],
                               })
         else:
             obs_fields = get_inputs(active_obs['image_observation'],

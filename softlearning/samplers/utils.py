@@ -51,7 +51,8 @@ def rollouts(n_paths,
              render_mode=None,
              render_goals=False,
              break_on_terminal=True,
-             batch_size=None):
+             batch_size=None,
+             do_cropping=False):
 
     pool = replay_pools.SimpleReplayPool(env, max_size=path_length)
 
