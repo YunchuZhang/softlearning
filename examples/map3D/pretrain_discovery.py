@@ -12,7 +12,7 @@ import discovery.hyperparams as hyp
 from discovery.model_mujoco_online import MUJOCO_ONLINE
 
 exploration_steps = 500
-train_iters = 1000
+train_iters = 10000
 sample_steps_per_iter = 2
 
 log_freq = hyp.log_freqs['train']
@@ -31,7 +31,7 @@ session = tf.Session(config=tf.ConfigProto(gpu_options=gpu_options))
 tf.keras.backend.set_session(session)
 session = tf.keras.backend.get_session()
 
-env = GymAdapter('SawyerMulticameraReach',
+env = GymAdapter('SawyerMulticameraPushRandomObjects',
                  'v0',
                  observation_keys=observation_keys)
 
@@ -64,7 +64,7 @@ writer = model.all_writers['train']
 
 for step in range(train_iters):
 
-    print("Step:", step)
+    #print("Step:", step)
 
     for sample_step in range(sample_steps_per_iter):
         sampler.sample()
@@ -72,7 +72,7 @@ for step in range(train_iters):
     log_this = np.mod(step, log_freq) == 0
     #log_this = False
 
-    if log_this:
-        print("Should log!")
+    #if log_this:
+    #    print("Should log!")
 
     model.train_step(step, 'train', sampler.random_batch(), True, writer, log_this)
