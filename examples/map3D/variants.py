@@ -51,8 +51,8 @@ ALGORITHM_PARAMS_BASE = {
     'type': 'SAC',
 
     'kwargs': {
-        'epoch_length': 1000,
-        'train_every_n_steps': 10,
+        'epoch_length': 5000,
+        'train_every_n_steps': 5,
         'n_train_repeat': 1,
         #'avg_weights_every_n_steps': 2,
         'pretrained_map3D': False,
@@ -72,9 +72,9 @@ ALGORITHM_PARAMS_BASE = {
 
 ALGORITHM_PARAMS_ADDITIONAL = {
     'SAC': {
-        'type': 'SAC',
+        'type': 'RemoteSAC',
         'kwargs': {
-            'num_agents': 4,
+            'num_agents': 1,
             'reparameterize': REPARAMETERIZE,
             'lr': 5e-4,
             'target_update_interval': 1,
@@ -136,7 +136,7 @@ NUM_EPOCHS_PER_DOMAIN = {
     'SawyerPushAndReachEnvEasy': 1000,
     'SawyerPushAndReachEnvMedium': 1000,
     'SawyerPushAndReachEnvHard': 1000,
-    'SawyerPushRandomObjects': 4000,
+    'SawyerPushRandomObjects': 5,
 
 }
 
@@ -262,7 +262,7 @@ ENVIRONMENT_PARAMS = {
     },
     'SawyerMulticameraPushRandomObjects': {
         'v0': {
-            #'num_agents': 4,
+            'num_agents': 2,
         }
     },
 }
@@ -281,8 +281,8 @@ SIMPLE_SAMPLER_PARAMS = {
 MULTIAGENT_SAMPLER_PARAMS = {
     'type': 'MultiAgentSampler',
     'kwargs': {
-        'num_agents': 4,
-        'batch_size': 8,
+        'num_agents': 2,
+        'batch_size': 2,
     }
 }
 
@@ -337,7 +337,7 @@ HER_REPLAY_POOL_PARAMS = {
     'type': 'HerReplayPool',
     'kwargs': {
         'normalize_images': False,
-        'max_size': 4e4,
+        'max_size': 1e3,
         'compute_reward_keys': {'achieved': 'state_achieved_goal',
                                 'desired': 'state_desired_goal',
                                 # These are required by the multiworld ImageEnv
