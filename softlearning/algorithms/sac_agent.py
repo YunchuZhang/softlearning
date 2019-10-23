@@ -3,6 +3,7 @@ from numbers import Number
 import sys
 import os
 import copy
+import gtimer as gt
 import math
 import numpy as np
 import tensorflow as tf
@@ -200,6 +201,10 @@ class SACAgent():
             #self.variables.set_session(self._session)
         else:
             self.variables = None
+
+        gt.reset_root()
+        gt.rename_root('SAC_Agent')
+        gt.set_def_unique(False)
 
         print("finished initialization")
         sys.stdout.flush()
@@ -530,7 +535,7 @@ class SACAgent():
                                             self.next_xyz_camXs_obs,
                                            )
 
-            if self._stop_3d_grads:
+            if self._stop_3D_grads:
                 memory_next = tf.stop_gradient(memory_next)
 
             next_latent_state = self._preprocessor([memory_next])
@@ -709,11 +714,14 @@ class SACAgent():
                 # Run target ops here.
                 self._update_target()
 
+            gt.blank_stamp()
             batch = self.training_batch()
 
             feed_dict = self._get_feed_dict(i, batch)
+            gt.stamp('get_data')
 
             self._session.run(self._training_ops, feed_dict)
+            gt.stamp('rum_session')
 
         if self._remote:
             return self.variables.get_weights()
@@ -819,6 +827,14 @@ class SACAgent():
 
     def get_weights(self):
         return self.variables.get_weights()
+
+
+    def get_timings(self):
+        return gt.get_times().stamps.cum
+
+
+    def reset_timings(self):
+        gt.reset()
 
 
     @property
