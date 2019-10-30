@@ -140,4 +140,4 @@ class BaseSampler(object):
                                self.obs_ph['centroid_goal']: obs_fields['state_desired_goal'],
                               })
 
-        return memory, obs_fields
+        return memory

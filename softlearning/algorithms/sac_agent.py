@@ -277,7 +277,6 @@ class SACAgent():
                 self._policy,
                 self._sampler._max_path_length,
                 sampler=get_sampler_from_variant(self.variant),
-                do_cropping=self.do_cropping,
                 memory3D=self.memory,
                 obs_ph=self.obs_placeholders,
                 session=self._session,
@@ -463,7 +462,7 @@ class SACAgent():
     def _init_map3D(self):
         with tf.compat.v1.variable_scope("memory", reuse=False):
             if self.do_cropping:
-                memory, summary = self.map3D.infer_from_tensors(
+                memory = self.map3D.infer_from_tensors(
                                                        tf.constant(np.zeros(hyp.B), dtype=tf.float32),
                                                        self.rgb_camXs_obs,
                                                        self.pix_T_cams_obs,
@@ -473,25 +472,25 @@ class SACAgent():
                                                        self.puck_xyz_camRs_obs,
                                                        self.camRs_T_puck_obs,
                                                        self.obj_size,
-                                                       return_summary=True
+                                                       #return_summary=True
                                                       )
                 #  self._training_ops.update(print_ops)
             else:
-                memory, summary = self.map3D.infer_from_tensors(
+                memory = self.map3D.infer_from_tensors(
                                                        tf.constant(np.zeros(hyp.B), dtype=tf.float32),
                                                        self.rgb_camXs_obs,
                                                        self.pix_T_cams_obs,
                                                        self.origin_T_camRs_obs,
                                                        self.origin_T_camXs_obs,
                                                        self.xyz_camXs_obs,
-                                                       return_summary=True
+                                                       #return_summary=True
                                                       )
 
 
             if self._stop_3D_grads:
                 memory = tf.stop_gradient(memory)
 
-            self.summary_op = summary
+            #self.summary_op = summary
             latent_state = self._preprocessor([memory])
 
         #  with tf.compat.v1.variable_scope("memory", reuse=True):
@@ -531,7 +530,7 @@ class SACAgent():
                                             self.next_xyz_camXs_obs,
                                            )
 
-            if self._stop_3d_grads:
+            if self._stop_3D_grads:
                 memory_next = tf.stop_gradient(memory_next)
 
             next_latent_state = self._preprocessor([memory_next])
@@ -774,9 +773,8 @@ class SACAgent():
 
     def get_diagnostics(self, iteration, batch):
         feed_dict = self._get_feed_dict(iteration, batch)
-        (summ, Q_values, Q_losses, alpha, global_step, memory) = self._session.run(
-            (self.summary_op,
-             self._Q_values,
+        (Q_values, Q_losses, alpha, global_step, memory) = self._session.run(
+            (self._Q_values,
              self._Q_losses,
              self._alpha,
              self.global_step,
