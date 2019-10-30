@@ -51,12 +51,12 @@ ALGORITHM_PARAMS_BASE = {
     'type': 'SAC',
 
     'kwargs': {
-        'epoch_length': 5000,
-        'train_every_n_steps': 5,
-        'n_train_repeat': 1,
-        #'avg_weights_every_n_steps': 2,
+        'epoch_length': 10000,
+        'train_every_n_steps': 1,
+        'n_train_repeat': 3,
+        'avg_weights_every_n_steps': 3,
         'pretrained_map3D': False,
-        'stop_3D_grads': False,
+        'stop_3D_grads': True,
         'eval_n_episodes': 5,
         'eval_deterministic': True,
         'eval_render_mode': None,
@@ -74,7 +74,7 @@ ALGORITHM_PARAMS_ADDITIONAL = {
     'SAC': {
         'type': 'RemoteSAC',
         'kwargs': {
-            'num_agents': 1,
+            'num_agents': 4,
             'reparameterize': REPARAMETERIZE,
             'lr': 5e-4,
             'target_update_interval': 1,
@@ -262,7 +262,7 @@ ENVIRONMENT_PARAMS = {
     },
     'SawyerMulticameraPushRandomObjects': {
         'v0': {
-            'num_agents': 2,
+            'num_agents': 8,
         }
     },
 }
@@ -281,8 +281,8 @@ SIMPLE_SAMPLER_PARAMS = {
 MULTIAGENT_SAMPLER_PARAMS = {
     'type': 'MultiAgentSampler',
     'kwargs': {
-        'num_agents': 2,
-        'batch_size': 2,
+        'num_agents': 8,
+        'batch_size': 8,
     }
 }
 
@@ -486,7 +486,7 @@ def get_variant_spec_3D(universe,
 
     preprocessor_params = {
         'type': 'convnet3d_preprocessor',
-        'input_shape':(32,32,32,32),
+        'input_shape':(32,32,32,8),
         'kwargs': {
             'output_size': 128,
             'conv_filters': (32,32,64),
