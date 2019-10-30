@@ -728,38 +728,12 @@ class SACAgent():
             self._terminals_ph: batch['terminals'],
         }
 
-        if self.do_cropping:
-            obs_fields = get_inputs(batch['observations.image_observation'],
-                                    batch['observations.depth_observation'],
-                                    batch['observations.cam_info_observation'],
-                                    batch['observations.full_state_observation'])
-        else:
-            obs_fields = get_inputs(batch['observations.image_observation'],
-                                    batch['observations.depth_observation'],
-                                    batch['observations.cam_info_observation'])
-
-        #goal_fields = get_inputs(batch['observations.image_desired_goal'],
-        #                         batch['observations.desired_goal_depth'],
-        #                         batch['observations.cam_info_goal'],
-        #                         batch['observations.state_desired_goal'])
-
-        if self.do_cropping:
-            next_obs_fields = get_inputs(batch['next_observations.image_observation'],
-                                         batch['next_observations.depth_observation'],
-                                         batch['next_observations.cam_info_observation'],
-                                         batch['next_observations.full_state_observation'])
-        else:
-            next_obs_fields = get_inputs(batch['next_observations.image_observation'],
-                                         batch['next_observations.depth_observation'],
-                                         batch['next_observations.cam_info_observation'])
-
-
         feed_dict.update({
-                           self.pix_T_cams_obs: obs_fields['pix_T_cams'],
-                           self.origin_T_camRs_obs: obs_fields['origin_T_camRs'],
-                           self.origin_T_camXs_obs: obs_fields['origin_T_camXs'],
-                           self.rgb_camXs_obs: obs_fields['rgb_camXs'],
-                           self.xyz_camXs_obs: obs_fields['xyz_camXs'],
+                           self.pix_T_cams_obs: batch['observations.pix_T_cams'],
+                           self.origin_T_camRs_obs: batch['observations.origin_T_camRs'],
+                           self.origin_T_camXs_obs: batch['observations.origin_T_camXs'],
+                           self.rgb_camXs_obs: batch['observations.rgb_camXs'],
+                           self.xyz_camXs_obs: batch['observations.xyz_camXs'],
 
                            self.state_centroid: batch['observations.full_state_observation'],
 
@@ -770,22 +744,22 @@ class SACAgent():
                            #  self.xyz_camXs_goal: goal_fields['xyz_camXs'],
                            self.centroid_goal: batch['observations.state_desired_goal'],
 
-                           self.next_pix_T_cams_obs: next_obs_fields['pix_T_cams'],
-                           self.next_origin_T_camRs_obs: next_obs_fields['origin_T_camRs'],
-                           self.next_origin_T_camXs_obs: next_obs_fields['origin_T_camXs'],
-                           self.next_rgb_camXs_obs: next_obs_fields['rgb_camXs'],
-                           self.next_xyz_camXs_obs: next_obs_fields['xyz_camXs'],
+                           self.next_pix_T_cams_obs: batch['next_observations.pix_T_cams'],
+                           self.next_origin_T_camRs_obs: batch['next_observations.origin_T_camRs'],
+                           self.next_origin_T_camXs_obs: batch['next_observations.origin_T_camXs'],
+                           self.next_rgb_camXs_obs: batch['next_observations.rgb_camXs'],
+                           self.next_xyz_camXs_obs: batch['next_observations.xyz_camXs'],
 
                            self.next_state_centroid: batch['next_observations.full_state_observation']
                           })
 
         if self.do_cropping:
             feed_dict.update({
-                              self.next_puck_xyz_camRs_obs: next_obs_fields['crop_center_xyz_camRs'],
-                              self.next_camRs_T_puck_obs: next_obs_fields['camRs_T_crop'],
-                              self.puck_xyz_camRs_obs: obs_fields['crop_center_xyz_camRs'],
-                              self.camRs_T_puck_obs: obs_fields['camRs_T_crop'],
+                              self.puck_xyz_camRs_obs: batch['observations.crop_center_xyz_camRs'],
+                              self.camRs_T_puck_obs: batch['observations.camRs_T_crop'],
                               self.obj_size: batch['observations.object_size'],
+                              self.next_puck_xyz_camRs_obs: batch['next_observations.crop_center_xyz_camRs'],
+                              self.next_camRs_T_puck_obs: batch['next_observations.camRs_T_crop'],
                              })
 
         if self._store_extra_policy_info:

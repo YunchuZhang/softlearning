@@ -10,7 +10,9 @@ class BaseSampler(object):
                  max_path_length,
                  min_pool_size,
                  batch_size,
-                 store_last_n_paths=10,filter_keys=None):
+                 store_last_n_paths=10,
+                 filter_keys=None):
+
         self._max_path_length = max_path_length
         self._min_pool_size = min_pool_size
         self._batch_size = batch_size
@@ -78,13 +80,25 @@ class BaseSampler(object):
         self.policy = None
         self.pool = None
 
-    def forward_3D(self, active_obs, do_cropping):
+
+    def add_discovery_fields(self, obs_dict, do_cropping):
 
         if do_cropping:
-            obs_fields = get_inputs(active_obs['image_observation'],
-                                    active_obs['depth_observation'],
-                                    active_obs['cam_info_observation'],
-                                    active_obs['full_state_observation'])
+            obs_fields = get_inputs(obs_dict['image_observation'],
+                                    obs_dict['depth_observation'],
+                                    obs_dict['cam_info_observation'],
+                                    obs_dict['full_state_observation'])
+        else:
+            obs_fields = get_inputs(obs_dict['image_observation'],
+                                    obs_dict['depth_observation'],
+                                    obs_dict['cam_info_observation'])
+
+        obs_dict.update(obs_fields)
+
+
+    def forward_3D(self, obs_fields, do_cropping):
+
+        if do_cropping:
 
             memory = self.session.run(
                     self.memory3D_sampler,
@@ -95,26 +109,18 @@ class BaseSampler(object):
                                self.obs_ph['rgb_camXs_obs']: obs_fields['rgb_camXs'],
                                self.obs_ph['xyz_camXs_obs']: obs_fields['xyz_camXs'],
 
-                               self.obs_ph['state_centroid']: active_obs['full_state_observation'],
+                               self.obs_ph['state_centroid']: obs_fields['full_state_observation'],
                                #self.obs_ph['pix_T_cams_goal']: goal_fields['pix_T_cams'],
                                #self.obs_ph['origin_T_camRs_goal']: goal_fields['origin_T_camRs'],
                                #self.obs_ph['origin_T_camXs_goal']: goal_fields['origin_T_camXs'],
                                #self.obs_ph['rgb_camXs_goal']: goal_fields['rgb_camXs'],
                                #self.obs_ph['xyz_camXs_goal']: goal_fields['xyz_camXs']
-                               self.obs_ph['centroid_goal']: active_obs['state_desired_goal'],
+                               self.obs_ph['centroid_goal']: obs_fields['state_desired_goal'],
                                self.obs_ph['puck_xyz_camRs']: obs_fields['crop_center_xyz_camRs'],
                                self.obs_ph['camRs_T_puck']: obs_fields['camRs_T_crop'],
-                               self.obs_ph['obj_size']: active_obs['object_size'],
+                               self.obs_ph['obj_size']: obs_fields['object_size'],
                               })
         else:
-            obs_fields = get_inputs(active_obs['image_observation'],
-                                    active_obs['depth_observation'],
-                                    active_obs['cam_info_observation'])
-
-        #goal_fields = get_inputs(active_obs['image_desired_goal'],
-        #                         active_obs['desired_goal_depth'],
-        #                         active_obs['cam_info_goal'],
-        #                         active_obs['state_desired_goal'])
 
             memory = self.session.run(
                     self.memory3D_sampler,
@@ -125,12 +131,13 @@ class BaseSampler(object):
                                self.obs_ph['rgb_camXs_obs']: obs_fields['rgb_camXs'],
                                self.obs_ph['xyz_camXs_obs']: obs_fields['xyz_camXs'],
 
-                               self.obs_ph['state_centroid']: active_obs['full_state_observation'],
+                               self.obs_ph['state_centroid']: obs_fields['full_state_observation'],
                                #self.obs_ph['pix_T_cams_goal']: goal_fields['pix_T_cams'],
                                #self.obs_ph['origin_T_camRs_goal']: goal_fields['origin_T_camRs'],
                                #self.obs_ph['origin_T_camXs_goal']: goal_fields['origin_T_camXs'],
                                #self.obs_ph['rgb_camXs_goal']: goal_fields['rgb_camXs'],
                                #self.obs_ph['xyz_camXs_goal']: goal_fields['xyz_camXs']
-                               self.obs_ph['centroid_goal']: active_obs['state_desired_goal'],
+                               self.obs_ph['centroid_goal']: obs_fields['state_desired_goal'],
                               })
-        return memory
+
+        return memory, obs_fields

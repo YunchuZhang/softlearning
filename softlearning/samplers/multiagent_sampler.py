@@ -37,16 +37,23 @@ class MultiAgentSampler(BaseSampler):
         if isinstance(observations, dict):
             observation = {field_name: values[index]
                         for field_name, values in observations.items()}
-            next_observation = {field_name: values[index]
-                                for field_name, values in next_observations.items()}
-            info = {field_name: values[index]
-                    for field_name, values in infos.items()}
 
         # Handles list of dictionaries (i.e. RemoteGymAdapter)
         elif isinstance(observations, (tuple, list)):
             observation = observations[index]
+
+        if isinstance(next_observations, dict):
+            next_observation = {field_name: values[index]
+                                for field_name, values in next_observations.items()}
+        elif isinstance(next_observations, (tuple, list)):
             next_observation = next_observations[index]
+
+        if isinstance(infos, dict):
+            info = {field_name: values[index]
+                    for field_name, values in infos.items()}
+        elif isinstance(infos, (tuple, list)):
             info = infos[index]
+
 
         processed_observation = {
             'observations': observation,
@@ -59,22 +66,27 @@ class MultiAgentSampler(BaseSampler):
 
         return copy.deepcopy(processed_observation)
 
+
+    def convert_observation(self, obs, do_cropping):
+
+        active_obs = self.env.convert_to_active_observation(obs, return_dict=True)
+        active_obs = {key: np.vstack([field] * int(self._batch_size / self.num_agents)) for key, field in active_obs.items()}
+
+        self.add_discovery_fields(active_obs, do_cropping)
+
+        return active_obs
+
+
     def sample(self, do_cropping):
         #pdb.set_trace()
         if self._current_observations is None:
-            self._current_observations = self.env.reset()
-
-        #actions = self.policy.actions_np([
-        #    self.env.convert_to_active_observation(
-        #        self._current_observations)
-        #])
-
-
+            if self.memory3D_sampler:
+                self._current_observations = self.convert_observation(self.env.reset(), do_cropping)
+            else:
+                self._current_observations = self.env.reset()
 
         if self.initialized and self.memory3D_sampler:
-            active_obs = self.env.convert_to_active_observation(self._current_observations, return_dict=True)
-            active_obs = {key: np.vstack([field] * int(self._batch_size / self.num_agents)) for key, field in active_obs.items()}
-            active_obs = self.forward_3D(active_obs, do_cropping)
+            active_obs = self.forward_3D(self._current_observations, do_cropping)
             active_obs = active_obs[:self.num_agents]
         else:
             active_obs = self.env.convert_to_active_observation(self._current_observations)
@@ -84,6 +96,9 @@ class MultiAgentSampler(BaseSampler):
         next_observations, rewards, terminals, infos = self.env.step(actions)
         self._path_length += 1
         self._total_samples += self.num_agents
+
+        if self.memory3D_sampler:
+            next_observations = self.convert_observation(next_observations, do_cropping)
 
         if self._path_returns is None:
             self._path_returns = np.zeros(self.num_agents)
@@ -97,8 +112,7 @@ class MultiAgentSampler(BaseSampler):
                 rewards=rewards,
                 terminals=terminals,
                 next_observations=next_observations,
-                infos=infos,
-            )
+                infos=infos)
 
             for key, value in processed_sample.items():
                 self._current_paths[i][key].append(value)

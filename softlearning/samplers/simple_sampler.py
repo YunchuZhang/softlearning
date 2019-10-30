@@ -46,7 +46,6 @@ class SimpleSampler(BaseSampler):
         if self._current_observation is None:
             self._current_observation = self.env.reset()
 
-
         if self.initialized and self.memory3D_sampler:
             a = time.time()
             active_obs = self.env.convert_to_active_observation(self._current_observation, return_dict=True)
