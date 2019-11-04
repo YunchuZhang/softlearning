@@ -219,6 +219,11 @@ ENVIRONMENT_PARAMS = {
             'observation_keys': ('observation', 'desired_goal'),
         },
     },
+    'FetchReach': {
+        'v1': {
+            'reward_type': 'dense'
+        }
+    },
     'SawyerReachXYEnv': {
         'v1': {
             'reward_type': 'hand_success'
@@ -251,18 +256,15 @@ ENVIRONMENT_PARAMS = {
             #'observation_keys': ('full_state_observation', 'state_desired_goal', 'state_achieved_goal'),
             'xml_paths': ['sawyer_xyz/sawyer_push_book.xml'],
             #'clamp_puck_on_step': False,
-            'track_object': True,
             #'reward_type': 'puck_success'
-        }
-    },
-    'FetchReach': {
-        'v1': {
-            'reward_type': 'dense'
         }
     },
     'SawyerMulticameraPushRandomObjects': {
         'v0': {
             'num_agents': 4,
+            'get_discovery_feats': True,
+            'num_cameras': 2,
+            'track_object': True,
         }
     },
 }
@@ -336,7 +338,7 @@ SIMPLE_REPLAY_POOL_PARAMS = {
 HER_REPLAY_POOL_PARAMS = {
     'type': 'HerReplayPool',
     'kwargs': {
-        'normalize_images': False,
+        'normalize_images': True,
         'max_size': 4e4,
         'compute_reward_keys': {'achieved': 'state_achieved_goal',
                                 'desired': 'state_desired_goal',
@@ -474,16 +476,8 @@ def get_variant_spec_3D(universe,
 
     environment_params = variant_spec['environment_params']
     env_train_params = environment_params['training']
-    env_train_params["kwargs"]["observation_keys"] = ["image_observation",
-                                                      "depth_observation",
-                                                      "cam_info_observation",
-                                                      "state_observation",
-                                                      "full_state_observation",
+    env_train_params["kwargs"]["observation_keys"] = ["full_state_observation",
                                                       "state_desired_goal",
-                                                      "image_desired_goal",
-                                                      "state_desired_goal",
-                                                      "depth_desired_goal",
-                                                      "cam_info_goal",
                                                       "pix_T_cams",
                                                       "origin_T_camRs",
                                                       "origin_T_camXs",
@@ -493,7 +487,7 @@ def get_variant_spec_3D(universe,
 
     preprocessor_params = {
         'type': 'convnet3d_preprocessor',
-        'input_shape':(32,32,32,8),
+        'input_shape': (32,32,32,8),
         'kwargs': {
             'output_size': 128,
             'conv_filters': (32,32,64),

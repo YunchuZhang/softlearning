@@ -42,7 +42,7 @@ class SimpleSampler(BaseSampler):
         return copy.deepcopy(processed_observation)
 
 
-    def sample(self):
+    def sample(self, do_cropping):
         if self._current_observation is None:
             self._current_observation = self.env.reset()
 
@@ -50,7 +50,7 @@ class SimpleSampler(BaseSampler):
             a = time.time()
             active_obs = self.env.convert_to_active_observation(self._current_observation, return_dict=True)
             active_obs = {key: np.vstack([field] * int(self._batch_size)) for key, field in active_obs.items()}
-            active_obs = self.forward_3D(active_obs)
+            active_obs = self.forward_3D(active_obs, do_cropping)
             #print(time.time()-a,"sampler sess")
             active_obs = active_obs[:1]
         else:

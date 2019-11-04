@@ -106,7 +106,7 @@ class HerReplayPool(SimpleReplayPool):
             batch[self._terminal_key] = terminals
 
         for key, value in batch.items():
-            if self.normalize_images and 'image' in key and value is not None:
+            if self.normalize_images and ('image' in key or 'rgb' in key) and value is not None:
                 value = normalize_image(value)
                 batch[key] = value
 

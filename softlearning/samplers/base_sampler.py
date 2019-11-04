@@ -81,21 +81,6 @@ class BaseSampler(object):
         self.pool = None
 
 
-    def add_discovery_fields(self, obs_dict, do_cropping):
-
-        if do_cropping:
-            obs_fields = get_inputs(obs_dict['image_observation'],
-                                    obs_dict['depth_observation'],
-                                    obs_dict['cam_info_observation'],
-                                    obs_dict['full_state_observation'])
-        else:
-            obs_fields = get_inputs(obs_dict['image_observation'],
-                                    obs_dict['depth_observation'],
-                                    obs_dict['cam_info_observation'])
-
-        obs_dict.update(obs_fields)
-
-
     def forward_3D(self, obs_fields, do_cropping):
 
         if do_cropping:

@@ -462,7 +462,7 @@ class SACAgent():
     def _init_map3D(self):
         with tf.compat.v1.variable_scope("memory", reuse=False):
             if self.do_cropping:
-                memory = self.map3D.infer_from_tensors(
+                result = self.map3D.infer_from_tensors(
                                                        tf.constant(np.zeros(hyp.B), dtype=tf.float32),
                                                        self.rgb_camXs_obs,
                                                        self.pix_T_cams_obs,
@@ -472,20 +472,21 @@ class SACAgent():
                                                        self.puck_xyz_camRs_obs,
                                                        self.camRs_T_puck_obs,
                                                        self.obj_size,
-                                                       #return_summary=True
+                                                       return_summary=True
                                                       )
                 #  self._training_ops.update(print_ops)
             else:
-                memory = self.map3D.infer_from_tensors(
+                result = self.map3D.infer_from_tensors(
                                                        tf.constant(np.zeros(hyp.B), dtype=tf.float32),
                                                        self.rgb_camXs_obs,
                                                        self.pix_T_cams_obs,
                                                        self.origin_T_camRs_obs,
                                                        self.origin_T_camXs_obs,
                                                        self.xyz_camXs_obs,
-                                                       #return_summary=True
+                                                       return_summary=True
                                                       )
 
+            memory = result[0]
 
             if self._stop_3D_grads:
                 memory = tf.stop_gradient(memory)
@@ -509,7 +510,7 @@ class SACAgent():
 
         with tf.compat.v1.variable_scope("memory", reuse=True):
             if self.do_cropping:
-                memory_next = self.map3D.infer_from_tensors(
+                result_next = self.map3D.infer_from_tensors(
                                             tf.constant(np.zeros(hyp.B), dtype=tf.float32),
                                             self.next_rgb_camXs_obs,
                                             self.next_pix_T_cams_obs,
@@ -521,7 +522,7 @@ class SACAgent():
                                             self.obj_size
                                            )
             else:
-                memory_next = self.map3D.infer_from_tensors(
+                result_next = self.map3D.infer_from_tensors(
                                             tf.constant(np.zeros(hyp.B), dtype=tf.float32),
                                             self.next_rgb_camXs_obs,
                                             self.next_pix_T_cams_obs,
@@ -529,6 +530,8 @@ class SACAgent():
                                             self.next_origin_T_camXs_obs,
                                             self.next_xyz_camXs_obs,
                                            )
+
+            memory_next = result_next[0]
 
             if self._stop_3D_grads:
                 memory_next = tf.stop_gradient(memory_next)
@@ -781,7 +784,7 @@ class SACAgent():
              self.memory),
             feed_dict)
 
-        self.map3D.write_summ(summ)
+        #self.map3D.write_summ(summ)
         policy_diagnostics = self._policy.get_diagnostics(memory)
         return Q_values, Q_losses, alpha, global_step, policy_diagnostics
 
