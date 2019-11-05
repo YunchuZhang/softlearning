@@ -277,7 +277,6 @@ class SACAgent():
                 self._policy,
                 self._sampler._max_path_length,
                 sampler=get_sampler_from_variant(self.variant),
-                do_cropping=self.do_cropping,
                 memory3D=self.memory,
                 obs_ph=self.obs_placeholders,
                 session=self._session,
@@ -531,7 +530,7 @@ class SACAgent():
                                             self.next_xyz_camXs_obs,
                                            )
 
-            if self._stop_3d_grads:
+            if self._stop_3D_grads:
                 memory_next = tf.stop_gradient(memory_next)
 
             next_latent_state = self._preprocessor([memory_next])
