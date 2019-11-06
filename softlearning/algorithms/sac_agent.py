@@ -468,6 +468,10 @@ class SACAgent():
                                                        return_summary=True
                                                       )
 
+
+            if self._stop_3D_grads:
+                memory = tf.stop_gradient(memory)
+
             self.summary_op = summary
             latent_state = self._preprocessor([memory])
 
@@ -508,7 +512,10 @@ class SACAgent():
                                             self.next_xyz_camXs_obs,
                                            )
 
-            next_latent_state = self._preprocessor([memory])
+            if self._stop_3D_grads:
+                memory_next = tf.stop_gradient(memory_next)
+
+            next_latent_state = self._preprocessor([memory_next])
 
         self.memory_next = [tf.concat([next_latent_state, self.next_state_centroid, self.centroid_goal],-1)]
 

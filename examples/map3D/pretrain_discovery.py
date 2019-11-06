@@ -12,7 +12,7 @@ import discovery.hyperparams as hyp
 from discovery.model_mujoco_online import MUJOCO_ONLINE
 
 exploration_steps = 500
-train_iters = 5000
+train_iters = 10000
 sample_steps_per_iter = 2
 
 log_freq = hyp.log_freqs['train']
@@ -26,7 +26,7 @@ observation_keys = ["image_observation",
                     "depth_desired_goal",
                     "cam_info_goal"]
 
-gpu_options = tf.GPUOptions(allow_growth=False)
+gpu_options = tf.GPUOptions(allow_growth=True)
 session = tf.Session(config=tf.ConfigProto(gpu_options=gpu_options))
 tf.keras.backend.set_session(session)
 session = tf.keras.backend.get_session()
