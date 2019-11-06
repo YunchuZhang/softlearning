@@ -17,7 +17,7 @@ from discovery.model_mujoco_online import MUJOCO_ONLINE
 from discovery.backend.mujoco_online_inputs import get_inputs
 
 from softlearning.environments.utils import get_environment_from_params
-from softlearning.algorithms.utils import get_algorithm_from_variant
+from softlearning.algorithms.utils import get_algorithm_from_variant, map3D_save, map3D_load
 from softlearning.policies.utils import get_policy_from_variant, get_policy
 from softlearning.replay_pools.utils import get_replay_pool_from_variant
 from softlearning.samplers.utils import get_sampler_from_variant
@@ -64,7 +64,7 @@ class SACAgent():
             pretrained_map3D=True,
             stop_3D_grads=False,
             observation_keys=None,
-            do_cropping=True,
+            do_cropping=False,
     ):
         """
         Args:
@@ -147,10 +147,8 @@ class SACAgent():
         self.checkpoint_dir_ = os.path.join("checkpoints", hyp.name)
         log_dir_ = os.path.join("logs_mujoco_online", hyp.name)
 
-        if not os.path.exists(self.checkpoint_dir_):
-            os.makedirs(self.checkpoint_dir_)
-        if not os.path.exists(log_dir_):
-            os.makedirs(log_dir_)
+        os.makedirs(self.checkpoint_dir_, exist_ok=True)
+        os.makedirs(log_dir_, exist_ok=True)
 
         #!! g=None might cause issues
         self.map3D = MUJOCO_ONLINE(graph=None,
@@ -190,7 +188,6 @@ class SACAgent():
         train_op = tf.group(*list(self._training_ops.values()))
 
         initialize_tf_variables(self._session, only_uninitialized=True)
-
 
         if pretrained_map3D:
             self._map3D_load(self._session)
@@ -429,17 +426,10 @@ class SACAgent():
             )
 
     def _map3D_save(self, sess):
-        checkpt = self.checkpoint_dir_
-        for k, saver in self.map3D_saver.items():
-            path = os.path.join(checkpt, k)
-            os.makedirs(path, exist_ok=True)
-            saver.save(sess, os.path.join(path, k), write_meta_graph=False)
+        map3D_save(sess, self.checkpoint_dir_, self.map3D_saver)
 
     def _map3D_load(self, sess):
-        checkpt = self.checkpoint_dir_
-        for k, saver in self.map3D_saver.items():
-            path = os.path.join(checkpt, k)
-            saver.restore(sess, os.path.join(path, k))
+        map3D_load(sess, self.checkpoint_dir_, self.map3D_save)
 
     def _init_map3D(self):
         with tf.compat.v1.variable_scope(self.map3D_scope, reuse=False):
@@ -488,7 +478,6 @@ class SACAgent():
 
         self.memory = [tf.concat([latent_state, self.state_centroid, self.centroid_goal],-1)]
 
-
         with tf.compat.v1.variable_scope(self.map3D_scope, reuse=True):
             if self.do_cropping:
                 memory_next = self.map3D.infer_from_tensors(
@@ -501,7 +490,7 @@ class SACAgent():
                                             self.next_puck_xyz_camRs_obs,
                                             self.next_camRs_T_puck_obs,
                                             self.obj_size
-                                           )
+                                           )[0]
             else:
                 memory_next = self.map3D.infer_from_tensors(
                                             tf.constant(np.zeros(hyp.B), dtype=tf.float32),
@@ -510,7 +499,7 @@ class SACAgent():
                                             self.next_origin_T_camRs_obs,
                                             self.next_origin_T_camXs_obs,
                                             self.next_xyz_camXs_obs,
-                                           )
+                                           )[0]
 
             if self._stop_3D_grads:
                 memory_next = tf.stop_gradient(memory_next)
@@ -523,12 +512,11 @@ class SACAgent():
 
         key_vars = defaultdict(list)
         for x in memory_vars:
-            key_vars[x.name.split("/")[1]].append(x)
+            if x.name.split('/')[0] == self.map3D_scope:
+                key_vars[x.name.split("/")[1]].append(x)
 
         self.map3D_saver = {}
         for k, v in key_vars.items():
-            #  for i in range(0, len(v), 13):
-                #  self.map3D_saver[k + str(i)] = tf.train.Saver(var_list=v[i: i + 13], max_to_keep=None, restore_sequentially=True)
             self.map3D_saver[k] = tf.train.Saver(var_list=v, max_to_keep=None, restore_sequentially=True)
 
     def _get_Q_target(self):

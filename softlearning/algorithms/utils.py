@@ -1,4 +1,5 @@
 from copy import deepcopy
+import os
 import ipdb
 st = ipdb.set_trace
 
@@ -64,3 +65,14 @@ def get_algorithm_from_variant(variant,
         variant, *args, **algorithm_kwargs, **kwargs)
 
     return algorithm
+
+def map3D_save(sess, checkpt, map3D_saver, gstep=1):
+    for k, saver in map3D_saver.items():
+        path = os.path.join(checkpt, k)
+        os.makedirs(path, exist_ok=True)
+        saver.save(sess, os.path.join(path, k), write_meta_graph=False, global_step=gstep)
+
+def map3D_load(sess, checkpt, map3D_saver):
+    for k, saver in map3D_saver.items():
+        path = os.path.join(checkpt, k)
+        saver.restore(sess, os.path.join(path, k + "-0"))
