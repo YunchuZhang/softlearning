@@ -74,7 +74,7 @@ ALGORITHM_PARAMS_ADDITIONAL = {
     'SAC': {
         'type': 'RemoteSAC',
         'kwargs': {
-            'num_agents': 4,
+            'num_agents': 2,
             'reparameterize': REPARAMETERIZE,
             'lr': 5e-4,
             'target_update_interval': 1,
@@ -490,9 +490,9 @@ def get_variant_spec_3D(universe,
         'input_shape': (32,32,32,8),
         'kwargs': {
             'output_size': 128,
-            'conv_filters': (32,32,64),
-            'conv_kernel_sizes': (5,4,3),
-            'conv_strides': (3, 2, 2),
+            'conv_filters': (32, 32, 64),
+            'conv_kernel_sizes': (5, 4, 3),
+            'conv_strides': (1, 1, 1),
             #'pool_type': 'MaxPool3D',
             #'pool_sizes':(2,2,2,2,2),
             #'pool_strides': (2,2,2,2,2),
