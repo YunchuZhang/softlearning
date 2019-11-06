@@ -74,7 +74,7 @@ ALGORITHM_PARAMS_ADDITIONAL = {
     'SAC': {
         'type': 'RemoteSAC',
         'kwargs': {
-            'num_agents': 4,
+            'num_agents': 2,
             'reparameterize': REPARAMETERIZE,
             'lr': 5e-4,
             'target_update_interval': 1,
@@ -481,18 +481,18 @@ def get_variant_spec_3D(universe,
                                                       "full_state_observation",
                                                       "state_desired_goal",
                                                       "image_desired_goal",
-                                                      "state_desired_goal",
                                                       "depth_desired_goal",
-                                                      "cam_info_goal"]
+                                                      "cam_info_goal",
+                                                      "object_size"]
 
     preprocessor_params = {
         'type': 'convnet3d_preprocessor',
-        'input_shape':(32,32,32,32),
+        'input_shape': (16, 16, 8, 32),
         'kwargs': {
             'output_size': 128,
-            'conv_filters': (32,32,64),
-            'conv_kernel_sizes': (5,4,3),
-            'conv_strides': (3, 2, 2),
+            'conv_filters': (32, 32, 64),
+            'conv_kernel_sizes': (5, 4, 3),
+            'conv_strides': (1, 1, 1),
             #'pool_type': 'MaxPool3D',
             #'pool_sizes':(2,2,2,2,2),
             #'pool_strides': (2,2,2,2,2),

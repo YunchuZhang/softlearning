@@ -14,6 +14,7 @@ from discovery.model_mujoco_online import MUJOCO_ONLINE
 exploration_steps = 500
 train_iters = 10000
 sample_steps_per_iter = 2
+do_cropping = False
 
 log_freq = hyp.log_freqs['train']
 
@@ -25,6 +26,8 @@ observation_keys = ["image_observation",
                     "image_desired_goal",
                     "depth_desired_goal",
                     "cam_info_goal"]
+if do_cropping:
+    observation_keys.extend(["full_state_observation", "object_size"])
 
 gpu_options = tf.GPUOptions(allow_growth=True)
 session = tf.Session(config=tf.ConfigProto(gpu_options=gpu_options))
@@ -55,7 +58,8 @@ log_dir = os.path.join("logs_mujoco_online", hyp.name)
 model = MUJOCO_ONLINE(graph=None,
                       sess=session,
                       checkpoint_dir=checkpoint_dir,
-                      log_dir=log_dir
+                      log_dir=log_dir,
+                      do_cropping = do_cropping
 )
 
 model.prepare_graph()
@@ -75,4 +79,4 @@ for step in range(train_iters):
     #if log_this:
     #    print("Should log!")
 
-    model.train_step(step, 'train', sampler.random_batch(), True, writer, log_this)
+    model.train_step(step, 'train', sampler.random_batch(), True, writer, log_this, do_cropping=do_cropping)
