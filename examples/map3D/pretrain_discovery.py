@@ -55,14 +55,16 @@ for i in range(exploration_steps):
 checkpoint_dir = os.path.join("checkpoints", hyp.name)
 log_dir = os.path.join("logs_mujoco_online", hyp.name)
 
-model = MUJOCO_ONLINE(graph=None,
-                      sess=session,
-                      checkpoint_dir=checkpoint_dir,
-                      log_dir=log_dir,
-                      do_cropping = do_cropping
-)
+with tf.compat.v1.variable_scope("memory"):
 
-model.prepare_graph()
+    model = MUJOCO_ONLINE(graph=None,
+                          sess=session,
+                          checkpoint_dir=checkpoint_dir,
+                          log_dir=log_dir,
+                          do_cropping = do_cropping
+    )
+
+    model.prepare_graph()
 
 writer = model.all_writers['train']
 
