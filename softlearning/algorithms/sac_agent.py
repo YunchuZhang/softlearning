@@ -6,6 +6,7 @@ import copy
 import math
 import numpy as np
 import tensorflow as tf
+from collections import defaultdict
 from tensorflow.core.protobuf import rewriter_config_pb2
 
 import ray
@@ -63,7 +64,7 @@ class SACAgent():
             pretrained_map3D=True,
             stop_3D_grads=False,
             observation_keys=None,
-            do_cropping=False,
+            do_cropping=True,
     ):
         """
         Args:
@@ -141,18 +142,20 @@ class SACAgent():
 
         self._remote = remote
 
-        checkpoint_dir_ = os.path.join("checkpoints", hyp.name)
+        self.map3D_scope = "memory"
+
+        self.checkpoint_dir_ = os.path.join("checkpoints", hyp.name)
         log_dir_ = os.path.join("logs_mujoco_online", hyp.name)
 
-        if not os.path.exists(checkpoint_dir_):
-            os.makedirs(checkpoint_dir_)
+        if not os.path.exists(self.checkpoint_dir_):
+            os.makedirs(self.checkpoint_dir_)
         if not os.path.exists(log_dir_):
             os.makedirs(log_dir_)
 
         #!! g=None might cause issues
         self.map3D = MUJOCO_ONLINE(graph=None,
                                     sess=None,
-                                    checkpoint_dir=checkpoint_dir_,
+                                    checkpoint_dir=self.checkpoint_dir_,
                                     log_dir=log_dir_
         )
 
@@ -190,7 +193,7 @@ class SACAgent():
 
 
         if pretrained_map3D:
-            self._map3D_load(self._session, map3D=self.map3D)
+            self._map3D_load(self._session)
 
         if self._remote:
             self.variables = TensorFlowVariables(
@@ -203,7 +206,6 @@ class SACAgent():
 
         print("finished initialization")
         sys.stdout.flush()
-
 
     def init_sampler(self):
         self._sampler.initialize(self._training_environment,
@@ -426,41 +428,21 @@ class SACAgent():
                 name='raw_actions',
             )
 
+    def _map3D_save(self, sess):
+        checkpt = self.checkpoint_dir_
+        for k, saver in self.map3D_saver.items():
+            path = os.path.join(checkpt, k)
+            os.makedirs(path, exist_ok=True)
+            saver.save(sess, os.path.join(path, k), write_meta_graph=False)
 
-    def _map3D_load(self, sess, name="rl_new/1", map3D=None):
-        config = Config(name)
-        config.load()
-        parts = map3D.weights
-        for partname in config.dct:
-            partscope, partpath = config.dct[partname]
-            if partname not in parts:
-                raise Exception("cannot load, part %s not in model" % partpath)
-            partpath = "/home/adhaig/softlearning/softlearning/map3D/" + partpath
-            print(partpath)
-            sys.stdout.flush()
-            ckpt = tf.train.get_checkpoint_state(partpath)
-            if not ckpt:
-                raise Exception("checkpoint not found? (1)")
-            elif not ckpt.model_checkpoint_path:
-                raise Exception("checkpoint not found? (2)")
-            loadpath = ckpt.model_checkpoint_path
-
-            scope, weights = parts[partname]
-
-            if not weights: #nothing to do
-                continue
-            
-            weights = {utils.utils.exchange_scope(weight.op.name, scope, partscope): weight
-                       for weight in weights}
-
-            saver = tf.train.Saver(weights)
-            saver.restore(sess, loadpath)
-            print(f"restore model from {loadpath}")
-        return config.step
-
+    def _map3D_load(self, sess):
+        checkpt = self.checkpoint_dir_
+        for k, saver in self.map3D_saver.items():
+            path = os.path.join(checkpt, k)
+            saver.restore(sess, os.path.join(path, k))
 
     def _init_map3D(self):
-        with tf.compat.v1.variable_scope("memory", reuse=False):
+        with tf.compat.v1.variable_scope(self.map3D_scope, reuse=False):
             if self.do_cropping:
                 result = self.map3D.infer_from_tensors(
                                                        tf.constant(np.zeros(hyp.B), dtype=tf.float32),
@@ -508,7 +490,7 @@ class SACAgent():
         self.memory = [tf.concat([latent_state, self.state_centroid, self.centroid_goal],-1)]
 
 
-        with tf.compat.v1.variable_scope("memory", reuse=True):
+        with tf.compat.v1.variable_scope(self.map3D_scope, reuse=True):
             if self.do_cropping:
                 result_next = self.map3D.infer_from_tensors(
                                             tf.constant(np.zeros(hyp.B), dtype=tf.float32),
@@ -540,6 +522,17 @@ class SACAgent():
 
         self.memory_next = [tf.concat([next_latent_state, self.next_state_centroid, self.centroid_goal],-1)]
 
+        memory_vars = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES, scope=self.map3D_scope)
+
+        key_vars = defaultdict(list)
+        for x in memory_vars:
+            key_vars[x.name.split("/")[1]].append(x)
+
+        self.map3D_saver = {}
+        for k, v in key_vars.items():
+            #  for i in range(0, len(v), 13):
+                #  self.map3D_saver[k + str(i)] = tf.train.Saver(var_list=v[i: i + 13], max_to_keep=None, restore_sequentially=True)
+            self.map3D_saver[k] = tf.train.Saver(var_list=v, max_to_keep=None, restore_sequentially=True)
 
     def _get_Q_target(self):
         import tensorflow as tf
