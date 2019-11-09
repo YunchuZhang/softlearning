@@ -39,10 +39,10 @@ def get_replay_pool_from_variant(variant, env, *args, **kwargs):
 
 def normalize_image(image):
     assert image.dtype == np.uint8
-    return np.float32(image) / 255.0
+    return (np.float32(image) / 255.0) - 0.5
 
 
 def unnormalize_image(image):
     assert image.dtype != np.uint8
     # image = np.concatenate([image,np.ones_like(image[...,:1])],-1)
-    return np.uint8(image * 255.0)
+    return np.uint8((image + 0.5) * 255.0)
