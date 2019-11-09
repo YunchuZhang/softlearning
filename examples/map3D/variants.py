@@ -66,6 +66,7 @@ ALGORITHM_PARAMS_BASE = {
         'discount': 0.99,
         'tau': 5e-3,
         'reward_scale': 1.0,
+        'do_cropping': False,
     }
 }
 
@@ -74,7 +75,7 @@ ALGORITHM_PARAMS_ADDITIONAL = {
     'SAC': {
         'type': 'RemoteSAC',
         'kwargs': {
-            'num_agents': 2,
+            'num_agents': 4,
             'reparameterize': REPARAMETERIZE,
             'lr': 5e-4,
             'target_update_interval': 1,
@@ -261,10 +262,11 @@ ENVIRONMENT_PARAMS = {
     },
     'SawyerMulticameraPushRandomObjects': {
         'v0': {
-            'num_agents': 4,
+            'num_agents': 8,
             'get_discovery_feats': True,
             'num_cameras': 2,
             'track_object': True,
+            'xml_paths': ['sawyer_xyz/sawyer_push_mug3.xml'],
         }
     },
 }
@@ -283,7 +285,7 @@ SIMPLE_SAMPLER_PARAMS = {
 MULTIAGENT_SAMPLER_PARAMS = {
     'type': 'MultiAgentSampler',
     'kwargs': {
-        'num_agents': 4,
+        'num_agents': 8,
         'batch_size': 8,
     }
 }
@@ -347,8 +349,8 @@ HER_REPLAY_POOL_PARAMS = {
                                 # the reward
                                 'image_env_dummy': 'achieved_goal',
                                 'image_env_dummy2': 'desired_goal'},
-        'desired_goal_key': 'image_desired_goal',
-        'achieved_goal_key': 'image_achieved_goal',
+        'desired_goal_key': 'state_desired_goal',
+        'achieved_goal_key': 'state_achieved_goal',
         'reward_key': 'rewards',
         'terminal_key': 'terminals'
     }

@@ -35,6 +35,7 @@ class RemoteSAC(RLAlgorithm):
             observation_keys=None,
             pretrained_map3D=True,
             stop_3D_grads=False,
+            do_cropping=False,
             **kwargs):
         """
         Args:
@@ -82,7 +83,8 @@ class RemoteSAC(RLAlgorithm):
             batch_size=batch_size,
             observation_keys=observation_keys,
             pretrained_map3D=pretrained_map3D,
-            stop_3D_grads=stop_3D_grads
+            stop_3D_grads=stop_3D_grads,
+            do_cropping=do_cropping,
         ) for _ in range(num_agents)]
 
         self._weights = ray.get(self._agents[0].get_weights.remote())

@@ -64,7 +64,7 @@ class SACAgent():
             pretrained_map3D=True,
             stop_3D_grads=False,
             observation_keys=None,
-            do_cropping=True,
+            do_cropping=False,
     ):
         """
         Args:
