@@ -229,8 +229,18 @@ class RemoteSAC(RLAlgorithm):
     def get_policy(self):
         return ray.get(self._agents[0].get_policy.remote())
 
+
     def get_Qs(self):
         return ray.get(self._agents[0].get_Qs.remote())
 
+
     def get_3Dmodel(self):
         return ray.get(self._agents[0].get_3Dmodel.remote())
+
+
+    def get_agent_timings(self):
+        return ray.get(self._agents[0].get_timings.remote())
+
+
+    def reset_agent_timings(self):
+        ray.get(self._agents[0].reset_timings.remote())

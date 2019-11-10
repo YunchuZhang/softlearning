@@ -3,6 +3,7 @@ from numbers import Number
 import sys
 import os
 import copy
+import gtimer as gt
 import math
 import numpy as np
 import tensorflow as tf
@@ -61,7 +62,7 @@ class SACAgent():
             n_initial_exploration_steps=0,
             batch_size=None,
             map3D=None,
-            pretrained_map3D=True,
+            pretrained_map3D=False,
             stop_3D_grads=False,
             observation_keys=None,
             do_cropping=False,
@@ -203,6 +204,10 @@ class SACAgent():
             #self.variables.set_session(self._session)
         else:
             self.variables = None
+
+        gt.reset_root()
+        gt.rename_root('SAC_Agent')
+        gt.set_def_unique(False)
 
         print("finished initialization")
         sys.stdout.flush()
@@ -355,7 +360,7 @@ class SACAgent():
         #self.origin_T_camXs_goal = tf.placeholder(tf.float32, [B, S, 4, 4], name='origin_T_camXs_goal')
         #self.rgb_camXs_goal = tf.placeholder(tf.float32, [B, S, H, W, 3], name='rgb_camXs_goal')
         #self.xyz_camXs_goal = tf.placeholder(tf.float32, [B, S, V, 3], name='xyz_camXs_goal')
-        self.centroid_goal = tf.placeholder(tf.float32, [B, *(self._training_environment._observation_space.spaces['state_desired_goal'].shape)], name='centroid_goal')
+        self.centroid_goal = tf.placeholder(tf.float32, [B, *(self._training_environment.observation_space.spaces['state_desired_goal'].shape)], name='centroid_goal')
 
         self.next_pix_T_cams_obs = tf.placeholder(tf.float32, [B, S, 4, 4], name='next_pix_T_cams_obs')
         self.next_origin_T_camRs_obs = tf.placeholder(tf.float32, [B, S, 4, 4], name='next_origin_T_camRs_obs')
@@ -454,7 +459,7 @@ class SACAgent():
                                                        self.puck_xyz_camRs_obs,
                                                        self.camRs_T_puck_obs,
                                                        self.obj_size,
-                                                       return_summary=True
+                                                       #return_summary=True
                                                       )
                 #  self._training_ops.update(print_ops)
             else:
@@ -465,7 +470,7 @@ class SACAgent():
                                                        self.origin_T_camRs_obs,
                                                        self.origin_T_camXs_obs,
                                                        self.xyz_camXs_obs,
-                                                       return_summary=True
+                                                       #return_summary=True
                                                       )
 
             memory = result[0]
@@ -705,11 +710,14 @@ class SACAgent():
                 # Run target ops here.
                 self._update_target()
 
+            gt.blank_stamp()
             batch = self.training_batch()
 
             feed_dict = self._get_feed_dict(i, batch)
+            gt.stamp('get_data')
 
             self._session.run(self._training_ops, feed_dict)
+            gt.stamp('rum_session')
 
         if self._remote:
             return self.variables.get_weights()
@@ -774,6 +782,7 @@ class SACAgent():
              self._Q_losses,
              self._alpha,
              self.global_step,
+             #self.summary_op,
              self.memory),
             feed_dict)
 
@@ -788,6 +797,14 @@ class SACAgent():
 
     def get_weights(self):
         return self.variables.get_weights()
+
+
+    def get_timings(self):
+        return gt.get_times().stamps.cum
+
+
+    def reset_timings(self):
+        gt.reset()
 
 
     @property

@@ -54,10 +54,10 @@ ALGORITHM_PARAMS_BASE = {
         'epoch_length': 10000,
         'train_every_n_steps': 1,
         'n_train_repeat': 3,
-        #'avg_weights_every_n_steps': 2,
+        'avg_weights_every_n_steps': 3,
         'pretrained_map3D': False,
-        'stop_3D_grads': False,
-        'eval_n_episodes': 10,
+        'stop_3D_grads': True,
+        'eval_n_episodes': 5,
         'eval_deterministic': True,
         'eval_render_mode': None,
         #'eval_render_mode': 'rgb_array',
@@ -83,7 +83,7 @@ ALGORITHM_PARAMS_ADDITIONAL = {
             'target_entropy': 'auto',
             'store_extra_policy_info': False,
             'action_prior': 'uniform',
-            'n_initial_exploration_steps': int(5e3),
+            'n_initial_exploration_steps': int(1e2),
         }
     },
     'SQL': {
@@ -137,7 +137,7 @@ NUM_EPOCHS_PER_DOMAIN = {
     'SawyerPushAndReachEnvEasy': 1000,
     'SawyerPushAndReachEnvMedium': 1000,
     'SawyerPushAndReachEnvHard': 1000,
-    'SawyerPushRandomObjects': 4000,
+    'SawyerPushRandomObjects': 5,
 
 }
 
@@ -278,7 +278,7 @@ NUM_CHECKPOINTS = 10
 SIMPLE_SAMPLER_PARAMS = {
     'type': 'SimpleSampler',
     'kwargs': {
-        'batch_size': 1,
+        'batch_size': 8,
     }
 }
 
