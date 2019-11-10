@@ -189,6 +189,9 @@ class RLAlgorithm():
 
             time_diagnostics = gt.get_times().stamps.itrs
 
+            agent_time_diagnostics = self.get_agent_timings()
+            self.reset_agent_timings()
+
             diagnostics.update(OrderedDict((
                 *(
                     (f'evaluation/{key}', evaluation_metrics[key])
@@ -201,6 +204,10 @@ class RLAlgorithm():
                 *(
                     (f'times/{key}', time_diagnostics[key][-1])
                     for key in sorted(time_diagnostics.keys())
+                ),
+                *(
+                    (f'times/agent/{key}', agent_time_diagnostics[key])
+                    for key in sorted(agent_time_diagnostics.keys())
                 ),
                 *(
                     (f'sampler/{key}', sampler_diagnostics[key])
