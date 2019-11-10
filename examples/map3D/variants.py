@@ -83,7 +83,7 @@ ALGORITHM_PARAMS_ADDITIONAL = {
             'target_entropy': 'auto',
             'store_extra_policy_info': False,
             'action_prior': 'uniform',
-            'n_initial_exploration_steps': int(1e2),
+            'n_initial_exploration_steps': int(5e3),
         }
     },
     'SQL': {
@@ -138,7 +138,7 @@ NUM_EPOCHS_PER_DOMAIN = {
     'SawyerPushAndReachEnvMedium': 1000,
     'SawyerPushAndReachEnvHard': 1000,
     'SawyerPushRandomObjects': 5,
-
+    'SawyerMulticameraPushRandomObjects': 1000
 }
 
 DEFAULT_ALGORITHM_DOMAIN_PARAMS = {
