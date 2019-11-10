@@ -74,7 +74,7 @@ ALGORITHM_PARAMS_ADDITIONAL = {
     'SAC': {
         'type': 'RemoteSAC',
         'kwargs': {
-            'num_agents': 2,
+            'num_agents': 4,
             'reparameterize': REPARAMETERIZE,
             'lr': 5e-4,
             'target_update_interval': 1,
@@ -262,7 +262,10 @@ ENVIRONMENT_PARAMS = {
     },
     'SawyerMulticameraPushRandomObjects': {
         'v0': {
-            'num_agents': 4,
+            'num_agents': 8,
+            'xml_paths': ['sawyer_xyz/sawyer_push_mug3.xml'],
+            'track_object': True,
+            'num_cameras': 2
         }
     },
 }
@@ -281,7 +284,7 @@ SIMPLE_SAMPLER_PARAMS = {
 MULTIAGENT_SAMPLER_PARAMS = {
     'type': 'MultiAgentSampler',
     'kwargs': {
-        'num_agents': 4,
+        'num_agents': 8,
         'batch_size': 8,
     }
 }
@@ -345,8 +348,8 @@ HER_REPLAY_POOL_PARAMS = {
                                 # the reward
                                 'image_env_dummy': 'achieved_goal',
                                 'image_env_dummy2': 'desired_goal'},
-        'desired_goal_key': 'image_desired_goal',
-        'achieved_goal_key': 'image_achieved_goal',
+        'desired_goal_key': 'state_desired_goal',
+        'achieved_goal_key': 'state_achieved_goal',
         'reward_key': 'rewards',
         'terminal_key': 'terminals'
     }
@@ -487,7 +490,7 @@ def get_variant_spec_3D(universe,
 
     preprocessor_params = {
         'type': 'convnet3d_preprocessor',
-        'input_shape': (16, 16, 8, 32),
+        'input_shape': (32, 32, 32, 8),
         'kwargs': {
             'output_size': 128,
             'conv_filters': (32, 32, 64),
