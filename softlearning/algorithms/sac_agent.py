@@ -705,7 +705,7 @@ class SACAgent():
             gt.stamp('get_data')
 
             self._session.run(self._training_ops, feed_dict)
-            gt.stamp('rum_session')
+            gt.stamp('run_session')
 
         if self._remote:
             return self.variables.get_weights()

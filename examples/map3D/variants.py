@@ -83,7 +83,7 @@ ALGORITHM_PARAMS_ADDITIONAL = {
             'target_entropy': 'auto',
             'store_extra_policy_info': False,
             'action_prior': 'uniform',
-            'n_initial_exploration_steps': int(1e2),
+            'n_initial_exploration_steps': int(5e3),
         }
     },
     'SQL': {
@@ -341,7 +341,7 @@ HER_REPLAY_POOL_PARAMS = {
     'type': 'HerReplayPool',
     'kwargs': {
         'normalize_images': False,
-        'max_size': 1e3,
+        'max_size': 4e4,
         'compute_reward_keys': {'achieved': 'state_achieved_goal',
                                 'desired': 'state_desired_goal',
                                 # These are required by the multiworld ImageEnv
