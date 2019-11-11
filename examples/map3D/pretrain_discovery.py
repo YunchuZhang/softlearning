@@ -41,11 +41,13 @@ env = GymAdapter('SawyerMulticameraPushRandomObjects',
                  'v0',
                  num_cameras=2,
                  track_object=True,
+                 xml_paths=['sawyer_xyz/sawyer_push_mug3.xml'],
                  observation_keys=observation_keys)
 
 
 replay_pool = SimpleReplayPool(env,
                                concat_observations=False,
+                               normalize_images=False,
                                max_size=1e4)
 
 policy = get_policy('UniformPolicy', env)
@@ -66,7 +68,7 @@ with tf.compat.v1.variable_scope("memory"):
                           sess=session,
                           checkpoint_dir=checkpoint_dir,
                           log_dir=log_dir,
-                          do_cropping = do_cropping
+                          do_cropping=do_cropping
     )
 
     model.prepare_graph()
