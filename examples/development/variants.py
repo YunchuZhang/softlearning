@@ -58,7 +58,7 @@ ALGORITHM_PARAMS_BASE = {
         'epoch_length': 10000,
         'train_every_n_steps': 1,
         'n_train_repeat': 3,
-        'avg_weights_every_n_steps': 3
+        'avg_weights_every_n_steps': 3,
         'eval_render_mode': None, 
         'eval_n_episodes': 10,
         'eval_deterministic': True,
