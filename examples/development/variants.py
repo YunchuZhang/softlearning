@@ -48,6 +48,7 @@ MAX_PATH_LENGTH_PER_DOMAIN = {
     'FlexFetchPush': 200,
     'FlexFetchReachMultiRobot': 100,
     'FlexFetchPushMultiRobot': 250,
+    'SawyerPushRandomObjects': 200
 }
 
 ALGORITHM_PARAMS_BASE = {
@@ -56,7 +57,8 @@ ALGORITHM_PARAMS_BASE = {
     'kwargs': {
         'epoch_length': 10000,
         'train_every_n_steps': 1,
-        'n_train_repeat': 1,
+        'n_train_repeat': 3,
+        'avg_weights_every_n_steps': 3
         'eval_render_mode': None, 
         'eval_n_episodes': 10,
         'eval_deterministic': True,
@@ -73,7 +75,7 @@ ALGORITHM_PARAMS_ADDITIONAL = {
         'type': 'RemoteSAC',
         'kwargs': {
             'reparameterize': REPARAMETERIZE,
-            'lr': 1e-3,
+            'lr': 5e-4,
             'target_update_interval': 1,
             'tau': 5e-3,
             'target_entropy': 'auto',
@@ -137,6 +139,7 @@ NUM_EPOCHS_PER_DOMAIN = {
     'FlexFetchPush': 1000,
     'FlexFetchReachMultiRobot': 1000,
     'FlexFetchPushMultiRobot': 10000,
+    'SawyerPushRandomObjects': 1000,
 }
 
 DEFAULT_ALGORITHM_DOMAIN_PARAMS = {
@@ -255,7 +258,15 @@ ENVIRONMENT_PARAMS = {
         'v0': {
             'render': 0
         }
-    }
+    },
+    'SawyerPushRandomObjects': {
+        'v0': {
+            'observation_keys': ('full_state_observation', 'state_desired_goal', 'state_achieved_goal'),
+            'xml_paths': ['sawyer_xyz/sawyer_push_mug3.xml'],
+            'clamp_puck_on_step': False,
+            'reward_type': 'puck_success'
+        }
+    },
     #'SawyerPickupEnvYZEasy': {
     #    'v0': {
     #        'reward_type': 'hand_and_obj_success'
@@ -282,7 +293,7 @@ SIMPLE_SAMPLER_PARAMS = {
 MULTIAGENT_SAMPLER_PARAMS = {
     'type': 'MultiAgentSampler',
     'kwargs': {
-        'batch_size': 32,
+        'batch_size': 16,
         'num_agents': 8,
     }
 }
@@ -336,7 +347,7 @@ SIMPLE_REPLAY_POOL_PARAMS = {
 HER_REPLAY_POOL_PARAMS = {
     'type': 'HerReplayPool',
     'kwargs': {
-        'max_size': 5e4,
+        'max_size': 4e4,
         'desired_goal_key': 'desired_goal',
         'achieved_goal_key': 'achieved_goal',
         'reward_key': 'rewards',
