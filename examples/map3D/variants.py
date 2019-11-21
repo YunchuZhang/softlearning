@@ -45,6 +45,7 @@ MAX_PATH_LENGTH_PER_DOMAIN = {
     'SawyerReachXYEnv': 50,
     'SawyerPushRandomObjects': 500,
     'SawyerMulticameraReach': 50,
+    'SawyerMulticameraPushRandomObjects': 200,
 }
 
 ALGORITHM_PARAMS_BASE = {
@@ -54,10 +55,10 @@ ALGORITHM_PARAMS_BASE = {
         'epoch_length': 10000,
         'train_every_n_steps': 1,
         'n_train_repeat': 3,
-        'avg_weights_every_n_steps': 3,
+        #'avg_weights_every_n_steps': 3,
         'pretrained_map3D': False,
-        'stop_3D_grads': True,
-        'eval_n_episodes': 5,
+        'stop_3D_grads': False,
+        'eval_n_episodes': 10,
         'eval_deterministic': True,
         'eval_render_mode': None,
         #'eval_render_mode': 'rgb_array',
@@ -83,7 +84,7 @@ ALGORITHM_PARAMS_ADDITIONAL = {
             'target_entropy': 'auto',
             'store_extra_policy_info': False,
             'action_prior': 'uniform',
-            'n_initial_exploration_steps': int(5e3),
+            'n_initial_exploration_steps': int(5e4),
         }
     },
     'SQL': {
@@ -266,7 +267,10 @@ ENVIRONMENT_PARAMS = {
             'get_discovery_feats': True,
             'num_cameras': 2,
             'track_object': True,
-            'xml_paths': ['sawyer_xyz/sawyer_push_mug3.xml'],
+            'xml_paths': ['sawyer_xyz/sawyer_push_mug1.xml',
+                          'sawyer_xyz/sawyer_push_headphones.xml',
+                          'sawyer_xyz/sawyer_push_car2.xml',
+                          'sawyer_xyz/sawyer_push_mouse.xml'],
         }
     },
 }
@@ -286,7 +290,7 @@ MULTIAGENT_SAMPLER_PARAMS = {
     'type': 'MultiAgentSampler',
     'kwargs': {
         'num_agents': 8,
-        'batch_size': 8,
+        'batch_size': 16,
     }
 }
 
@@ -341,7 +345,7 @@ HER_REPLAY_POOL_PARAMS = {
     'type': 'HerReplayPool',
     'kwargs': {
         'normalize_images': True,
-        'max_size': 4e4,
+        'max_size': 5e4,
         'compute_reward_keys': {'achieved': 'state_achieved_goal',
                                 'desired': 'state_desired_goal',
                                 # These are required by the multiworld ImageEnv
@@ -489,7 +493,7 @@ def get_variant_spec_3D(universe,
 
     preprocessor_params = {
         'type': 'convnet3d_preprocessor',
-        'input_shape': (32,32,32,8),
+        'input_shape': (16, 16, 16, 8),
         'kwargs': {
             'output_size': 128,
             'conv_filters': (32, 32, 64),

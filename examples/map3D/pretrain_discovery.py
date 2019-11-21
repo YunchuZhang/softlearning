@@ -14,7 +14,7 @@ import discovery.hyperparams as hyp
 from discovery.model_mujoco_online import MUJOCO_ONLINE
 
 exploration_steps = 500
-train_iters = 10000
+train_iters = hyp.max_iters
 sample_steps_per_iter = 2
 do_cropping = False
 map3D_scope = "memory"
@@ -41,9 +41,13 @@ env = GymAdapter('SawyerMulticameraPushRandomObjects',
                  'v0',
                  num_cameras=2,
                  track_object=True,
-                 xml_paths=['sawyer_xyz/sawyer_push_mug3.xml'],
+                 angle_high=360,
+                 #xml_paths=['sawyer_xyz/sawyer_push_mug3.xml'],
+                 xml_paths=['sawyer_xyz/sawyer_push_mug1.xml',
+                            'sawyer_xyz/sawyer_push_headphones.xml',
+                            'sawyer_xyz/sawyer_push_car2.xml',
+                            'sawyer_xyz/sawyer_push_mouse.xml'],
                  observation_keys=observation_keys)
-
 
 replay_pool = SimpleReplayPool(env,
                                concat_observations=False,
@@ -52,7 +56,7 @@ replay_pool = SimpleReplayPool(env,
 
 policy = get_policy('UniformPolicy', env)
 
-sampler = SimpleSampler(batch_size=hyp.B, max_path_length=50, min_pool_size=0)
+sampler = SimpleSampler(batch_size=hyp.B, max_path_length=200, min_pool_size=16)
 sampler.initialize(env, policy, replay_pool)
 
 for i in range(exploration_steps):
@@ -96,6 +100,6 @@ for step in range(train_iters):
     #log_this = False
 
     if log_this:
-        map3D_save(session, "/home/ychandar/pretrained_with_log", map3D_saver, step // log_freq)
+        map3D_save(session, "/home/adhaig/pretrained_with_log2", map3D_saver, step // log_freq)
 
     model.train_step(step, 'train', sampler.random_batch(), True, writer, log_this, do_cropping=do_cropping)
