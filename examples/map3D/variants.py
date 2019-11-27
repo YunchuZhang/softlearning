@@ -45,6 +45,7 @@ MAX_PATH_LENGTH_PER_DOMAIN = {
     'SawyerReachXYEnv': 50,
     'SawyerPushRandomObjects': 500,
     'SawyerMulticameraReach': 50,
+    'SawyerMulticameraPushRandomObjects': 200
 }
 
 ALGORITHM_PARAMS_BASE = {
@@ -286,7 +287,7 @@ MULTIAGENT_SAMPLER_PARAMS = {
     'type': 'MultiAgentSampler',
     'kwargs': {
         'num_agents': 8,
-        'batch_size': 8,
+        'batch_size': 16,
     }
 }
 
