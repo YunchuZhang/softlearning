@@ -262,7 +262,11 @@ ENVIRONMENT_PARAMS = {
     'SawyerPushRandomObjects': {
         'v0': {
             'observation_keys': ('full_state_observation', 'state_desired_goal', 'state_achieved_goal'),
-            'xml_paths': ['sawyer_xyz/sawyer_push_mug3.xml'],
+            #'xml_paths': ['sawyer_xyz/sawyer_push_mug1.xml']
+            'xml_paths': ['sawyer_xyz/sawyer_push_mug1.xml',
+                          'sawyer_xyz/sawyer_push_headphones.xml',
+                          'sawyer_xyz/sawyer_push_car2.xml',
+                          'sawyer_xyz/sawyer_push_mouse.xml']
             'clamp_puck_on_step': False,
             'reward_type': 'puck_success'
         }
@@ -347,7 +351,7 @@ SIMPLE_REPLAY_POOL_PARAMS = {
 HER_REPLAY_POOL_PARAMS = {
     'type': 'HerReplayPool',
     'kwargs': {
-        'max_size': 4e4,
+        'max_size': 5e4,
         'desired_goal_key': 'desired_goal',
         'achieved_goal_key': 'achieved_goal',
         'reward_key': 'rewards',
