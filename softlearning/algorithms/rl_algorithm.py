@@ -3,6 +3,7 @@ from collections import OrderedDict
 from itertools import count
 import gtimer as gt
 import os
+import psutil
 
 import numpy as np
 
@@ -191,6 +192,10 @@ class RLAlgorithm():
 
             agent_time_diagnostics = self.get_agent_timings()
             self.reset_agent_timings()
+            
+            mem_keys = ['available', 'used', 'total', 'percent']
+            mem_usage = dict(psutil.virtual_memory()._asdict())
+            diagnostics.update({'memory/'+k: mem_usage[k] for k in mem_keys})
 
             diagnostics.update(OrderedDict((
                 *(

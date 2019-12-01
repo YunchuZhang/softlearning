@@ -18,7 +18,7 @@ from discovery.model_mujoco_online import MUJOCO_ONLINE
 from discovery.backend.mujoco_online_inputs import get_inputs
 
 from softlearning.environments.utils import get_environment_from_params
-from softlearning.algorithms.utils import get_algorithm_from_variant
+from softlearning.algorithms.utils import get_algorithm_from_variant, map3D_save, map3D_load
 from softlearning.policies.utils import get_policy_from_variant, get_policy
 from softlearning.replay_pools.utils import get_replay_pool_from_variant
 from softlearning.samplers.utils import get_sampler_from_variant
@@ -191,7 +191,6 @@ class SACAgent():
         train_op = tf.group(*list(self._training_ops.values()))
 
         initialize_tf_variables(self._session, only_uninitialized=True)
-
 
         if pretrained_map3D:
             self._map3D_load(self._session)
@@ -434,17 +433,10 @@ class SACAgent():
             )
 
     def _map3D_save(self, sess):
-        checkpt = self.checkpoint_dir_
-        for k, saver in self.map3D_saver.items():
-            path = os.path.join(checkpt, k)
-            os.makedirs(path, exist_ok=True)
-            saver.save(sess, os.path.join(path, k), write_meta_graph=False)
+        map3D_save(sess, self.checkpoint_dir_, self.map3D_saver, self.global_step)
 
     def _map3D_load(self, sess):
-        checkpt = self.checkpoint_dir_
-        for k, saver in self.map3D_saver.items():
-            path = os.path.join(checkpt, k)
-            saver.restore(sess, os.path.join(path, k))
+        map3D_load(sess, "/home/ychandar/pretrained_multi_track_0.1", self.map3D_saver, 39)
 
     def _init_map3D(self):
         with tf.compat.v1.variable_scope(self.map3D_scope, reuse=False):
