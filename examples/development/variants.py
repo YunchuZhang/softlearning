@@ -266,7 +266,7 @@ ENVIRONMENT_PARAMS = {
             'xml_paths': ['sawyer_xyz/sawyer_push_mug1.xml',
                           'sawyer_xyz/sawyer_push_headphones.xml',
                           'sawyer_xyz/sawyer_push_car2.xml',
-                          'sawyer_xyz/sawyer_push_mouse.xml']
+                          'sawyer_xyz/sawyer_push_mouse.xml'],
             'clamp_puck_on_step': False,
             'reward_type': 'puck_success'
         }
